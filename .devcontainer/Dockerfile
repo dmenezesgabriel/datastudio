@@ -100,4 +100,4 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
 
 # Install skills
 RUN npx skills add microsoft/playwright-cli --skill '*' -a claude-code -y
-RUN npx skills add vercel-labs/agent-skills --skill frontend-design -a claude-code -y
+RUN npx skills add anthropic/skills --skill frontend-design -a claude-code -y
