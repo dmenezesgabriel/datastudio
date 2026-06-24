@@ -2,7 +2,6 @@ from langchain_core.language_models import BaseChatModel
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from chat.application.ports.language_model_port import LanguageModelPort
 from chat.application.ports.sql_engine_port import SqlEnginePort
 from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.nodes.execute_sql import ExecuteSql
@@ -13,7 +12,7 @@ from chat.infrastructure.nodes.list_tables import ListTables
 
 
 def build_text2sql_graph(
-    language_model: LanguageModelPort,
+    chat_model: BaseChatModel,
     sql_engine: SqlEnginePort,
 ) -> CompiledStateGraph:
     """Builds and compiles the text2sql LangGraph.
@@ -23,7 +22,6 @@ def build_text2sql_graph(
         result = graph.invoke({"question": "How many trips in April?"})
         print(result["response"])
     """
-    chat_model = language_model.get_chat_model()
     nodes = _build_nodes(chat_model, sql_engine)
     return _wire_graph(nodes)
 

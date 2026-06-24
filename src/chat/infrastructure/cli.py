@@ -101,14 +101,14 @@ def main() -> None:
     args = build_arg_parser().parse_args()
     settings = AppSettings()  # type: ignore[call-arg]
     model_name, temperature, api_key, api_base = resolve_model_config(args, settings)
-    language_model = LiteLLMLanguageModel(
+    chat_model = LiteLLMLanguageModel(
         model_name=model_name,
         temperature=temperature,
         api_key=api_key,
         api_base=api_base,
-    )
+    ).get_chat_model()
     sql_engine = DuckDbSqlEngine(settings.duckdb_path)
-    graph = build_text2sql_graph(language_model, sql_engine)
+    graph = build_text2sql_graph(chat_model, sql_engine)
     if args.interactive:
         run_interactive(graph)
         return
