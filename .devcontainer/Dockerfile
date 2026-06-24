@@ -82,15 +82,11 @@ COPY --from=uv_source /uv /uvx /bin/
 # Set zsh as default shell for the user
 RUN chsh -s /bin/zsh $USERNAME
 
-# Install additional CLI tools
-RUN curl -fsSL https://claude.ai/install.sh | bash \
-    && curl -fsSL https://antigravity.google/cli/install.sh | bash \
-    && curl -fsSL https://opencode.ai/install | bash \
-    && curl -fsSL https://pi.dev/install.sh | sh
-
 # Set working directory and user
 USER $USERNAME
 WORKDIR /workspace
+
+ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 
 # Install oh-my-zsh and plugins
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
@@ -98,6 +94,12 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
     && git clone https://github.com/zsh-users/zsh-syntax-highlighting ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting \
     && sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' ~/.zshrc
 
+# Install additional CLI tools
+RUN curl -fsSL https://claude.ai/install.sh | bash \
+    && curl -fsSL https://antigravity.google/cli/install.sh | bash \
+    && curl -fsSL https://opencode.ai/install | bash \
+    && curl -fsSL https://pi.dev/install.sh | sh
+
 # Install skills
 RUN npx skills add microsoft/playwright-cli --skill '*' -a claude-code -y
-RUN npx skills add anthropic/skills --skill frontend-design -a claude-code -y
+RUN npx skills add anthropics/skills --skill frontend-design -a claude-code -y
