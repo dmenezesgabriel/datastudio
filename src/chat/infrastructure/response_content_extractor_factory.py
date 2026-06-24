@@ -1,11 +1,11 @@
-from chat.application.ports.response_content_extractor_port import ResponseContentExtractorPort
 from chat.infrastructure.plain_text_extractor import PlainTextExtractor
+from chat.infrastructure.response_content_extractor import ResponseContentExtractor
 from chat.infrastructure.thinking_blocks_extractor import ThinkingBlocksExtractor
 
 _THINKING_BLOCK_PROVIDERS = ("opencode.ai",)
 
 
-def create_response_content_extractor(api_base: str | None) -> ResponseContentExtractorPort:
+def create_response_content_extractor(api_base: str | None) -> ResponseContentExtractor:
     """Returns the appropriate extractor for the given provider base URL.
 
     Example:

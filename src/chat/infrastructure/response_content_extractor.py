@@ -3,11 +3,11 @@ from typing import Protocol
 from langchain_core.messages import BaseMessage
 
 
-class ResponseContentExtractorPort(Protocol):
-    """Extracts plain text from a LangChain message response.
+class ResponseContentExtractor(Protocol):
+    """Contract for extracting plain text from a LangChain message response.
 
     Example:
-        extractor: ResponseContentExtractorPort = PlainTextExtractor()
+        extractor: ResponseContentExtractor = PlainTextExtractor()
         text = extractor.extract(message)
     """
 

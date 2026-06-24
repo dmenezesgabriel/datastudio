@@ -2,8 +2,8 @@ import pytest
 from langchain_core.messages import HumanMessage
 from pytest_bdd import given, scenario, then, when
 
-from chat.application.ports.response_content_extractor_port import ResponseContentExtractorPort
 from chat.infrastructure.litellm_language_model import LiteLLMLanguageModel
+from chat.infrastructure.response_content_extractor import ResponseContentExtractor
 from shared.infrastructure.settings import AppSettings
 
 
@@ -30,5 +30,5 @@ def send_prompt(chat_model):
 
 
 @then("I receive a non-empty text response")
-def verify_response(response, content_extractor: ResponseContentExtractorPort) -> None:
+def verify_response(response, content_extractor: ResponseContentExtractor) -> None:
     assert content_extractor.extract(response).strip()
