@@ -81,5 +81,9 @@
             ]
         }
     },
-    "postCreateCommand": "uv sync && uv run pre-commit install"
+    "postCreateCommand": "uv sync && uv run pre-commit install",
+    "containerEnv": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONUNBUFFERED": "1"
+    }
 }
