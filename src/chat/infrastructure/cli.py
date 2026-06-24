@@ -42,10 +42,18 @@ def resolve_model_config(
     Example:
         model, temp, key, base = resolve_model_config(args, AppSettings())
     """
-    model_name = args.model if args.model is not None else settings.language_model_name
-    temperature = args.temperature if args.temperature is not None else settings.language_model_temperature
-    api_key = args.api_key if args.api_key is not None else settings.openai_api_key
-    api_base = args.api_base if args.api_base is not None else settings.openai_base_url
+    model_name = settings.language_model_name
+    if args.model is not None:
+        model_name = args.model
+    temperature = settings.language_model_temperature
+    if args.temperature is not None:
+        temperature = args.temperature
+    api_key = settings.openai_api_key
+    if args.api_key is not None:
+        api_key = args.api_key
+    api_base = settings.openai_base_url
+    if args.api_base is not None:
+        api_base = args.api_base
     return model_name, temperature, api_key, api_base
 
 
@@ -123,5 +131,5 @@ def main() -> None:
     extractor = create_response_content_extractor(api_base)
     if args.interactive:
         run_interactive(chat_model, extractor, args.system_prompt)
-    else:
-        run_non_interactive(args.message, chat_model, extractor, args.system_prompt)
+        return
+    run_non_interactive(args.message, chat_model, extractor, args.system_prompt)
