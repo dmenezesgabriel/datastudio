@@ -1,6 +1,8 @@
+from collections.abc import Mapping
+from typing import Protocol
+
 from langchain_core.language_models import BaseChatModel
-from langgraph.graph import END, START, StateGraph
-from langgraph.graph.state import CompiledStateGraph
+from langgraph.graph import END, START, StateGraph  # pyright: ignore[reportMissingTypeStubs]
 
 from chat.application.ports.sql_engine_port import SqlEnginePort
 from chat.domain.value_objects.chat_state import ChatState
@@ -9,12 +11,19 @@ from chat.infrastructure.nodes.format_response import FormatResponse
 from chat.infrastructure.nodes.generate_sql import GenerateSql
 from chat.infrastructure.nodes.get_schema import GetSchema
 from chat.infrastructure.nodes.list_tables import ListTables
+from chat.infrastructure.types import TypedChatGraph
+
+
+class _ChatNode(Protocol):
+    """Structural contract for a callable that accepts ChatState and returns a partial state dict."""
+
+    def __call__(self, state: ChatState) -> Mapping[str, object]: ...
 
 
 def build_text2sql_graph(
     chat_model: BaseChatModel,
     sql_engine: SqlEnginePort,
-) -> CompiledStateGraph:
+) -> TypedChatGraph:
     """Builds and compiles the text2sql LangGraph.
 
     Example:
@@ -29,7 +38,7 @@ def build_text2sql_graph(
 def _build_nodes(
     chat_model: BaseChatModel,
     sql_engine: SqlEnginePort,
-) -> dict[str, object]:
+) -> dict[str, _ChatNode]:
     return {
         "list_tables": ListTables(sql_engine),
         "get_schema": GetSchema(sql_engine),
@@ -39,14 +48,14 @@ def _build_nodes(
     }
 
 
-def _wire_graph(nodes: dict[str, object]) -> CompiledStateGraph:
-    builder: StateGraph = StateGraph(ChatState)
+def _wire_graph(nodes: dict[str, _ChatNode]) -> TypedChatGraph:
+    builder: StateGraph[ChatState, None, ChatState, ChatState] = StateGraph(ChatState)
     for name, node in nodes.items():
-        builder.add_node(name, node)  # type: ignore[arg-type]
+        builder.add_node(name, node)  # pyright: ignore[reportUnknownMemberType]
     builder.add_edge(START, "list_tables")
     builder.add_edge("list_tables", "get_schema")
     builder.add_edge("get_schema", "generate_sql")
     builder.add_edge("generate_sql", "execute_sql")
     builder.add_edge("execute_sql", "format_response")
     builder.add_edge("format_response", END)
-    return builder.compile()
+    return builder.compile()  # pyright: ignore[reportUnknownMemberType]

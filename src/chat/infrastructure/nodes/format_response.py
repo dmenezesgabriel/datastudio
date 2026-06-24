@@ -1,5 +1,9 @@
+from typing import cast
+
 from langchain_core.language_models import BaseChatModel
+from langchain_core.language_models.base import LanguageModelInput
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
 from chat.domain.value_objects.chat_state import ChatState
@@ -24,11 +28,17 @@ class FormatResponse:
     """
 
     def __init__(self, chat_model: BaseChatModel) -> None:
-        self._model = chat_model.with_structured_output(_AnswerOutput)
+        self._model: Runnable[LanguageModelInput, _AnswerOutput] = cast(
+            Runnable[LanguageModelInput, _AnswerOutput],
+            chat_model.with_structured_output(_AnswerOutput),
+        )
 
     def __call__(self, state: ChatState) -> dict[str, str]:
         table = state["query_result"].to_markdown_table()
         human_content = f"Question: {state['question']}\n\nResults:\n{table}"
-        messages = [SystemMessage(content=_SYSTEM_PROMPT), HumanMessage(content=human_content)]
-        result: _AnswerOutput = self._model.invoke(messages)  # type: ignore[assignment]
+        messages = [
+            SystemMessage(content=_SYSTEM_PROMPT),
+            HumanMessage(content=human_content),
+        ]
+        result: _AnswerOutput = self._model.invoke(messages)
         return {"response": result.answer}

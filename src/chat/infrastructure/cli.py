@@ -1,10 +1,11 @@
 import argparse
+from typing import cast
 
-from langgraph.graph.state import CompiledStateGraph
-
+from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.duckdb_sql_engine import DuckDbSqlEngine
 from chat.infrastructure.litellm_language_model import LiteLLMLanguageModel
 from chat.infrastructure.text2sql_graph import build_text2sql_graph
+from chat.infrastructure.types import TypedChatGraph
 from shared.infrastructure.settings import AppSettings
 
 
@@ -20,15 +21,49 @@ def build_arg_parser() -> argparse.ArgumentParser:
         description="Text2SQL: ask questions about your data in natural language.",
     )
     model_group = parser.add_argument_group("model overrides")
-    model_group.add_argument("--model", default=None, metavar="NAME", help="LiteLLM model name (default: from settings)")
-    model_group.add_argument("--temperature", type=float, default=None, metavar="FLOAT", help="Sampling temperature 0.0-1.0 (default: from settings)")
-    model_group.add_argument("--api-key", default=None, metavar="KEY", help="API key (default: from settings)")
-    model_group.add_argument("--api-base", default=None, metavar="URL", help="API base URL (default: from settings)")
+    model_group.add_argument(
+        "--model",
+        default=None,
+        metavar="NAME",
+        help="LiteLLM model name (default: from settings)",
+    )
+    model_group.add_argument(
+        "--temperature",
+        type=float,
+        default=None,
+        metavar="FLOAT",
+        help="Sampling temperature 0.0-1.0 (default: from settings)",
+    )
+    model_group.add_argument(
+        "--api-key",
+        default=None,
+        metavar="KEY",
+        help="API key (default: from settings)",
+    )
+    model_group.add_argument(
+        "--api-base",
+        default=None,
+        metavar="URL",
+        help="API base URL (default: from settings)",
+    )
     # kept for backwards-compatibility, no longer forwarded
-    parser.add_argument("--system-prompt", default=None, metavar="TEXT", help=argparse.SUPPRESS)
+    parser.add_argument(
+        "--system-prompt", default=None, metavar="TEXT", help=argparse.SUPPRESS
+    )
     mode_group = parser.add_mutually_exclusive_group(required=True)
-    mode_group.add_argument("--message", "-m", default=None, metavar="TEXT", help="Send a single message and exit")
-    mode_group.add_argument("--interactive", "-i", action="store_true", help="Start an interactive REPL loop")
+    mode_group.add_argument(
+        "--message",
+        "-m",
+        default=None,
+        metavar="TEXT",
+        help="Send a single message and exit",
+    )
+    mode_group.add_argument(
+        "--interactive",
+        "-i",
+        action="store_true",
+        help="Start an interactive REPL loop",
+    )
     return parser
 
 
@@ -56,17 +91,18 @@ def resolve_model_config(
     return model_name, temperature, api_key, api_base
 
 
-def invoke_graph(graph: CompiledStateGraph, message: str) -> str:
+def invoke_graph(graph: TypedChatGraph, message: str) -> str:
     """Invokes the compiled LangGraph with a user question and returns the response.
 
     Example:
         response = invoke_graph(graph, "How many trips were there?")
     """
-    result = graph.invoke({"question": message})
+    raw = graph.invoke(cast(ChatState, {"question": message}))  # pyright: ignore[reportUnknownMemberType]
+    result = cast(ChatState, raw)
     return result["response"]
 
 
-def run_non_interactive(message: str, graph: CompiledStateGraph) -> None:
+def run_non_interactive(message: str, graph: TypedChatGraph) -> None:
     """Sends a single message, prints the response, and returns.
 
     Example:
@@ -75,7 +111,7 @@ def run_non_interactive(message: str, graph: CompiledStateGraph) -> None:
     print(invoke_graph(graph, message))
 
 
-def run_interactive(graph: CompiledStateGraph) -> None:
+def run_interactive(graph: TypedChatGraph) -> None:
     """Runs a REPL loop until EOF or empty input.
 
     Example:
