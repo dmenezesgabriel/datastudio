@@ -20,11 +20,24 @@ markers = [
     "integration: hits real external APIs — run explicitly with -m integration",
 ]
 
+[tool.pyright]
+pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "strict"
+
+[tool.deptry]
+# DEP002: fastapi/langchain/litellm are runtime deps pulled transitively or via entrypoint
+# DEP003: langchain_core/pydantic are transitive deps imported directly — acceptable
+# DEP004: pytest/pytest_bdd in test files are dev deps used as intended
+ignore = ["DEP002", "DEP003", "DEP004"]
+
 [dependency-groups]
 dev = [
     "bandit==1.9.4",
     "deptry==0.25.1",
     "import-linter==2.11",
+    "pre-commit>=4.0.0",
     "pyright==1.1.410",
     "pytest==9.1.0",
     "pytest-bdd==8.1.0",
