@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from langchain_core.language_models import BaseChatModel
 
-from chat.infrastructure.litellm_language_model import LiteLLMLanguageModel
+from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
 
 
 class FakeChatLiteLLM(BaseChatModel):
@@ -23,7 +23,7 @@ class TestLiteLLMLanguageModel:
     def test_get_chat_model_returns_base_chat_model(self) -> None:
         # Arrange
         with patch(
-            "chat.infrastructure.litellm_language_model.ChatLiteLLM",
+            "chat.infrastructure.graph.litellm_language_model.ChatLiteLLM",
             FakeChatLiteLLM,
         ):
             sut = LiteLLMLanguageModel(model_name="gpt-4o")
@@ -37,7 +37,7 @@ class TestLiteLLMLanguageModel:
     def test_get_chat_model_forwards_model_name(self) -> None:
         # Arrange
         with patch(
-            "chat.infrastructure.litellm_language_model.ChatLiteLLM",
+            "chat.infrastructure.graph.litellm_language_model.ChatLiteLLM",
             FakeChatLiteLLM,
         ):
             sut = LiteLLMLanguageModel(model_name="anthropic/claude-3-5-sonnet")
@@ -51,7 +51,7 @@ class TestLiteLLMLanguageModel:
     def test_get_chat_model_forwards_temperature(self) -> None:
         # Arrange
         with patch(
-            "chat.infrastructure.litellm_language_model.ChatLiteLLM",
+            "chat.infrastructure.graph.litellm_language_model.ChatLiteLLM",
             FakeChatLiteLLM,
         ):
             sut = LiteLLMLanguageModel(model_name="gpt-4o", temperature=0.7)
@@ -65,7 +65,7 @@ class TestLiteLLMLanguageModel:
     def test_get_chat_model_returns_distinct_instances(self) -> None:
         # Arrange
         with patch(
-            "chat.infrastructure.litellm_language_model.ChatLiteLLM",
+            "chat.infrastructure.graph.litellm_language_model.ChatLiteLLM",
             FakeChatLiteLLM,
         ):
             sut = LiteLLMLanguageModel(model_name="gpt-4o")
@@ -80,7 +80,7 @@ class TestLiteLLMLanguageModel:
     def test_get_chat_model_forwards_api_key(self) -> None:
         # Arrange
         with patch(
-            "chat.infrastructure.litellm_language_model.ChatLiteLLM",
+            "chat.infrastructure.graph.litellm_language_model.ChatLiteLLM",
             FakeChatLiteLLM,
         ):
             sut = LiteLLMLanguageModel(model_name="gpt-4o", api_key="sk-test-key")
@@ -94,7 +94,7 @@ class TestLiteLLMLanguageModel:
     def test_get_chat_model_forwards_api_base(self) -> None:
         # Arrange
         with patch(
-            "chat.infrastructure.litellm_language_model.ChatLiteLLM",
+            "chat.infrastructure.graph.litellm_language_model.ChatLiteLLM",
             FakeChatLiteLLM,
         ):
             sut = LiteLLMLanguageModel(

@@ -1,8 +1,8 @@
 from langchain_core.messages import SystemMessage
 
 from chat.domain.value_objects.chat_state import ChatState
-from chat.infrastructure.nodes.generate_sql import GenerateSql
-from test.unit.chat.infrastructure.nodes.fake_structured_chat_model import (
+from chat.infrastructure.graph.nodes.generate_sql import GenerateSql
+from test.unit.chat.infrastructure.graph.nodes.fake_structured_chat_model import (
     FakeStructuredChatModel,
 )
 

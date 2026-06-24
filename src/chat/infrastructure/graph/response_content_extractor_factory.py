@@ -1,6 +1,8 @@
-from chat.infrastructure.plain_text_extractor import PlainTextExtractor
-from chat.infrastructure.response_content_extractor import ResponseContentExtractor
-from chat.infrastructure.thinking_blocks_extractor import ThinkingBlocksExtractor
+from chat.infrastructure.graph.plain_text_extractor import PlainTextExtractor
+from chat.infrastructure.graph.response_content_extractor import (
+    ResponseContentExtractor,
+)
+from chat.infrastructure.graph.thinking_blocks_extractor import ThinkingBlocksExtractor
 
 _THINKING_BLOCK_PROVIDERS = ("opencode.ai",)
 

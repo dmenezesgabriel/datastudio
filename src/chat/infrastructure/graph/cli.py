@@ -2,10 +2,10 @@ import argparse
 from typing import cast
 
 from chat.domain.value_objects.chat_state import ChatState
-from chat.infrastructure.duckdb_sql_engine import DuckDbSqlEngine
-from chat.infrastructure.litellm_language_model import LiteLLMLanguageModel
-from chat.infrastructure.text2sql_graph import build_text2sql_graph
-from chat.infrastructure.types import TypedChatGraph
+from chat.infrastructure.graph.duckdb_sql_engine import DuckDbSqlEngine
+from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
+from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
+from chat.infrastructure.graph.types import TypedChatGraph
 from shared.infrastructure.settings import AppSettings
 
 

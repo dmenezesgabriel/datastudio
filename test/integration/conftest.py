@@ -1,7 +1,9 @@
 import pytest
 
-from chat.infrastructure.response_content_extractor import ResponseContentExtractor
-from chat.infrastructure.response_content_extractor_factory import (
+from chat.infrastructure.graph.response_content_extractor import (
+    ResponseContentExtractor,
+)
+from chat.infrastructure.graph.response_content_extractor_factory import (
     create_response_content_extractor,
 )
 from shared.infrastructure.settings import AppSettings

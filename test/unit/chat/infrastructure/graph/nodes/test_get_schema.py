@@ -1,5 +1,5 @@
-from chat.infrastructure.nodes.get_schema import GetSchema
-from test.unit.chat.infrastructure.nodes.fake_sql_engine import FakeSqlEngine
+from chat.infrastructure.graph.nodes.get_schema import GetSchema
+from test.unit.chat.infrastructure.graph.nodes.fake_sql_engine import FakeSqlEngine
 
 
 class TestGetSchema:

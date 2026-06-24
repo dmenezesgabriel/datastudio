@@ -3,10 +3,10 @@ import re
 import pytest
 from pytest_bdd import given, scenario, then, when
 
-from chat.infrastructure.duckdb_sql_engine import DuckDbSqlEngine
-from chat.infrastructure.litellm_language_model import LiteLLMLanguageModel
-from chat.infrastructure.text2sql_graph import build_text2sql_graph
-from chat.infrastructure.types import TypedChatGraph
+from chat.infrastructure.graph.duckdb_sql_engine import DuckDbSqlEngine
+from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
+from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
+from chat.infrastructure.graph.types import TypedChatGraph
 from shared.infrastructure.settings import AppSettings
 
 
@@ -35,7 +35,7 @@ def text2sql_graph_fixture(
         api_key=app_settings.openai_api_key,
         api_base=app_settings.openai_base_url,
     )
-    return build_text2sql_graph(language_model, sql_engine)
+    return build_text2sql_graph(language_model.get_chat_model(), sql_engine)
 
 
 @when('I ask "How many taxi trips are in the dataset?"', target_fixture="answer")

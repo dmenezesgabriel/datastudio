@@ -6,12 +6,12 @@ from langgraph.graph import END, START, StateGraph  # pyright: ignore[reportMiss
 
 from chat.application.ports.sql_engine_port import SqlEnginePort
 from chat.domain.value_objects.chat_state import ChatState
-from chat.infrastructure.nodes.execute_sql import ExecuteSql
-from chat.infrastructure.nodes.format_response import FormatResponse
-from chat.infrastructure.nodes.generate_sql import GenerateSql
-from chat.infrastructure.nodes.get_schema import GetSchema
-from chat.infrastructure.nodes.list_tables import ListTables
-from chat.infrastructure.types import TypedChatGraph
+from chat.infrastructure.graph.nodes.execute_sql import ExecuteSql
+from chat.infrastructure.graph.nodes.format_response import FormatResponse
+from chat.infrastructure.graph.nodes.generate_sql import GenerateSql
+from chat.infrastructure.graph.nodes.get_schema import GetSchema
+from chat.infrastructure.graph.nodes.list_tables import ListTables
+from chat.infrastructure.graph.types import TypedChatGraph
 
 
 class _ChatNode(Protocol):

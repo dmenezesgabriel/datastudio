@@ -2,8 +2,10 @@ import pytest
 from langchain_core.messages import HumanMessage
 from pytest_bdd import given, scenario, then, when
 
-from chat.infrastructure.litellm_language_model import LiteLLMLanguageModel
-from chat.infrastructure.response_content_extractor import ResponseContentExtractor
+from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
+from chat.infrastructure.graph.response_content_extractor import (
+    ResponseContentExtractor,
+)
 from shared.infrastructure.settings import AppSettings
 
 
