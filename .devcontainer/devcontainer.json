@@ -1,0 +1,79 @@
+{
+    "name": "Datastudio Python Devcontainer",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "..",
+        "args": {
+            "BASE_IMAGE": "python:3.12-slim",
+            "UV_IMAGE": "ghcr.io/astral-sh/uv:latest",
+            "NODE_IMAGE": "node:22-slim",
+            "PIP_INDEX_URL": "https://pypi.org/simple",
+            "PIP_TRUSTED_HOST": "pypi.org",
+            "UV_INDEX_URL": "https://pypi.org/simple",
+            "UV_TRUSTED_HOST": "pypi.org",
+            "UV_SYSTEM_CERTS": "1",
+            "NODE_TLS_REJECT_UNAUTHORIZED": "1",
+            "DEBIAN_REPO": "",
+            "HTTP_PROXY": "${localEnv:HTTP_PROXY}",
+            "http_proxy": "${localEnv:http_proxy}",
+            "HTTPS_PROXY": "${localEnv:HTTPS_PROXY}",
+            "https_proxy": "${localEnv:https_proxy}",
+            "NO_PROXY": "${localEnv:NO_PROXY}",
+            "no_proxy": "${localEnv:no_proxy}"
+        }
+    },
+    "remoteUser": "vscode",
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": ".venv/bin/python",
+                "python.testing.pytestEnabled": true,
+                "python.testing.unittestEnabled": false,
+                "python.testing.pytestArgs": [
+                    "test"
+                ],
+                "editor.formatOnSave": true,
+                "terminal.integrated.defaultProfile.linux": "zsh",
+                "terminal.integrated.profiles.linux": {
+                    "zsh": {
+                        "path": "/usr/bin/zsh"
+                    }
+                },
+                "workbench.colorTheme": "Catppuccin Macchiato",
+                "workbench.iconTheme": "catppuccin-macchiato",
+                "cSpell.language": "en,pt,pt-BR",
+                "trailing-spaces.trimOnSave": true,
+                "trailing-spaces.highlightCurrentLine": false,
+                "[python]": {
+                    "editor.defaultFormatter": "charliermarsh.ruff",
+                    "editor.codeActionsOnSave": {
+                        "source.fixAll": "explicit",
+                        "source.organizeImports": "explicit"
+                    }
+                },
+                "[toml]": {
+                    "editor.defaultFormatter": "tamasfe.even-better-toml"
+                },
+                "cucumber.glue": [
+                    "test/**/*.py"
+                ]
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-python.debugpy",
+                "ms-python.vscode-python-envs",
+                "charliermarsh.ruff",
+                "tamasfe.even-better-toml",
+                "shardulm94.trailing-spaces",
+                "Catppuccin.catppuccin-vsc",
+                "Catppuccin.catppuccin-vsc-icons",
+                "CucumberOpen.cucumber-official",
+                "bierner.markdown-mermaid",
+                "streetsidesoftware.code-spell-checker",
+                "streetsidesoftware.code-spell-checker-portuguese-brazilian",
+                "Anthropic.claude-code"
+            ]
+        }
+    },
+    "postCreateCommand": "uv sync && uv run pre-commit install"
+}
