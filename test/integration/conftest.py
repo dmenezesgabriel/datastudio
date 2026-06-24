@@ -6,7 +6,7 @@ from chat.infrastructure.graph.response_content_extractor import (
 from chat.infrastructure.graph.response_content_extractor_factory import (
     create_response_content_extractor,
 )
-from shared.infrastructure.settings import AppSettings
+from shared.infrastructure.config.settings import AppSettings
 
 
 @pytest.fixture(scope="session")

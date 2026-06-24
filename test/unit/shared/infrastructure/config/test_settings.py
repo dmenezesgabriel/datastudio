@@ -1,6 +1,6 @@
 import pytest
 
-from shared.infrastructure.settings import AppSettings
+from shared.infrastructure.config.settings import AppSettings
 
 
 class TestAppSettings:

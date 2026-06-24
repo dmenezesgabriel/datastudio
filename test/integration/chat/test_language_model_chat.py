@@ -6,7 +6,7 @@ from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageMode
 from chat.infrastructure.graph.response_content_extractor import (
     ResponseContentExtractor,
 )
-from shared.infrastructure.settings import AppSettings
+from shared.infrastructure.config.settings import AppSettings
 
 
 @pytest.mark.integration
