@@ -81,7 +81,7 @@
             ]
         }
     },
-    "postCreateCommand": "uv sync && uv run pre-commit install && bash .devcontainer/setup-claude.sh",
+    "postCreateCommand": "bash .devcontainer/post-create.sh",
     "containerEnv": {
         "PYTHONDONTWRITEBYTECODE": "1",
         "PYTHONUNBUFFERED": "1"
