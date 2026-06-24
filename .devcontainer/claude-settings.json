@@ -1,7 +1,0 @@
-{
-  "theme": "dark",
-  "statusLine": {
-    "type": "command",
-    "command": "bash /home/vscode/.claude/statusline-command.sh"
-  }
-}

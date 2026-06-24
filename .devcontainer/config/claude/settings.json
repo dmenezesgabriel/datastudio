@@ -1,0 +1,16 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "permissions": {
+    "defaultMode": "auto"
+  },
+  "model": "sonnet",
+  "statusLine": {
+    "type": "command",
+    "command": "jq -r 'now as $n | .rate_limits.five_hour // {} as $fh | ($fh.resets_at // 0) as $r | ($r - $n | if . < 0 then 0 else . end) as $diff | ($diff / 3600 | floor) as $h | (($diff % 3600) / 60 | floor) as $m | ($diff % 60 | floor) as $s | \"[\\(.model.display_name)] Context: \\(.context_window.used_percentage // 0 | floor)% | Usage: \\($fh.used_percentage // 0 | floor)% | Reset: \\($h)h \\($m)m \\($s)s\"'"
+  },
+  "theme": "dark",
+  "skipAutoPermissionPrompt": true
+}
