@@ -1,12 +1,12 @@
 import re
 
 import pytest
-from langgraph.graph.state import CompiledStateGraph
 from pytest_bdd import given, scenario, then, when
 
 from chat.infrastructure.duckdb_sql_engine import DuckDbSqlEngine
 from chat.infrastructure.litellm_language_model import LiteLLMLanguageModel
 from chat.infrastructure.text2sql_graph import build_text2sql_graph
+from chat.infrastructure.types import TypedChatGraph
 from shared.infrastructure.settings import AppSettings
 
 
@@ -21,11 +21,14 @@ def sql_engine_fixture(app_settings: AppSettings) -> DuckDbSqlEngine:
     return DuckDbSqlEngine(app_settings.duckdb_path)
 
 
-@given("a text2sql graph configured with OpenCode Go settings", target_fixture="text2sql_graph")
+@given(
+    "a text2sql graph configured with OpenCode Go settings",
+    target_fixture="text2sql_graph",
+)
 def text2sql_graph_fixture(
     app_settings: AppSettings,
     sql_engine: DuckDbSqlEngine,
-) -> CompiledStateGraph:
+) -> TypedChatGraph:
     language_model = LiteLLMLanguageModel(
         model_name=app_settings.language_model_name,
         temperature=app_settings.language_model_temperature,
@@ -36,8 +39,10 @@ def text2sql_graph_fixture(
 
 
 @when('I ask "How many taxi trips are in the dataset?"', target_fixture="answer")
-def ask_question(text2sql_graph: CompiledStateGraph) -> str:
-    result = text2sql_graph.invoke({"question": "How many taxi trips are in the dataset?"})
+def ask_question(text2sql_graph: TypedChatGraph) -> str:
+    result = text2sql_graph.invoke(
+        {"question": "How many taxi trips are in the dataset?"}
+    )
     return result["response"]
 
 

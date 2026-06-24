@@ -40,10 +40,14 @@ class FakeStructuredChatModel(BaseChatModel):
     def last_runnable(self) -> _FakeStructuredRunnable:
         return self._last_runnable
 
-    def with_structured_output(self, schema: Any, **kwargs: Any) -> _FakeStructuredRunnable:
+    def with_structured_output(
+        self, schema: Any, **kwargs: Any
+    ) -> _FakeStructuredRunnable:
         return self._last_runnable
 
-    def _generate(self, messages: Any, stop: Any = None, run_manager: Any = None, **kwargs: Any) -> ChatResult:
+    def _generate(
+        self, messages: Any, stop: Any = None, run_manager: Any = None, **kwargs: Any
+    ) -> ChatResult:
         return ChatResult(generations=[ChatGeneration(message=AIMessage(content=""))])
 
     @property

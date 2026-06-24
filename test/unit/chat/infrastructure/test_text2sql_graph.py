@@ -1,12 +1,29 @@
-from langgraph.graph.state import CompiledStateGraph
+from langgraph.graph.state import CompiledStateGraph  # pyright: ignore[reportMissingTypeStubs]
 
 from chat.domain.value_objects.query_result import QueryResult
 from chat.infrastructure.text2sql_graph import build_text2sql_graph
+from chat.infrastructure.types import TypedChatGraph
 from test.unit.chat.infrastructure.nodes.fake_sql_engine import FakeSqlEngine
-from test.unit.chat.infrastructure.nodes.fake_structured_chat_model import FakeStructuredChatModel
+from test.unit.chat.infrastructure.nodes.fake_structured_chat_model import (
+    FakeStructuredChatModel,
+)
+
+_EXPECTED_NODES = frozenset(
+    {"list_tables", "get_schema", "generate_sql", "execute_sql", "format_response"}
+)
+_EXPECTED_EDGES = frozenset(
+    {
+        ("__start__", "list_tables"),
+        ("list_tables", "get_schema"),
+        ("get_schema", "generate_sql"),
+        ("generate_sql", "execute_sql"),
+        ("execute_sql", "format_response"),
+        ("format_response", "__end__"),
+    }
+)
 
 
-def _make_graph() -> CompiledStateGraph:
+def _make_graph() -> TypedChatGraph:
     chat_model = FakeStructuredChatModel(sql="SELECT 1", answer="One row.")
     sql_engine = FakeSqlEngine(
         tables=["orders"],
@@ -18,12 +35,41 @@ def _make_graph() -> CompiledStateGraph:
 
 class TestBuildText2SqlGraph:
     def test_returns_compiled_state_graph(self) -> None:
-        assert isinstance(_make_graph(), CompiledStateGraph)
+        # arrange / act
+        graph = _make_graph()
+        # assert
+        assert isinstance(graph, CompiledStateGraph)
 
     def test_invoke_returns_response_key(self) -> None:
-        result = _make_graph().invoke({"question": "How many?"})
+        # arrange
+        graph = _make_graph()
+        # act
+        result = graph.invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
+        # assert
         assert result["response"] == "One row."
 
     def test_invoke_propagates_tables_through_state(self) -> None:
-        result = _make_graph().invoke({"question": "q"})
+        # arrange
+        graph = _make_graph()
+        # act
+        result = graph.invoke({"question": "q"})  # pyright: ignore[reportUnknownMemberType]
+        # assert
         assert result["tables"] == ["orders"]
+
+
+class TestGraphTopology:
+    """Verifies that all expected nodes are wired and reachable in the compiled graph."""
+
+    def test_all_five_nodes_are_registered(self) -> None:
+        # arrange / act
+        graph = _make_graph()
+        # assert — builder.nodes holds the spec dict keyed by node name
+        registered = frozenset(graph.builder.nodes.keys())
+        assert registered == _EXPECTED_NODES
+
+    def test_graph_edges_contain_all_expected_connections(self) -> None:
+        # arrange / act
+        graph = _make_graph()
+        # assert — builder.edges order is not guaranteed; compare as a set of pairs
+        edges = frozenset((src, dst) for src, dst in graph.builder.edges)
+        assert edges == _EXPECTED_EDGES

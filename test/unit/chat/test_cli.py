@@ -1,9 +1,10 @@
 import argparse
 from dataclasses import dataclass
-from typing import Any
+from typing import cast
 
 import pytest
 
+from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.cli import (
     build_arg_parser,
     invoke_graph,
@@ -22,15 +23,19 @@ class FakeSettings:
 
 
 class FakeGraph:
-    """Minimal graph stub — captures invocations and returns a canned response."""
+    """Minimal graph fake that satisfies the _Graph structural interface.
+
+    Returns a canned response and records the last invocation input for
+    assertion in tests.
+    """
 
     def __init__(self, response: str = "fake answer") -> None:
         self._response = response
-        self.last_input: dict[str, Any] | None = None
+        self.last_input: ChatState | None = None
 
-    def invoke(self, input: dict[str, Any]) -> dict[str, Any]:
+    def invoke(self, input: ChatState) -> ChatState:  # noqa: A002
         self.last_input = input
-        return {"response": self._response}
+        return cast(ChatState, {"response": self._response})
 
 
 class TestBuildArgParser:
@@ -89,62 +94,97 @@ class TestResolveModelConfig:
 
     def test_settings_used_when_all_args_are_none(self) -> None:
         result = resolve_model_config(self._make_namespace(), FakeSettings())  # type: ignore[arg-type]
-        assert result == ("settings/model", 0.5, "settings-key", "https://settings.base")
+        assert result == (
+            "settings/model",
+            0.5,
+            "settings-key",
+            "https://settings.base",
+        )
 
     def test_model_arg_overrides_settings(self) -> None:
-        name, *_ = resolve_model_config(self._make_namespace(model="override/model"), FakeSettings())  # type: ignore[arg-type]
+        name, *_ = resolve_model_config(
+            self._make_namespace(model="override/model"), FakeSettings()
+        )  # type: ignore[arg-type]
         assert name == "override/model"
 
     def test_temperature_arg_overrides_settings(self) -> None:
-        _, temp, *_ = resolve_model_config(self._make_namespace(temperature=0.9), FakeSettings())  # type: ignore[arg-type]
+        _, temp, *_ = resolve_model_config(
+            self._make_namespace(temperature=0.9), FakeSettings()
+        )  # type: ignore[arg-type]
         assert temp == 0.9
 
     def test_api_key_arg_overrides_settings(self) -> None:
-        _, _, key, _ = resolve_model_config(self._make_namespace(api_key="cli-key"), FakeSettings())  # type: ignore[arg-type]
+        _, _, key, _ = resolve_model_config(
+            self._make_namespace(api_key="cli-key"), FakeSettings()
+        )  # type: ignore[arg-type]
         assert key == "cli-key"
 
     def test_api_base_arg_overrides_settings(self) -> None:
-        _, _, _, base = resolve_model_config(self._make_namespace(api_base="https://cli.base"), FakeSettings())  # type: ignore[arg-type]
+        _, _, _, base = resolve_model_config(
+            self._make_namespace(api_base="https://cli.base"), FakeSettings()
+        )  # type: ignore[arg-type]
         assert base == "https://cli.base"
 
     def test_all_args_override_settings(self) -> None:
-        args = self._make_namespace(model="cli/model", temperature=0.1, api_key="cli-key", api_base="https://cli.base")
+        args = self._make_namespace(
+            model="cli/model",
+            temperature=0.1,
+            api_key="cli-key",
+            api_base="https://cli.base",
+        )
         result = resolve_model_config(args, FakeSettings())  # type: ignore[arg-type]
         assert result == ("cli/model", 0.1, "cli-key", "https://cli.base")
 
 
 class TestInvokeGraph:
     def test_returns_response_from_graph(self) -> None:
+        # arrange
         graph = FakeGraph(response="hello there")
-        result = invoke_graph(graph, "hi")  # type: ignore[arg-type]
+        # act
+        result = invoke_graph(graph, "hi")  # pyright: ignore[reportArgumentType]
+        # assert
         assert result == "hello there"
 
     def test_passes_message_as_question(self) -> None:
+        # arrange
         graph = FakeGraph()
-        invoke_graph(graph, "what is 2+2?")  # type: ignore[arg-type]
-        assert graph.last_input == {"question": "what is 2+2?"}
+        # act
+        invoke_graph(graph, "what is 2+2?")  # pyright: ignore[reportArgumentType]
+        # assert
+        assert graph.last_input == cast(ChatState, {"question": "what is 2+2?"})
 
 
 class TestRunNonInteractive:
-    def test_prints_response_to_stdout(self, capsys: pytest.CaptureFixture[str]) -> None:
-        run_non_interactive("hi", FakeGraph(response="the answer"))  # type: ignore[arg-type]
+    def test_prints_response_to_stdout(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        # arrange / act
+        run_non_interactive("hi", FakeGraph(response="the answer"))  # pyright: ignore[reportArgumentType]
+        # assert
         assert capsys.readouterr().out == "the answer\n"
 
 
 class TestRunInteractive:
     def test_exits_on_eof(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr("builtins.input", lambda _: (_ for _ in ()).throw(EOFError()))
-        run_interactive(FakeGraph())  # type: ignore[arg-type]
+        # arrange
+        monkeypatch.setattr(
+            "builtins.input", lambda _: (_ for _ in ()).throw(EOFError())
+        )
+        # act / assert (no exception raised)
+        run_interactive(FakeGraph())  # pyright: ignore[reportArgumentType]
 
     def test_exits_on_empty_line(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # arrange
         monkeypatch.setattr("builtins.input", lambda _: "")
-        run_interactive(FakeGraph())  # type: ignore[arg-type]
+        # act / assert (no exception raised)
+        run_interactive(FakeGraph())  # pyright: ignore[reportArgumentType]
 
     def test_prints_response_for_each_message(
         self,
         monkeypatch: pytest.MonkeyPatch,
         capsys: pytest.CaptureFixture[str],
     ) -> None:
+        # arrange
         responses = iter(["hello", EOFError()])
 
         def fake_input(_: str) -> str:
@@ -154,5 +194,7 @@ class TestRunInteractive:
             return value  # type: ignore[return-value]
 
         monkeypatch.setattr("builtins.input", fake_input)
-        run_interactive(FakeGraph(response="world"))  # type: ignore[arg-type]
+        # act
+        run_interactive(FakeGraph(response="world"))  # pyright: ignore[reportArgumentType]
+        # assert
         assert capsys.readouterr().out == "world\n"
