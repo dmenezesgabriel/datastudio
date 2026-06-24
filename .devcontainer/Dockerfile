@@ -2,8 +2,8 @@ ARG UV_IMAGE=ghcr.io/astral-sh/uv:latest
 ARG NODE_IMAGE=node:22-slim
 ARG BASE_IMAGE=python:3.12-slim
 
-FROM ${UV_IMAGE} as uv_source
-FROM ${NODE_IMAGE} as node_source
+FROM ${UV_IMAGE} AS uv_source
+FROM ${NODE_IMAGE} AS node_source
 FROM ${BASE_IMAGE}
 
 ARG HTTP_PROXY
@@ -73,7 +73,7 @@ RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && ln -s /usr/local/lib/node_modules/corepack/dist/corepack.js /usr/local/bin/corepack
 
 # Install global npm packages
-RUN npm install -g playwright-cli
+RUN npm install -g @playwright/cli
 
 # Install uv package manager
 COPY --from=uv_source /uv /uvx /bin/
