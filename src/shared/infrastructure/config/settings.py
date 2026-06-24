@@ -1,4 +1,16 @@
+import logging
+from typing import Annotated
+
+from pydantic import AfterValidator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _normalise_log_level(value: str) -> str:
+    normalised = value.upper()
+    if normalised not in logging.getLevelNamesMapping():
+        valid = list(logging.getLevelNamesMapping())
+        raise ValueError(f"Invalid log_level {value!r}; expected one of {valid}")
+    return normalised
 
 
 class AppSettings(BaseSettings):
@@ -16,3 +28,4 @@ class AppSettings(BaseSettings):
     language_model_name: str = "openai/glm-5"
     language_model_temperature: float = 0.0
     duckdb_path: str = "./dev_data/datastudio.duckdb"
+    log_level: Annotated[str, AfterValidator(_normalise_log_level)] = "INFO"
