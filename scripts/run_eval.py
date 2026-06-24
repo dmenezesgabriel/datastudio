@@ -31,9 +31,9 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--output",
-        default="eval_report.json",
+        default="reports/eval_report.json",
         metavar="PATH",
-        help="Path to write the JSON report (default: eval_report.json)",
+        help="Path to write the JSON report (default: reports/eval_report.json)",
     )
     parser.add_argument(
         "--judge-model",
@@ -109,6 +109,7 @@ def main() -> None:
     report = runner.run(cases)
 
     output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(asdict(report), indent=2))
 
     _print_summary(report)
