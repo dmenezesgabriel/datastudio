@@ -74,6 +74,7 @@ RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 
 # Install global npm packages
 RUN npm install -g @playwright/cli
+RUN playwright-cli install
 
 # Install uv package manager
 COPY --from=uv_source /uv /uvx /bin/
@@ -97,5 +98,6 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
     && git clone https://github.com/zsh-users/zsh-syntax-highlighting ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting \
     && sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' ~/.zshrc
 
-# Install playwright-cli skills
-RUN playwright-cli install --skills
+# Install skills
+RUN npx skills add microsoft/playwright-cli --skill '*' -a claude-code -y
+RUN npx skills add vercel-labs/agent-skills --skill frontend-design -a claude-code -y
