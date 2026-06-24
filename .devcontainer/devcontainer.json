@@ -39,6 +39,7 @@
                         "path": "/usr/bin/zsh"
                     }
                 },
+                "terminal.integrated.gpuAcceleration": "off",
                 "workbench.colorTheme": "Catppuccin Macchiato",
                 "workbench.iconTheme": "catppuccin-macchiato",
                 "cSpell.language": "en,pt,pt-BR",
@@ -64,6 +65,10 @@
                 "ms-python.vscode-python-envs",
                 "charliermarsh.ruff",
                 "tamasfe.even-better-toml",
+                "redhat.vscode-yaml",
+                "esbenp.prettier-vscode",
+                "naumovs.color-highlight",
+                "mikestead.dotenv",
                 "shardulm94.trailing-spaces",
                 "Catppuccin.catppuccin-vsc",
                 "Catppuccin.catppuccin-vsc-icons",
@@ -71,7 +76,8 @@
                 "bierner.markdown-mermaid",
                 "streetsidesoftware.code-spell-checker",
                 "streetsidesoftware.code-spell-checker-portuguese-brazilian",
-                "Anthropic.claude-code"
+                "Anthropic.claude-code",
+                "hashicorp.terraform"
             ]
         }
     },
