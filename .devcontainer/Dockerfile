@@ -100,6 +100,4 @@ RUN curl -fsSL https://claude.ai/install.sh | bash \
     && curl -fsSL https://opencode.ai/install | bash \
     && curl -fsSL https://pi.dev/install.sh | sh
 
-# Install skills
-RUN npx skills add microsoft/playwright-cli --skill '*' -a claude-code -y
-RUN npx skills add anthropics/skills --skill frontend-design -a claude-code -y
+COPY --chown=${USERNAME}:${USER_GID} .devcontainer/config/claude/settings.json /home/${USERNAME}/.claude/settings.json
