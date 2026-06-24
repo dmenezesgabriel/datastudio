@@ -49,7 +49,9 @@ def _download_file(url: str, dest: Path) -> None:
     print(f"done ({dest.stat().st_size // 1024} KB)")
 
 
-def _load_into_duckdb(conn: duckdb.DuckDBPyConnection, name: str, path: Path, fmt: str) -> None:
+def _load_into_duckdb(
+    conn: duckdb.DuckDBPyConnection, name: str, path: Path, fmt: str
+) -> None:
     source = _LOAD_SQL[fmt].format(path=path)
     conn.execute(f"CREATE OR REPLACE TABLE {name} AS {source}")
     count = conn.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0]  # type: ignore[index]

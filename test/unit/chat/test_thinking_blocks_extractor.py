@@ -6,10 +6,12 @@ from chat.infrastructure.thinking_blocks_extractor import ThinkingBlocksExtracto
 class TestThinkingBlocksExtractor:
     def test_extract_returns_text_block_content(self) -> None:
         # Arrange
-        message = AIMessage(content=[
-            {"type": "thinking", "thinking": "Let me think..."},
-            {"type": "text", "text": "Hello"},
-        ])
+        message = AIMessage(
+            content=[
+                {"type": "thinking", "thinking": "Let me think..."},
+                {"type": "text", "text": "Hello"},
+            ]
+        )
 
         # Act
         result = ThinkingBlocksExtractor().extract(message)
@@ -19,10 +21,12 @@ class TestThinkingBlocksExtractor:
 
     def test_extract_joins_multiple_text_blocks(self) -> None:
         # Arrange
-        message = AIMessage(content=[
-            {"type": "text", "text": "Hello"},
-            {"type": "text", "text": "World"},
-        ])
+        message = AIMessage(
+            content=[
+                {"type": "text", "text": "Hello"},
+                {"type": "text", "text": "World"},
+            ]
+        )
 
         # Act
         result = ThinkingBlocksExtractor().extract(message)

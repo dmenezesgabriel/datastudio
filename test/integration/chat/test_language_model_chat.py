@@ -8,12 +8,16 @@ from shared.infrastructure.settings import AppSettings
 
 
 @pytest.mark.integration
-@scenario("language_model_chat.feature", "Chat model returns a response to a simple prompt")
+@scenario(
+    "language_model_chat.feature", "Chat model returns a response to a simple prompt"
+)
 def test_chat_model_returns_response() -> None:
     pass
 
 
-@given("a language model configured with OpenCode Go settings", target_fixture="chat_model")
+@given(
+    "a language model configured with OpenCode Go settings", target_fixture="chat_model"
+)
 def chat_model_fixture(app_settings: AppSettings):
     model = LiteLLMLanguageModel(
         model_name=app_settings.language_model_name,

@@ -14,6 +14,8 @@ class ThinkingBlocksExtractor:
     def extract(self, message: BaseMessage) -> str:
         content = message.content
         if isinstance(content, list):
-            texts = [b["text"] for b in content if isinstance(b, dict) and b.get("text")]
+            texts = [
+                b["text"] for b in content if isinstance(b, dict) and b.get("text")
+            ]
             return " ".join(texts)
         return str(content)

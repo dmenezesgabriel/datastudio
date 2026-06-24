@@ -36,7 +36,9 @@ class TestDuckDbSqlEngine:
         assert result.columns == ["id", "label"]
 
     def test_execute_query_returns_correct_rows(self, db_path: str) -> None:
-        result = DuckDbSqlEngine(db_path).execute_query("SELECT id FROM items ORDER BY id")
+        result = DuckDbSqlEngine(db_path).execute_query(
+            "SELECT id FROM items ORDER BY id"
+        )
         assert result.rows == [(1,), (2,)]
 
     def test_execute_query_row_count_matches(self, db_path: str) -> None:
