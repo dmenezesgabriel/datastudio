@@ -5,7 +5,9 @@ Following Python's `TypedDict` naming convention, aliases defined here use the
 types used by this component.
 """
 
-from langgraph.graph.state import CompiledStateGraph  # pyright: ignore[reportMissingTypeStubs]
+from langgraph.graph.state import (  # pyright: ignore[reportMissingTypeStubs]
+    CompiledStateGraph,
+)
 
 from chat.domain.value_objects.chat_state import ChatState
 

@@ -14,7 +14,7 @@ from chat.infrastructure.graph.nodes.list_tables import ListTables
 from chat.infrastructure.graph.types import TypedChatGraph
 
 
-class _ChatNode(Protocol):
+class ChatNode(Protocol):
     """Structural contract for a callable that accepts ChatState and returns a partial state dict."""
 
     def __call__(self, state: ChatState) -> Mapping[str, object]: ...
@@ -32,13 +32,13 @@ def build_text2sql_graph(
         print(result["response"])
     """
     nodes = _build_nodes(chat_model, sql_engine)
-    return _wire_graph(nodes)
+    return wire_text2sql_graph(nodes)
 
 
 def _build_nodes(
     chat_model: BaseChatModel,
     sql_engine: SqlEnginePort,
-) -> dict[str, _ChatNode]:
+) -> dict[str, ChatNode]:
     return {
         "list_tables": ListTables(sql_engine),
         "get_schema": GetSchema(sql_engine),
@@ -48,7 +48,12 @@ def _build_nodes(
     }
 
 
-def _wire_graph(nodes: dict[str, _ChatNode]) -> TypedChatGraph:
+def wire_text2sql_graph(nodes: dict[str, ChatNode]) -> TypedChatGraph:
+    """Wires a set of named ChatNode callables into a compiled LangGraph.
+
+    Example:
+        graph = wire_text2sql_graph({"list_tables": ListTables(engine), ...})
+    """
     builder: StateGraph[ChatState, None, ChatState, ChatState] = StateGraph(ChatState)
     for name, node in nodes.items():
         builder.add_node(name, node)  # pyright: ignore[reportUnknownMemberType]
