@@ -4,7 +4,7 @@ from typing import Protocol
 from langchain_core.language_models import BaseChatModel
 from langgraph.graph import END, START, StateGraph  # pyright: ignore[reportMissingTypeStubs]
 
-from chat.application.ports.sql_engine_port import SqlEnginePort
+from shared.application.ports.sql_engine_port import SqlEnginePort
 from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.graph.nodes.execute_sql import ExecuteSql
 from chat.infrastructure.graph.nodes.format_response import FormatResponse

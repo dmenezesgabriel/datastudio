@@ -1,7 +1,7 @@
 import pytest
 import duckdb
 
-from chat.infrastructure.graph.duckdb_sql_engine import DuckDbSqlEngine
+from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
 
 
 @pytest.fixture()

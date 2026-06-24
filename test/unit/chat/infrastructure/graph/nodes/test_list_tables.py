@@ -1,5 +1,5 @@
 from chat.infrastructure.graph.nodes.list_tables import ListTables
-from test.unit.chat.infrastructure.graph.nodes.fake_sql_engine import FakeSqlEngine
+from test.unit.shared.infrastructure.sql_engine.fake_sql_engine import FakeSqlEngine
 
 
 class TestListTables:

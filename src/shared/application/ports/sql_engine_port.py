@@ -1,6 +1,6 @@
 from typing import Protocol, runtime_checkable
 
-from chat.domain.value_objects.query_result import QueryResult
+from shared.domain.value_objects.query_result import QueryResult
 
 
 @runtime_checkable

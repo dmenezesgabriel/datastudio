@@ -1,6 +1,6 @@
 import pytest
 
-from chat.domain.value_objects.query_result import QueryResult
+from shared.domain.value_objects.query_result import QueryResult
 
 
 class TestQueryResult:

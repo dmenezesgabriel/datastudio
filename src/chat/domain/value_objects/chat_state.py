@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from chat.domain.value_objects.query_result import QueryResult
+from shared.domain.value_objects.query_result import QueryResult
 
 
 class ChatState(TypedDict):

@@ -1,6 +1,6 @@
-from chat.application.ports.sql_engine_port import SqlEnginePort
+from shared.application.ports.sql_engine_port import SqlEnginePort
 from chat.domain.value_objects.chat_state import ChatState
-from chat.domain.value_objects.query_result import QueryResult
+from shared.domain.value_objects.query_result import QueryResult
 
 
 class ExecuteSql:

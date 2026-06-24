@@ -2,7 +2,7 @@ import re
 
 import duckdb
 
-from chat.domain.value_objects.query_result import QueryResult
+from shared.domain.value_objects.query_result import QueryResult
 
 
 class DuckDbSqlEngine:

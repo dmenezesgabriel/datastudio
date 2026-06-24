@@ -1,9 +1,9 @@
 from langgraph.graph.state import CompiledStateGraph  # pyright: ignore[reportMissingTypeStubs]
 
-from chat.domain.value_objects.query_result import QueryResult
+from shared.domain.value_objects.query_result import QueryResult
 from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
 from chat.infrastructure.graph.types import TypedChatGraph
-from test.unit.chat.infrastructure.graph.nodes.fake_sql_engine import FakeSqlEngine
+from test.unit.shared.infrastructure.sql_engine.fake_sql_engine import FakeSqlEngine
 from test.unit.chat.infrastructure.graph.nodes.fake_structured_chat_model import (
     FakeStructuredChatModel,
 )

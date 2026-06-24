@@ -1,4 +1,4 @@
-from chat.application.ports.sql_engine_port import SqlEnginePort
+from shared.application.ports.sql_engine_port import SqlEnginePort
 from chat.domain.value_objects.chat_state import ChatState
 
 

@@ -1,6 +1,6 @@
-from chat.domain.value_objects.query_result import QueryResult
+from shared.domain.value_objects.query_result import QueryResult
 from chat.infrastructure.graph.nodes.execute_sql import ExecuteSql
-from test.unit.chat.infrastructure.graph.nodes.fake_sql_engine import FakeSqlEngine
+from test.unit.shared.infrastructure.sql_engine.fake_sql_engine import FakeSqlEngine
 
 
 class TestExecuteSql:
