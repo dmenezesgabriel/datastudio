@@ -6,6 +6,11 @@
 - Names: specific and unique. Avoid `data`, `handler`, `Manager`.
   Prefer names that return <5 grep hits in the codebase.
 - Types: explicit. No `any`, no `Dict`, no untyped functions.
+- Type aliases that narrow a generic to a component-specific concrete type use
+  the `Typed` prefix (e.g. `TypedChatGraph`), following Python's `TypedDict`
+  convention. If an alias is shared across more than one module inside the same
+  component, it lives in `<component>/infrastructure/types.py` and is imported
+  from there — never redefined locally.
 - No code duplication. Extract shared logic into a function/module.
 - Early returns over nested ifs. Max 2 levels of indentation.
 - Exception messages must include the offending value and expected shape.
