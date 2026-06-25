@@ -22,8 +22,11 @@ class _TableSelectionOutput(BaseModel):
 class SelectTables:
     """Node that selects only the tables relevant to the question before schema fetching.
 
-    Reduces generate_sql input tokens by filtering out irrelevant tables before
-    get_schema fetches full DDL.
+    This is the schema-linking stage and the pipeline's main scalability lever:
+    get_schema and generate_sql only ever see the selected tables, so the prompt
+    size stays flat as the catalog grows from a handful of tables to the many a
+    warehouse like AWS Athena holds. It always runs — table count is exactly when
+    pruning matters, so it is never skipped.
 
     Example:
         node = SelectTables(chat_model)

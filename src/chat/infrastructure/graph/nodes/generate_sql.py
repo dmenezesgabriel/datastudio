@@ -9,8 +9,15 @@ from pydantic import BaseModel
 from chat.domain.value_objects.chat_state import ChatState
 
 _SYSTEM_PROMPT = (
-    "You are a SQL expert. Given a database schema and a natural language question, "
-    "write a single DuckDB-compatible SELECT query that answers the question."
+    "You are a SQL expert. Given a DuckDB database schema and a natural language "
+    "question, write a single DuckDB-compatible SELECT query that answers it.\n"
+    "- Return exactly one SELECT statement; compute everything inside SQL. For "
+    "comparisons across periods or groups, use CASE WHEN, conditional aggregation, "
+    "or subqueries within the single statement.\n"
+    "- For literal filters, reuse the sample values shown in the schema comments "
+    "(`-- e.g. ...`), matching their exact spelling and case.\n"
+    "- Use DuckDB date/time functions (date_diff, date_part, strftime) for date logic.\n"
+    "- Reference columns exactly as named in the schema."
 )
 
 
