@@ -1,4 +1,5 @@
-import math
+"""Correctness checks for text-to-SQL evaluation."""
+
 from dataclasses import dataclass, field
 from typing import Protocol, TypedDict, cast
 
@@ -9,6 +10,7 @@ from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
 from chat.domain.value_objects.chat_state import ChatState
+from chat.infrastructure.eval._result_matching import result_sets_match, value_matches
 from shared.application.ports.sql_engine_port import SqlEnginePort
 from shared.domain.value_objects.query_result import QueryResult
 
@@ -32,7 +34,9 @@ class Check(Protocol):
         result = check.evaluate(state)  # CheckResult
     """
 
-    def evaluate(self, state: ChatState) -> CheckResult: ...
+    def evaluate(self, state: ChatState) -> CheckResult:
+        """Evaluate the check against a completed graph state."""
+        ...
 
 
 @dataclass
@@ -47,6 +51,7 @@ class ResponseIncludesCheck:
     value: str
 
     def evaluate(self, state: ChatState) -> CheckResult:
+        """Return passed when response contains self.value (case-insensitive)."""
         response = cast(dict[str, object], state).get("response") or ""
         passed = self.value.lower() in str(response).lower()
         return CheckResult(type="response_includes", value=self.value, passed=passed, reasoning="")
@@ -61,6 +66,7 @@ class SqlValidCheck:
     """
 
     def evaluate(self, state: ChatState) -> CheckResult:
+        """Return passed when query_result is present in state."""
         state_dict = cast(dict[str, object], state)
         passed = bool(state_dict.get("query_result"))
         return CheckResult(type="sql_valid", value="", passed=passed, reasoning="")
@@ -87,6 +93,7 @@ class ResultSetCheck:
     column: str | None = field(default=None)
 
     def evaluate(self, state: ChatState) -> CheckResult:
+        """Return passed when any result cell matches expected_value."""
         state_dict = cast(dict[str, object], state)
         qr = state_dict.get("query_result")
         if not isinstance(qr, QueryResult):
@@ -101,29 +108,9 @@ class ResultSetCheck:
             cells: list[object] = [row.get(self.column) for row in rows]
         else:
             cells = [v for row in rows for v in row.values()]
-        passed = any(_value_matches(cell, self.expected_value) for cell in cells)
+        passed = any(value_matches(cell, self.expected_value) for cell in cells)
         label = f"{self.column}={self.expected_value}" if self.column else self.expected_value
         return CheckResult(type="result_set", value=label, passed=passed, reasoning="")
-
-
-def _value_matches(cell: object, expected: str) -> bool:
-    """Compare a result cell to an expected string, normalising numeric types.
-
-    Rounds to the precision implied by the expected string (capped at 4 decimals,
-    so an unrounded float gold value such as a large SUM is not over-constrained),
-    so an unrounded AVG result (6.7741...) matches an expected value of "6.77". A
-    relative-tolerance fallback absorbs floating-point summation noise between two
-    separate executions of the same query.
-    """
-    try:
-        cell_f = float(str(cell))
-        exp_f = float(expected)
-        decimals = min(len(expected.split(".")[1]) if "." in expected else 0, 4)
-        if round(cell_f, decimals) == round(exp_f, decimals):
-            return True
-        return math.isclose(cell_f, exp_f, rel_tol=1e-6)
-    except (ValueError, TypeError):
-        return str(cell).strip().lower() == expected.strip().lower()
 
 
 @dataclass
@@ -148,6 +135,7 @@ class ExecutionMatchCheck:
     order_matters: bool = field(default=False)
 
     def evaluate(self, state: ChatState) -> CheckResult:
+        """Return passed when candidate result matches gold_sql result."""
         candidate = cast(dict[str, object], state).get("query_result")
         if not isinstance(candidate, QueryResult):
             return CheckResult(
@@ -157,7 +145,7 @@ class ExecutionMatchCheck:
                 reasoning="no query result",
             )
         gold = self.engine.execute_query(self.gold_sql)
-        passed = _result_sets_match(candidate, gold, self.order_matters)
+        passed = result_sets_match(candidate, gold, self.order_matters)
         reasoning = (
             "" if passed else f"expected {gold.row_count} gold row(s), got {candidate.row_count}"
         )
@@ -167,49 +155,6 @@ class ExecutionMatchCheck:
             passed=passed,
             reasoning=reasoning,
         )
-
-
-def _result_sets_match(candidate: QueryResult, gold: QueryResult, order_matters: bool) -> bool:
-    """Compare two result sets row-wise with numeric tolerance."""
-    if candidate.row_count != gold.row_count:
-        return False
-    if order_matters:
-        return all(_row_covers(c, g) for c, g in zip(candidate.rows, gold.rows, strict=True))
-    return _rows_cover_unordered(candidate.rows, gold.rows)
-
-
-def _rows_cover_unordered(
-    candidate_rows: list[tuple[object, ...]], gold_rows: list[tuple[object, ...]]
-) -> bool:
-    """Each gold row must be covered by a distinct, not-yet-used candidate row."""
-    used: set[int] = set()
-    for gold_row in gold_rows:
-        match = next(
-            (
-                i
-                for i, cand_row in enumerate(candidate_rows)
-                if i not in used and _row_covers(cand_row, gold_row)
-            ),
-            None,
-        )
-        if match is None:
-            return False
-        used.add(match)
-    return True
-
-
-def _row_covers(candidate_row: tuple[object, ...], gold_row: tuple[object, ...]) -> bool:
-    """True when every gold cell value is present in the candidate row (multiset)."""
-    pool = list(candidate_row)
-    for gold_cell in gold_row:
-        match = next(
-            (i for i, cell in enumerate(pool) if _value_matches(cell, str(gold_cell))),
-            None,
-        )
-        if match is None:
-            return False
-        pool.pop(match)
-    return True
 
 
 _JUDGE_SYSTEM_PROMPT = (
@@ -238,6 +183,7 @@ class RubricCheck:
     """
 
     def __init__(self, model: BaseChatModel, rubric: str) -> None:
+        """Wire the judge chain; model and rubric are fixed for the lifetime of the check."""
         self.rubric = rubric
         self._chain: Runnable[LanguageModelInput, _RubricVerdict] = cast(
             Runnable[LanguageModelInput, _RubricVerdict],
@@ -245,6 +191,7 @@ class RubricCheck:
         )
 
     def evaluate(self, state: ChatState) -> CheckResult:
+        """Invoke the LLM judge and return its verdict as a CheckResult."""
         state_dict = cast(dict[str, object], state)
         human_content = _JUDGE_HUMAN_TEMPLATE.format(
             question=state_dict.get("question", ""),
