@@ -1,3 +1,5 @@
+"""Root logger configuration wired with JSON output to stderr."""
+
 import logging
 import sys
 
@@ -16,9 +18,7 @@ def configure_logging(log_level: str) -> None:
     """
     root = logging.getLogger()
     root.setLevel(log_level)
-    already_configured = any(
-        isinstance(h.formatter, JsonFormatter) for h in root.handlers
-    )
+    already_configured = any(isinstance(h.formatter, JsonFormatter) for h in root.handlers)
     if not already_configured:
         handler = logging.StreamHandler(sys.stderr)
         handler.setFormatter(JsonFormatter())

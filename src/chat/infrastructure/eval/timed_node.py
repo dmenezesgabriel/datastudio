@@ -1,3 +1,5 @@
+"""Timing decorator node for LangGraph that records per-node wall-clock latency."""
+
 from collections.abc import Mapping
 from time import perf_counter
 from typing import Protocol
@@ -23,11 +25,13 @@ class TimedNode:
     """
 
     def __init__(self, name: str, inner: _ChatNode, recorder: MetricsRecorder) -> None:
+        """Wire the node name, inner callable, and metrics recorder."""
         self._name = name
         self._inner = inner
         self._recorder = recorder
 
     def __call__(self, state: ChatState) -> Mapping[str, object]:
+        """Record latency and delegate to the inner node."""
         self._recorder.set_node(self._name)
         t0 = perf_counter()
         result = self._inner(state)

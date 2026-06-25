@@ -1,3 +1,5 @@
+"""LangGraph node that selects only the tables relevant to the user's question."""
+
 from typing import cast
 
 from langchain_core.language_models import BaseChatModel
@@ -35,12 +37,14 @@ class SelectTables:
     """
 
     def __init__(self, chat_model: BaseChatModel) -> None:
+        """Wire the chat model as a structured-output runnable."""
         self._model: Runnable[LanguageModelInput, _TableSelectionOutput] = cast(
             Runnable[LanguageModelInput, _TableSelectionOutput],
             chat_model.with_structured_output(_TableSelectionOutput),
         )
 
     def __call__(self, state: ChatState) -> dict[str, list[str]]:
+        """Select the tables relevant to the question in state."""
         human_content = f"Tables: {state['tables']}\n\nQuestion: {state['question']}"
         messages = [
             SystemMessage(content=_SYSTEM_PROMPT),

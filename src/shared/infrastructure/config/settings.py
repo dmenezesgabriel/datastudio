@@ -1,3 +1,5 @@
+"""Application settings loaded from environment variables and .env file."""
+
 import logging
 from typing import Annotated
 
@@ -21,9 +23,7 @@ class AppSettings(BaseSettings):
         print(settings.openai_api_key)
     """
 
-    model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     openai_api_key: str
     openai_base_url: str = "https://opencode.ai/zen/go/v1"

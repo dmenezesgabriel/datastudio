@@ -1,3 +1,5 @@
+"""LiteLLM-backed language model factory for LangChain."""
+
 from langchain_core.language_models import BaseChatModel
 from langchain_litellm import ChatLiteLLM
 
@@ -21,12 +23,14 @@ class LiteLLMLanguageModel:
         api_key: str | None = None,
         api_base: str | None = None,
     ) -> None:
+        """Configure the LiteLLM model connection parameters."""
         self._model_name = model_name
         self._temperature = temperature
         self._api_key = api_key
         self._api_base = api_base
 
     def get_chat_model(self) -> BaseChatModel:
+        """Build and return a configured ChatLiteLLM instance."""
         return ChatLiteLLM(
             model=self._model_name,
             temperature=self._temperature,

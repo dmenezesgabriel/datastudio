@@ -1,3 +1,5 @@
+"""Port interface for SQL execution backends."""
+
 from typing import Protocol, runtime_checkable
 
 from shared.domain.value_objects.query_result import QueryResult
@@ -21,8 +23,14 @@ class SqlEnginePort(Protocol):
         result = engine.execute_query("SELECT COUNT(*) FROM orders")
     """
 
-    def list_tables(self) -> list[str]: ...
+    def list_tables(self) -> list[str]:
+        """Return the names of all tables in the database."""
+        ...
 
-    def get_table_schema(self, table_name: str) -> str: ...
+    def get_table_schema(self, table_name: str) -> str:
+        """Return a DDL-style schema string annotated with column info for the given table."""
+        ...
 
-    def execute_query(self, sql: str) -> QueryResult: ...
+    def execute_query(self, sql: str) -> QueryResult:
+        """Execute a SQL SELECT and return the result set."""
+        ...

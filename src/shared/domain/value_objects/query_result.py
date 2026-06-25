@@ -1,3 +1,5 @@
+"""Immutable value object representing a SQL query result set."""
+
 from dataclasses import dataclass
 
 
@@ -15,6 +17,7 @@ class QueryResult:
     row_count: int
 
     def __post_init__(self) -> None:
+        """Validate that row_count matches the actual number of rows."""
         if self.row_count != len(self.rows):
             raise ValueError(
                 f"row_count={self.row_count!r} does not match len(rows)={len(self.rows)!r}"

@@ -1,3 +1,5 @@
+"""JSON log formatter for structured observability output."""
+
 import datetime
 import json
 import logging
@@ -48,6 +50,7 @@ class JsonFormatter(logging.Formatter):
     )
 
     def format(self, record: logging.LogRecord) -> str:
+        """Serialize the log record to a single-line JSON string."""
         record.message = record.getMessage()
         return json.dumps(self._build_payload(record))
 

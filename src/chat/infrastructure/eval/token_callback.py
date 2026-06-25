@@ -1,3 +1,5 @@
+"""LangChain callback for counting LLM token usage per graph node."""
+
 from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.outputs import ChatGeneration, LLMResult
 
@@ -17,15 +19,15 @@ class TokenCountingCallback(BaseCallbackHandler):
     """
 
     def __init__(self, recorder: MetricsRecorder) -> None:
+        """Attach the metrics recorder to this callback."""
         super().__init__()
         self._recorder = recorder
 
     def on_llm_end(self, response: LLMResult, **_kwargs: object) -> None:
+        """Extract token counts from the LLM response and record them."""
         input_t, output_t = _extract_tokens(response)
         if input_t is not None and self._recorder.current_node:
-            self._recorder.record_tokens(
-                self._recorder.current_node, input_t, output_t or 0
-            )
+            self._recorder.record_tokens(self._recorder.current_node, input_t, output_t or 0)
 
 
 def _extract_tokens(response: LLMResult) -> tuple[int | None, int | None]:

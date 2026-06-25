@@ -1,3 +1,5 @@
+"""LangGraph node that formats SQL query results as natural language."""
+
 from typing import cast
 
 from langchain_core.language_models import BaseChatModel
@@ -37,12 +39,14 @@ class FormatResponse:
     """
 
     def __init__(self, chat_model: BaseChatModel) -> None:
+        """Wire the chat model as a structured-output runnable."""
         self._model: Runnable[LanguageModelInput, _AnswerOutput] = cast(
             Runnable[LanguageModelInput, _AnswerOutput],
             chat_model.with_structured_output(_AnswerOutput),
         )
 
     def __call__(self, state: ChatState) -> dict[str, str]:
+        """Format the query result as a natural language answer."""
         query_result = cast(dict[str, object], state).get("query_result")
         if not isinstance(query_result, QueryResult):
             return {"response": _NO_RESULT_RESPONSE}

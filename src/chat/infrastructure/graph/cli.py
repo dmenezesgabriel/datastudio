@@ -1,3 +1,5 @@
+"""CLI entrypoint for the Text-to-SQL LangGraph pipeline."""
+
 import argparse
 from typing import cast
 

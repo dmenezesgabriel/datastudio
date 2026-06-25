@@ -1,3 +1,5 @@
+"""Factory for named loggers; requires configure_logging at startup."""
+
 import logging
 
 

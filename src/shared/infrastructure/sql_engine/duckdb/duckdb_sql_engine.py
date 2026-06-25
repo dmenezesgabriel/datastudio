@@ -1,3 +1,5 @@
+"""DuckDB implementation of the SQL engine port."""
+
 import re
 
 import duckdb
@@ -24,14 +26,17 @@ class DuckDbSqlEngine:
     """
 
     def __init__(self, db_path: str) -> None:
+        """Store the DuckDB file path."""
         self._db_path = db_path
 
     def list_tables(self) -> list[str]:
+        """Query SHOW TABLES and return table names as a list."""
         with duckdb.connect(self._db_path, read_only=True) as conn:
             rows = conn.execute("SHOW TABLES").fetchall()
         return [row[0] for row in rows]
 
     def get_table_schema(self, table_name: str) -> str:
+        """Return annotated DDL for the table with example values for text columns."""
         self._validate_table_name(table_name)
         with duckdb.connect(self._db_path, read_only=True) as conn:
             rows = conn.execute(f'DESCRIBE "{table_name}"').fetchall()
@@ -39,6 +44,7 @@ class DuckDbSqlEngine:
         return f"-- {table_name}\n" + "\n".join(lines)
 
     def execute_query(self, sql: str) -> QueryResult:
+        """Execute a SQL query and return the result as a QueryResult."""
         with duckdb.connect(self._db_path, read_only=True) as conn:
             cursor = conn.execute(sql)
             columns = [desc[0] for desc in cursor.description]

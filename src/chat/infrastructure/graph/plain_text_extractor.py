@@ -1,3 +1,5 @@
+"""Response content extractor for plain-text model outputs."""
+
 from langchain_core.messages import BaseMessage
 
 
@@ -9,4 +11,5 @@ class PlainTextExtractor:
     """
 
     def extract(self, message: BaseMessage) -> str:
+        """Return the message content cast to string."""
         return str(message.content)

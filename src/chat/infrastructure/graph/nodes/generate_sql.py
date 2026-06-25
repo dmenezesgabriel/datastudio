@@ -1,3 +1,5 @@
+"""LangGraph node that generates SQL from a natural language question."""
+
 from typing import cast
 
 from langchain_core.language_models import BaseChatModel
@@ -26,21 +28,23 @@ class _SqlOutput(BaseModel):
 
 
 class GenerateSql:
-    """Node that uses an LLM with structured output to generate a SQL query.
+    r"""Node that uses an LLM with structured output to generate a SQL query.
 
     Example:
         node = GenerateSql(chat_model)
-        result = node({"schema": "-- orders\\nid INT", "question": "Count orders"})
+        result = node({"schema": "-- orders\nid INT", "question": "Count orders"})
         # result == {"sql_query": "SELECT COUNT(*) FROM orders"}
     """
 
     def __init__(self, chat_model: BaseChatModel) -> None:
+        """Wire the chat model as a structured-output runnable."""
         self._model: Runnable[LanguageModelInput, _SqlOutput] = cast(
             Runnable[LanguageModelInput, _SqlOutput],
             chat_model.with_structured_output(_SqlOutput),
         )
 
     def __call__(self, state: ChatState) -> dict[str, str]:
+        """Generate a SQL query from the schema and question in state."""
         human_content = f"Schema:\n{state['schema']}\n\nQuestion: {state['question']}"
         messages = [
             SystemMessage(content=_SYSTEM_PROMPT),

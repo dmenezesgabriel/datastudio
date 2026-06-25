@@ -1,3 +1,5 @@
+"""Chat state TypedDict shared across all LangGraph nodes."""
+
 from typing import NotRequired, TypedDict
 
 from shared.domain.value_objects.query_result import QueryResult

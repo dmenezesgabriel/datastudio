@@ -65,6 +65,7 @@ def _print_table(rows: list[dict[str, object]]) -> None:
 
 
 def main() -> None:
+    """Parse args and print the trend table to stdout."""
     args = _build_arg_parser().parse_args()
     _print_table(_load_rows(Path(args.reports_dir)))
 

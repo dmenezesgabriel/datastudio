@@ -51,9 +51,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _load_cases(
-    cases_path: Path, judge_model: object, sql_engine: SqlEnginePort
-) -> list[EvalCase]:
+def _load_cases(cases_path: Path, judge_model: object, sql_engine: SqlEnginePort) -> list[EvalCase]:
     """Load EvalCases from a JSON fixture file, deserialising each check spec."""
     from langchain_core.language_models import BaseChatModel
 
@@ -116,6 +114,7 @@ def _print_cases(report: EvalReport) -> None:
 
 
 def main() -> None:
+    """Parse args, run the eval suite, and write the JSON report."""
     args = _build_arg_parser().parse_args()
     settings = AppSettings()  # type: ignore[call-arg]
 

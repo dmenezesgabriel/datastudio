@@ -36,6 +36,8 @@ class SeedSettings(BaseSettings):
 
 @dataclass(frozen=True)
 class PublicDataset:
+    """Dataset available at a public HTTP URL."""
+
     name: str
     url: str
     fmt: Literal["parquet", "csv", "json"]
@@ -43,6 +45,8 @@ class PublicDataset:
 
 @dataclass(frozen=True)
 class KaggleDataset:
+    """Dataset available via the Kaggle API."""
+
     slug: str  # e.g. "olistbr/brazilian-ecommerce"
     files: list[tuple[str, str]]  # (filename_inside_zip, duckdb_table_name)
 
@@ -110,6 +114,7 @@ class KaggleClient:
     _BASE_URL = "https://www.kaggle.com/api/v1/datasets/download"
 
     def __init__(self, username: str, api_key: str) -> None:
+        """Encode the Kaggle API credentials as a Basic auth header."""
         token = base64.b64encode(f"{username}:{api_key}".encode()).decode()
         self._auth_header = {"Authorization": f"Basic {token}"}
 

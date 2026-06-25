@@ -1,3 +1,5 @@
+"""Factory that selects the appropriate response content extractor by provider."""
+
 from chat.infrastructure.graph.plain_text_extractor import PlainTextExtractor
 from chat.infrastructure.graph.response_content_extractor import (
     ResponseContentExtractor,

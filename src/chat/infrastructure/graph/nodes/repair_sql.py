@@ -1,3 +1,5 @@
+"""LangGraph node that repairs failed SQL queries with LLM assistance."""
+
 from collections.abc import Mapping
 from typing import cast
 
@@ -51,6 +53,7 @@ class RepairSql:
         max_attempts: int = MAX_REPAIR_ATTEMPTS,
         candidate_count: int = 3,
     ) -> None:
+        """Wire the model, engine, and repair parameters."""
         self._model: Runnable[LanguageModelInput, _SqlOutput] = cast(
             Runnable[LanguageModelInput, _SqlOutput],
             chat_model.with_structured_output(_SqlOutput),
@@ -60,6 +63,7 @@ class RepairSql:
         self._candidate_count = candidate_count
 
     def __call__(self, state: ChatState) -> Mapping[str, object]:
+        """Attempt to fix the failed SQL and return the corrected query."""
         attempt = self._current_attempts(state) + 1
         if attempt < self._max_attempts:
             sql = self._repair_once(state, _CANDIDATE_HINTS[0])
