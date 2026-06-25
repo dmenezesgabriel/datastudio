@@ -1,10 +1,8 @@
+import json
 import logging
 import sys
 
-
 from shared.infrastructure.logging.json_formatter import JsonFormatter
-
-import json
 
 
 def make_record(

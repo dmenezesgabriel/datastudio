@@ -14,9 +14,7 @@ class FakeSqlEngine:
     ) -> None:
         self._tables = tables or []
         self._schemas = schemas or {}
-        self._query_result = query_result or QueryResult(
-            columns=[], rows=[], row_count=0
-        )
+        self._query_result = query_result or QueryResult(columns=[], rows=[], row_count=0)
         self._results_by_sql = results_by_sql or {}
         self._error = error
         self.last_sql: str | None = None

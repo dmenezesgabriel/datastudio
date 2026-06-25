@@ -31,9 +31,7 @@ class TestConfigureLogging:
         configure_logging("INFO")
 
         # Assert
-        assert any(
-            isinstance(h, logging.StreamHandler) for h in logging.getLogger().handlers
-        )
+        assert any(isinstance(h, logging.StreamHandler) for h in logging.getLogger().handlers)
 
     def test_handler_formatter_is_json_formatter(self) -> None:
         # Arrange / Act
@@ -41,9 +39,7 @@ class TestConfigureLogging:
 
         # Assert
         root = logging.getLogger()
-        stream_handlers = [
-            h for h in root.handlers if isinstance(h, logging.StreamHandler)
-        ]
+        stream_handlers = [h for h in root.handlers if isinstance(h, logging.StreamHandler)]
         assert any(isinstance(h.formatter, JsonFormatter) for h in stream_handlers)
 
     def test_handler_writes_to_stderr(self) -> None:
@@ -53,8 +49,7 @@ class TestConfigureLogging:
         # Assert
         root = logging.getLogger()
         assert any(
-            isinstance(h, logging.StreamHandler) and h.stream is sys.stderr
-            for h in root.handlers
+            isinstance(h, logging.StreamHandler) and h.stream is sys.stderr for h in root.handlers
         )
 
     def test_second_call_updates_level_without_adding_handler(self) -> None:

@@ -11,9 +11,7 @@ def engine(tmp_path: Path) -> DuckDbSqlEngine:
     """A DuckDbSqlEngine over a temp database with one seeded table."""
     db_path = str(tmp_path / "test.duckdb")
     with duckdb.connect(db_path) as conn:
-        conn.execute(
-            "CREATE TABLE cars (  name VARCHAR NOT NULL,  origin VARCHAR,  mpg DOUBLE)"
-        )
+        conn.execute("CREATE TABLE cars (  name VARCHAR NOT NULL,  origin VARCHAR,  mpg DOUBLE)")
         conn.execute(
             "INSERT INTO cars VALUES "
             "('a','USA',18.0),('b','USA',20.0),('c','Japan',30.0),('d','Europe',25.0)"
@@ -41,9 +39,7 @@ class TestDuckDbSqlEngineSchemaEnrichment:
     def test_omits_examples_for_numeric_columns(self, engine: DuckDbSqlEngine) -> None:
         # act
         line = next(
-            ln
-            for ln in engine.get_table_schema("cars").splitlines()
-            if ln.startswith("mpg")
+            ln for ln in engine.get_table_schema("cars").splitlines() if ln.startswith("mpg")
         )
         # assert — numeric columns carry no example values
         assert "e.g." not in line
@@ -56,16 +52,12 @@ class TestDuckDbSqlEngineSchemaEnrichment:
 
 
 class TestDuckDbSqlEngineScalability:
-    def test_omits_examples_for_high_cardinality_text_column(
-        self, tmp_path: Path
-    ) -> None:
+    def test_omits_examples_for_high_cardinality_text_column(self, tmp_path: Path) -> None:
         # arrange — 50 distinct ids: too many to enumerate; sampling must skip it
         db_path = str(tmp_path / "high.duckdb")
         with duckdb.connect(db_path) as conn:
             conn.execute("CREATE TABLE t (uid VARCHAR)")
-            conn.executemany(
-                "INSERT INTO t VALUES (?)", [(f"id-{i}",) for i in range(50)]
-            )
+            conn.executemany("INSERT INTO t VALUES (?)", [(f"id-{i}",) for i in range(50)])
         engine = DuckDbSqlEngine(db_path)
         # act
         schema = engine.get_table_schema("t")

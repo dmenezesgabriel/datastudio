@@ -55,9 +55,7 @@ class TestAppSettings:
         for key in ("OPENAI_API_KEY", "KAGGLE_USERNAME", "KAGGLE_KEY"):
             monkeypatch.delenv(key, raising=False)
         env_file = tmp_path / ".env"  # type: ignore[operator]
-        env_file.write_text(
-            "OPENAI_API_KEY=test-key\nKAGGLE_USERNAME=someone\nKAGGLE_KEY=secret\n"
-        )
+        env_file.write_text("OPENAI_API_KEY=test-key\nKAGGLE_USERNAME=someone\nKAGGLE_KEY=secret\n")
 
         # Act / Assert — must not raise
         settings = AppSettings(_env_file=str(env_file))  # type: ignore[call-arg]
@@ -75,9 +73,7 @@ class TestAppSettingsLogLevel:
         # Assert
         assert settings.log_level == "INFO"
 
-    def test_accepts_valid_log_level_debug(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_accepts_valid_log_level_debug(self, monkeypatch: pytest.MonkeyPatch) -> None:
         # Arrange
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         monkeypatch.setenv("LOG_LEVEL", "DEBUG")
@@ -88,9 +84,7 @@ class TestAppSettingsLogLevel:
         # Assert
         assert settings.log_level == "DEBUG"
 
-    def test_normalises_lowercase_to_uppercase(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_normalises_lowercase_to_uppercase(self, monkeypatch: pytest.MonkeyPatch) -> None:
         # Arrange
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         monkeypatch.setenv("LOG_LEVEL", "debug")

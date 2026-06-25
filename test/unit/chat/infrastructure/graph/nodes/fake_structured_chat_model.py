@@ -40,9 +40,7 @@ class FakeStructuredChatModel(BaseChatModel):
     def last_runnable(self) -> _FakeStructuredRunnable:
         return self._last_runnable
 
-    def with_structured_output(
-        self, schema: Any, **kwargs: Any
-    ) -> _FakeStructuredRunnable:
+    def with_structured_output(self, schema: Any, **kwargs: Any) -> _FakeStructuredRunnable:
         return self._last_runnable
 
     def _generate(

@@ -3,11 +3,11 @@ import re
 import pytest
 from pytest_bdd import given, scenario, then, when
 
-from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
 from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
 from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
 from chat.infrastructure.graph.types import TypedChatGraph
 from shared.infrastructure.config.settings import AppSettings
+from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
 
 
 @pytest.mark.integration
@@ -40,9 +40,7 @@ def text2sql_graph_fixture(
 
 @when('I ask "How many taxi trips are in the dataset?"', target_fixture="answer")
 def ask_question(text2sql_graph: TypedChatGraph) -> str:
-    result = text2sql_graph.invoke(
-        {"question": "How many taxi trips are in the dataset?"}
-    )
+    result = text2sql_graph.invoke({"question": "How many taxi trips are in the dataset?"})
     return result["response"]
 
 

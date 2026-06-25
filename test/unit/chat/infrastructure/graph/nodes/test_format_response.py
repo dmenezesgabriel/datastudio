@@ -1,8 +1,8 @@
 from langchain_core.messages import SystemMessage
 
 from chat.domain.value_objects.chat_state import ChatState
-from shared.domain.value_objects.query_result import QueryResult
 from chat.infrastructure.graph.nodes.format_response import FormatResponse
+from shared.domain.value_objects.query_result import QueryResult
 from test.unit.chat.infrastructure.graph.nodes.fake_structured_chat_model import (
     FakeStructuredChatModel,
 )

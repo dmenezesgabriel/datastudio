@@ -3,10 +3,10 @@ from typing import cast
 from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.eval.checks import ExecutionMatchCheck, deserialize_check
 from shared.domain.value_objects.query_result import QueryResult
-from test.unit.shared.infrastructure.sql_engine.fake_sql_engine import FakeSqlEngine
 from test.unit.chat.infrastructure.graph.nodes.fake_structured_chat_model import (
     FakeStructuredChatModel,
 )
+from test.unit.shared.infrastructure.sql_engine.fake_sql_engine import FakeSqlEngine
 
 _GOLD_SQL = "SELECT COUNT(*) FROM movies WHERE Distributor = 'Warner Bros.'"
 
@@ -53,9 +53,7 @@ class TestExecutionMatchCheckScalar:
     def test_tolerates_summation_noise_on_unrounded_large_floats(self) -> None:
         # arrange — two executions of a large SUM differ in the lowest digits
         gold = QueryResult(columns=["s"], rows=[(145047454.13116914,)], row_count=1)
-        candidate = QueryResult(
-            columns=["s"], rows=[(145047454.13116920,)], row_count=1
-        )
+        candidate = QueryResult(columns=["s"], rows=[(145047454.13116920,)], row_count=1)
         check = ExecutionMatchCheck(_GOLD_SQL, _engine(gold))
         # act / assert
         assert check.evaluate(_state_with_result(candidate))["passed"] is True
@@ -81,9 +79,7 @@ class TestExecutionMatchCheckRowSets:
     def test_fails_when_row_counts_differ(self) -> None:
         # arrange — candidate dumps the whole column; gold expects one row
         gold = QueryResult(columns=["s"], rows=[("SP",)], row_count=1)
-        candidate = QueryResult(
-            columns=["s"], rows=[("SP",), ("RJ",), ("MG",)], row_count=3
-        )
+        candidate = QueryResult(columns=["s"], rows=[("SP",), ("RJ",), ("MG",)], row_count=3)
         check = ExecutionMatchCheck(_GOLD_SQL, _engine(gold))
         # act / assert
         assert check.evaluate(_state_with_result(candidate))["passed"] is False
@@ -91,9 +87,7 @@ class TestExecutionMatchCheckRowSets:
     def test_passes_when_candidate_has_extra_descriptive_column(self) -> None:
         # arrange — gold names the state; candidate also returns the count
         gold = QueryResult(columns=["state"], rows=[("SP",)], row_count=1)
-        candidate = QueryResult(
-            columns=["state", "n"], rows=[("SP", 11000)], row_count=1
-        )
+        candidate = QueryResult(columns=["state", "n"], rows=[("SP", 11000)], row_count=1)
         check = ExecutionMatchCheck(_GOLD_SQL, _engine(gold))
         # act / assert — every gold value is present in the candidate row
         assert check.evaluate(_state_with_result(candidate))["passed"] is True
