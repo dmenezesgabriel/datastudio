@@ -4,7 +4,7 @@ import datetime
 import math
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import cast
+from typing import Literal, cast
 
 from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.eval.checks import Check, CheckResult
@@ -58,6 +58,24 @@ def _percentile(values: list[float], pct: float) -> float:
     return ordered[rank]
 
 
+def _count_passed(cases: list[CaseResult]) -> int:
+    """Count cases where all checks passed."""
+    return sum(1 for c in cases if c.passed)
+
+
+def _case_latencies(cases: list[CaseResult]) -> list[float]:
+    """Sum node latencies per case, returning one value per case."""
+    return [sum(m.latency_s for m in c.nodes.values()) for c in cases]
+
+
+def _sum_node_token_attr(
+    cases: list[CaseResult],
+    attr: Literal["input_tokens", "output_tokens"],
+) -> int:
+    """Sum a token count attribute across all nodes in all cases."""
+    return sum((getattr(m, attr) or 0) for c in cases for m in c.nodes.values())
+
+
 def _by_tag(cases: list[CaseResult]) -> dict[str, dict[str, int]]:
     """Pass/total counts per tag, for stratified accuracy reporting."""
     breakdown: dict[str, dict[str, int]] = {}
@@ -80,10 +98,10 @@ def compute_summary(
     at zero when pricing is not configured.
     """
     total = len(cases)
-    passed = sum(1 for c in cases if c.passed)
-    latencies = [sum(m.latency_s for m in c.nodes.values()) for c in cases]
-    input_tokens = sum((m.input_tokens or 0) for c in cases for m in c.nodes.values())
-    output_tokens = sum((m.output_tokens or 0) for c in cases for m in c.nodes.values())
+    passed = _count_passed(cases)
+    latencies = _case_latencies(cases)
+    input_tokens = _sum_node_token_attr(cases, "input_tokens")
+    output_tokens = _sum_node_token_attr(cases, "output_tokens")
     cost = (input_tokens * input_price_per_m + output_tokens * output_price_per_m) / 1e6
     return {
         "total": total,
