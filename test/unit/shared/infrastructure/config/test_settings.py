@@ -46,6 +46,19 @@ class TestAppSettings:
         # Assert
         assert settings.language_model_name == "openai/glm-5"
 
+    def test_ignores_unknown_keys_in_env_file(
+        self, tmp_path: pytest.TempPathFactory
+    ) -> None:
+        # Arrange — env file contains fields unknown to AppSettings
+        env_file = tmp_path / ".env"  # type: ignore[operator]
+        env_file.write_text(
+            "OPENAI_API_KEY=test-key\nKAGGLE_USERNAME=someone\nKAGGLE_KEY=secret\n"
+        )
+
+        # Act / Assert — must not raise
+        settings = AppSettings(_env_file=str(env_file))  # type: ignore[call-arg]
+        assert settings.openai_api_key == "test-key"
+
 
 class TestAppSettingsLogLevel:
     def test_default_log_level_is_info(self, monkeypatch: pytest.MonkeyPatch) -> None:
