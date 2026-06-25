@@ -93,6 +93,104 @@
         {"type": "result_set", "expected_value": "68.2"},
         {"type": "rubric", "rubric": "The answer should state a percentage and reference the summer period or the months June through August."}
       ]
+    },
+    {
+      "id": "olist_total_gmv",
+      "question": "What is the total gross merchandise value generated across all orders on the platform?",
+      "checks": [
+        {"type": "sql_valid"},
+        {"type": "sql_contains", "value": "SUM"},
+        {"type": "result_set", "expected_value": "13591643.7"},
+        {"type": "rubric", "rubric": "The answer should state a total monetary amount representing gross merchandise value across all platform orders."}
+      ]
+    },
+    {
+      "id": "olist_top_revenue_category",
+      "question": "Which product category generated the highest revenue on the platform?",
+      "checks": [
+        {"type": "sql_valid"},
+        {"type": "sql_contains", "value": "SUM"},
+        {"type": "result_set", "expected_value": "health_beauty"},
+        {"type": "rubric", "rubric": "The answer should name a specific product category and attribute it to the highest revenue position."}
+      ]
+    },
+    {
+      "id": "olist_on_time_delivery_rate",
+      "question": "What percentage of delivered orders arrived on or before the estimated delivery date?",
+      "checks": [
+        {"type": "sql_valid"},
+        {"type": "sql_contains", "value": "COUNT"},
+        {"type": "result_set", "expected_value": "91.89"},
+        {"type": "rubric", "rubric": "The answer should state a percentage and reference on-time delivery or the estimated delivery date."}
+      ]
+    },
+    {
+      "id": "olist_average_order_value",
+      "question": "What is the average order value across all purchases on the platform?",
+      "checks": [
+        {"type": "sql_valid"},
+        {"type": "sql_contains", "value": "AVG"},
+        {"type": "result_set", "expected_value": "160.99"},
+        {"type": "rubric", "rubric": "The answer should state a monetary amount representing the average value per order."}
+      ]
+    },
+    {
+      "id": "olist_avg_review_score",
+      "question": "What is the platform's average customer satisfaction score based on order reviews?",
+      "checks": [
+        {"type": "sql_valid"},
+        {"type": "sql_contains", "value": "AVG"},
+        {"type": "result_set", "expected_value": "4.09"},
+        {"type": "rubric", "rubric": "The answer should state a numeric score out of 5 representing average customer satisfaction across all reviews."}
+      ]
+    },
+    {
+      "id": "olist_five_star_review_share",
+      "question": "What percentage of customer reviews received the highest possible rating of 5 stars?",
+      "checks": [
+        {"type": "sql_valid"},
+        {"type": "sql_contains", "value": "COUNT"},
+        {"type": "result_set", "expected_value": "57.78"},
+        {"type": "rubric", "rubric": "The answer should state a percentage and attribute it to 5-star or top-rated reviews."}
+      ]
+    },
+    {
+      "id": "olist_credit_card_payment_share",
+      "question": "What percentage of payment transactions on the platform were made using credit card?",
+      "checks": [
+        {"type": "sql_valid"},
+        {"type": "sql_contains", "value": "COUNT"},
+        {"type": "result_set", "expected_value": "73.92"},
+        {"type": "rubric", "rubric": "The answer should state a percentage and reference credit card as the payment method."}
+      ]
+    },
+    {
+      "id": "olist_cancellation_rate",
+      "question": "What is the overall order cancellation rate on the platform?",
+      "checks": [
+        {"type": "sql_valid"},
+        {"type": "rubric", "rubric": "The answer should state a percentage representing the share of orders that were cancelled, around 0.63%."}
+      ]
+    },
+    {
+      "id": "olist_top_customer_state",
+      "question": "Which Brazilian state has the highest number of registered customers?",
+      "checks": [
+        {"type": "sql_valid"},
+        {"type": "sql_contains", "value": "COUNT"},
+        {"type": "result_set", "expected_value": "SP"},
+        {"type": "rubric", "rubric": "The answer should name a Brazilian state abbreviation or full name and associate it with the largest customer concentration."}
+      ]
+    },
+    {
+      "id": "olist_avg_delivery_days",
+      "question": "On average, how many days does it take from order placement to delivery to the customer?",
+      "checks": [
+        {"type": "sql_valid"},
+        {"type": "sql_contains", "value": "AVG"},
+        {"type": "result_set", "expected_value": "12.5"},
+        {"type": "rubric", "rubric": "The answer should state a number of days representing the average end-to-end delivery time from purchase to delivery."}
+      ]
     }
   ]
 }
