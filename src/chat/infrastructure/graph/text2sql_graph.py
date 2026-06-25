@@ -5,6 +5,7 @@ from typing import Protocol, cast
 
 from langchain_core.language_models import BaseChatModel
 from langgraph.graph import END, START, StateGraph  # pyright: ignore[reportMissingTypeStubs]
+from langgraph.types import RetryPolicy
 
 from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.graph.nodes.execute_sql import ExecuteSql
@@ -88,19 +89,29 @@ def build_text2sql_nodes(
     }
 
 
+# Transient failures (connection blips, 5xx from the LLM/DB) should not sink a
+# whole run; deterministic bugs (ValueError/TypeError, etc.) must surface at once.
+# default_retry_on already retries ConnectionError + 5xx and skips those bugs.
+# execute_sql swallows its own errors into state for the repair loop, so retry is
+# a no-op there — the real win is on the LLM-backed nodes.
+_NODE_RETRY_POLICY = RetryPolicy(max_attempts=3)
+
+
 def wire_text2sql_graph(nodes: dict[str, ChatNode]) -> TypedChatGraph:
     """Wires a set of named ChatNode callables into a compiled LangGraph.
 
     The flow is a single path with a repair loop: a failed execution routes to
     repair_sql (which regenerates the query) and back to execute_sql, up to
     MAX_REPAIR_ATTEMPTS, before giving up and formatting a failure message.
+    Every node carries a RetryPolicy so transient infrastructure errors are
+    retried with backoff instead of failing the run.
 
     Example:
         graph = wire_text2sql_graph({"list_tables": ListTables(engine), ...})
     """
     builder: StateGraph[ChatState, None, ChatState, ChatState] = StateGraph(ChatState)
     for name, node in nodes.items():
-        builder.add_node(name, node)  # pyright: ignore[reportUnknownMemberType]
+        builder.add_node(name, node, retry_policy=_NODE_RETRY_POLICY)  # pyright: ignore[reportUnknownMemberType]
     builder.add_edge(START, "list_tables")
     builder.add_edge("list_tables", "select_tables")
     builder.add_edge("select_tables", "get_schema")
