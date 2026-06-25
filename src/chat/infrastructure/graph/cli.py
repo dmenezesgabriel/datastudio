@@ -120,6 +120,9 @@ def run_interactive(graph: TypedChatGraph) -> None:
             message = input("> ")
         except EOFError:
             break
+        except KeyboardInterrupt:
+            print()  # newline after ^C so the next shell prompt starts cleanly
+            break
         if not message:
             break
         print(invoke_graph(graph, message))

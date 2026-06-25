@@ -108,15 +108,11 @@ class TestResolveModelConfig:
         assert name == "override/model"
 
     def test_temperature_arg_overrides_settings(self) -> None:
-        _, temp, *_ = resolve_model_config(
-            self._make_namespace(temperature=0.9), FakeSettings()
-        )  # type: ignore[arg-type]
+        _, temp, *_ = resolve_model_config(self._make_namespace(temperature=0.9), FakeSettings())  # type: ignore[arg-type]
         assert temp == 0.9
 
     def test_api_key_arg_overrides_settings(self) -> None:
-        _, _, key, _ = resolve_model_config(
-            self._make_namespace(api_key="cli-key"), FakeSettings()
-        )  # type: ignore[arg-type]
+        _, _, key, _ = resolve_model_config(self._make_namespace(api_key="cli-key"), FakeSettings())  # type: ignore[arg-type]
         assert key == "cli-key"
 
     def test_api_base_arg_overrides_settings(self) -> None:
@@ -155,9 +151,7 @@ class TestInvokeGraph:
 
 
 class TestRunNonInteractive:
-    def test_prints_response_to_stdout(
-        self, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_prints_response_to_stdout(self, capsys: pytest.CaptureFixture[str]) -> None:
         # arrange / act
         run_non_interactive("hi", FakeGraph(response="the answer"))  # pyright: ignore[reportArgumentType]
         # assert
@@ -167,9 +161,7 @@ class TestRunNonInteractive:
 class TestRunInteractive:
     def test_exits_on_eof(self, monkeypatch: pytest.MonkeyPatch) -> None:
         # arrange
-        monkeypatch.setattr(
-            "builtins.input", lambda _: (_ for _ in ()).throw(EOFError())
-        )
+        monkeypatch.setattr("builtins.input", lambda _: (_ for _ in ()).throw(EOFError()))
         # act / assert (no exception raised)
         run_interactive(FakeGraph())  # pyright: ignore[reportArgumentType]
 
@@ -198,3 +190,9 @@ class TestRunInteractive:
         run_interactive(FakeGraph(response="world"))  # pyright: ignore[reportArgumentType]
         # assert
         assert capsys.readouterr().out == "world\n"
+
+    def test_exits_on_keyboard_interrupt(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # arrange
+        monkeypatch.setattr("builtins.input", lambda _: (_ for _ in ()).throw(KeyboardInterrupt()))
+        # act / assert (must not raise)
+        run_interactive(FakeGraph())  # pyright: ignore[reportArgumentType]
