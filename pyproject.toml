@@ -46,6 +46,12 @@ targets = ["src"]
 min_confidence = 80
 paths = ["src"]
 
+[tool.radon]
+# Thresholds enforced by xenon in pre-commit; this section controls `radon cc` CLI defaults
+cc_min = "A"
+show_complexity = true
+average = true
+
 [tool.coverage.run]
 source = ["src"]
 branch = true
@@ -82,4 +88,5 @@ dev = [
     "ruff==0.15.17",
     "semgrep==1.166.0",
     "vulture==2.16",
+    "xenon==0.9.3",
 ]

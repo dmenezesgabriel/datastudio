@@ -57,3 +57,10 @@ repos:
         entry: uv run vulture src --min-confidence 80
         types: [python]
         pass_filenames: false
+
+      - id: xenon
+        name: xenon (cyclomatic complexity)
+        language: system
+        entry: uv run xenon src --max-absolute B --max-modules B --max-average A
+        types: [python]
+        pass_filenames: false
