@@ -32,3 +32,10 @@ class AppSettings(BaseSettings):
     language_model_temperature: float = 0.0
     duckdb_path: str = "./dev_data/datastudio.duckdb"
     log_level: Annotated[str, AfterValidator(_normalise_log_level)] = "INFO"
+    # Token pricing (USD per million tokens) used to compute eval cost_usd.
+    input_token_price_per_million: float = 0.0
+    output_token_price_per_million: float = 0.0
+    # Eval SLOs — the budget gate fails when a run regresses past these.
+    eval_min_pass_rate: float = 0.8
+    eval_max_p95_latency_s: float = 180.0
+    eval_max_avg_output_tokens: float = 3000.0

@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass, field
 from typing import Protocol, TypedDict, cast
 
@@ -8,6 +9,7 @@ from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
 from chat.domain.value_objects.chat_state import ChatState
+from shared.application.ports.sql_engine_port import SqlEnginePort
 from shared.domain.value_objects.query_result import QueryResult
 
 
@@ -51,25 +53,6 @@ class ResponseIncludesCheck:
         passed = self.value.lower() in str(response).lower()
         return CheckResult(
             type="response_includes", value=self.value, passed=passed, reasoning=""
-        )
-
-
-@dataclass
-class SqlContainsCheck:
-    """Passes when state["sql_query"] contains value (case-insensitive).
-
-    Example:
-        check = SqlContainsCheck("COUNT")
-        result = check.evaluate(state)  # {"type": "sql_contains", "passed": True, ...}
-    """
-
-    value: str
-
-    def evaluate(self, state: ChatState) -> CheckResult:
-        sql = cast(dict[str, object], state).get("sql_query") or ""
-        passed = self.value.lower() in str(sql).lower()
-        return CheckResult(
-            type="sql_contains", value=self.value, passed=passed, reasoning=""
         )
 
 
@@ -134,16 +117,113 @@ class ResultSetCheck:
 def _value_matches(cell: object, expected: str) -> bool:
     """Compare a result cell to an expected string, normalising numeric types.
 
-    Rounds to the precision implied by the expected string before comparing, so
-    an unrounded AVG result (6.7741...) matches an expected value of "6.77".
+    Rounds to the precision implied by the expected string (capped at 4 decimals,
+    so an unrounded float gold value such as a large SUM is not over-constrained),
+    so an unrounded AVG result (6.7741...) matches an expected value of "6.77". A
+    relative-tolerance fallback absorbs floating-point summation noise between two
+    separate executions of the same query.
     """
     try:
         cell_f = float(str(cell))
         exp_f = float(expected)
-        decimals = len(expected.split(".")[1]) if "." in expected else 0
-        return round(cell_f, decimals) == round(exp_f, decimals)
+        decimals = min(len(expected.split(".")[1]) if "." in expected else 0, 4)
+        if round(cell_f, decimals) == round(exp_f, decimals):
+            return True
+        return math.isclose(cell_f, exp_f, rel_tol=1e-6)
     except (ValueError, TypeError):
         return str(cell).strip().lower() == expected.strip().lower()
+
+
+@dataclass
+class ExecutionMatchCheck:
+    """Execution accuracy: the candidate result must match a gold query's result.
+
+    The gold SQL is executed against the same engine at eval time (so it stays
+    correct as the data changes — the BIRD/Spider standard, not a frozen value).
+    Comparison is an order-insensitive row match with numeric tolerance; each
+    gold row must be covered by a distinct candidate row that contains all the
+    gold cell values, so a candidate may carry extra descriptive columns but
+    cannot dump the whole table (row counts must be equal).
+
+    Example:
+        check = ExecutionMatchCheck("SELECT COUNT(*) FROM movies", engine)
+        result = check.evaluate(state)
+        # {"type": "execution_match", "passed": True, ...}
+    """
+
+    gold_sql: str
+    engine: SqlEnginePort
+    order_matters: bool = field(default=False)
+
+    def evaluate(self, state: ChatState) -> CheckResult:
+        candidate = cast(dict[str, object], state).get("query_result")
+        if not isinstance(candidate, QueryResult):
+            return CheckResult(
+                type="execution_match",
+                value=self.gold_sql,
+                passed=False,
+                reasoning="no query result",
+            )
+        gold = self.engine.execute_query(self.gold_sql)
+        passed = _result_sets_match(candidate, gold, self.order_matters)
+        reasoning = (
+            ""
+            if passed
+            else f"expected {gold.row_count} gold row(s), got {candidate.row_count}"
+        )
+        return CheckResult(
+            type="execution_match",
+            value=self.gold_sql,
+            passed=passed,
+            reasoning=reasoning,
+        )
+
+
+def _result_sets_match(
+    candidate: QueryResult, gold: QueryResult, order_matters: bool
+) -> bool:
+    """Compare two result sets row-wise with numeric tolerance."""
+    if candidate.row_count != gold.row_count:
+        return False
+    if order_matters:
+        return all(_row_covers(c, g) for c, g in zip(candidate.rows, gold.rows))
+    return _rows_cover_unordered(candidate.rows, gold.rows)
+
+
+def _rows_cover_unordered(
+    candidate_rows: list[tuple[object, ...]], gold_rows: list[tuple[object, ...]]
+) -> bool:
+    """Each gold row must be covered by a distinct, not-yet-used candidate row."""
+    used: set[int] = set()
+    for gold_row in gold_rows:
+        match = next(
+            (
+                i
+                for i, cand_row in enumerate(candidate_rows)
+                if i not in used and _row_covers(cand_row, gold_row)
+            ),
+            None,
+        )
+        if match is None:
+            return False
+        used.add(match)
+    return True
+
+
+def _row_covers(
+    candidate_row: tuple[object, ...], gold_row: tuple[object, ...]
+) -> bool:
+    """True when every gold cell value is present in the candidate row (multiset)."""
+    pool = list(candidate_row)
+    for gold_cell in gold_row:
+        match = next(
+            (i for i, cell in enumerate(pool) if _value_matches(cell, str(gold_cell))),
+            None,
+        )
+        if match is None:
+            return False
+        pool.pop(match)
+    return True
 
 
 _JUDGE_SYSTEM_PROMPT = (
@@ -201,20 +281,28 @@ class RubricCheck:
         )
 
 
-def deserialize_check(spec: dict[str, str], judge_model: BaseChatModel) -> Check:
+def deserialize_check(
+    spec: dict[str, str], judge_model: BaseChatModel, sql_engine: SqlEnginePort
+) -> Check:
     """Build a Check from a JSON spec dict.
 
     Example:
-        check = deserialize_check({"type": "sql_valid"}, model)
-        check = deserialize_check({"type": "rubric", "rubric": "Must be a sentence."}, model)
+        check = deserialize_check({"type": "sql_valid"}, model, engine)
+        check = deserialize_check(
+            {"type": "execution_match", "gold_sql": "SELECT 1"}, model, engine
+        )
     """
     check_type = spec.get("type", "")
-    valid = ("response_includes", "sql_contains", "sql_valid", "result_set", "rubric")
+    valid = (
+        "response_includes",
+        "sql_valid",
+        "result_set",
+        "execution_match",
+        "rubric",
+    )
     match check_type:
         case "response_includes":
             return ResponseIncludesCheck(value=spec["value"])
-        case "sql_contains":
-            return SqlContainsCheck(value=spec["value"])
         case "sql_valid":
             return SqlValidCheck()
         case "result_set":
@@ -222,6 +310,8 @@ def deserialize_check(spec: dict[str, str], judge_model: BaseChatModel) -> Check
                 expected_value=spec["expected_value"],
                 column=spec.get("column"),
             )
+        case "execution_match":
+            return ExecutionMatchCheck(gold_sql=spec["gold_sql"], engine=sql_engine)
         case "rubric":
             return RubricCheck(model=judge_model, rubric=spec["rubric"])
         case _:

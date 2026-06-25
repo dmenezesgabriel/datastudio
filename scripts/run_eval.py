@@ -11,10 +11,12 @@ import json
 import time
 from dataclasses import asdict
 from pathlib import Path
+from typing import cast
 
 from chat.infrastructure.eval.checks import deserialize_check
 from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner
 from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
+from shared.application.ports.sql_engine_port import SqlEnginePort
 from shared.infrastructure.config.settings import AppSettings
 from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
 
@@ -49,7 +51,9 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _load_cases(cases_path: Path, judge_model: object) -> list[EvalCase]:
+def _load_cases(
+    cases_path: Path, judge_model: object, sql_engine: SqlEnginePort
+) -> list[EvalCase]:
     """Load EvalCases from a JSON fixture file, deserialising each check spec."""
     from langchain_core.language_models import BaseChatModel
 
@@ -60,9 +64,10 @@ def _load_cases(cases_path: Path, judge_model: object) -> list[EvalCase]:
             id=case_spec["id"],
             question=case_spec["question"],
             checks=[
-                deserialize_check(spec, judge_model)
+                deserialize_check(spec, judge_model, sql_engine)
                 for spec in case_spec.get("checks", [])
             ],
+            tags=case_spec.get("tags", []),
         )
         for case_spec in raw["cases"]
     ]
@@ -73,9 +78,30 @@ def _print_summary(report: EvalReport) -> None:
     print(f"Model    : {report.model}")
     print(f"Run at   : {report.run_at}")
     print(f"Results  : {s['passed']}/{s['total']} passed ({s['failed']} failed)")
-    print(f"Avg lat  : {s['avg_latency_s']}s")
-    print(f"Tokens   : {s['total_input_tokens']} in / {s['total_output_tokens']} out")
+    print(f"Pass rate: {s['pass_rate']}")
+    print(f"Latency  : {s['avg_latency_s']}s avg / {s['p95_latency_s']}s p95")
+    print(
+        f"Tokens   : {s['total_input_tokens']} in / {s['total_output_tokens']} out "
+        f"({s['avg_output_tokens']}/case)"
+    )
+    print(f"Cost     : ${s['cost_usd']}")
+    _print_by_tag(s)
     print()
+    _print_cases(report)
+
+
+def _print_by_tag(summary: dict[str, object]) -> None:
+    by_tag = summary.get("by_tag")
+    if not isinstance(by_tag, dict):
+        return
+    counts = cast(dict[str, dict[str, int]], by_tag)
+    print("By tag   :")
+    for tag in sorted(counts):
+        bucket = counts[tag]
+        print(f"           {tag:24} {bucket['passed']}/{bucket['total']}")
+
+
+def _print_cases(report: EvalReport) -> None:
     for case in report.cases:
         status = "PASS" if case.passed else "FAIL"
         total_lat = sum(m.latency_s for m in case.nodes.values())
@@ -99,6 +125,12 @@ def main() -> None:
         api_key=settings.openai_api_key,
         api_base=settings.openai_base_url,
     ).get_chat_model()
+    format_chat_model = LiteLLMLanguageModel(
+        model_name=settings.format_model_name,
+        temperature=settings.language_model_temperature,
+        api_key=settings.openai_api_key,
+        api_base=settings.openai_base_url,
+    ).get_chat_model()
 
     judge_model_name = args.judge_model or settings.language_model_name
     judge_model = LiteLLMLanguageModel(
@@ -108,9 +140,16 @@ def main() -> None:
         api_base=settings.openai_base_url,
     ).get_chat_model()
 
-    cases = _load_cases(Path(args.cases), judge_model)
     sql_engine = DuckDbSqlEngine(settings.duckdb_path)
-    runner = EvalRunner(chat_model, sql_engine, settings.language_model_name)
+    cases = _load_cases(Path(args.cases), judge_model, sql_engine)
+    runner = EvalRunner(
+        chat_model,
+        sql_engine,
+        settings.language_model_name,
+        format_chat_model=format_chat_model,
+        input_price_per_m=settings.input_token_price_per_million,
+        output_price_per_m=settings.output_token_price_per_million,
+    )
     report = runner.run(cases)
 
     output_path = Path(args.output)

@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from chat.infrastructure.eval.runner import CaseResult, EvalReport
+from shared.infrastructure.config.settings import AppSettings
 
 _CASES_PATH = Path(__file__).parent / "cases.json"
 _CASE_IDS = [c["id"] for c in json.loads(_CASES_PATH.read_text())["cases"]]
@@ -29,3 +30,37 @@ class TestEvalCases:
         result = next(c for c in eval_report.cases if c.case_id == case_id)
         # Assert
         assert result.passed, _format_failure(result)
+
+
+class TestEvalBudgets:
+    """Production SLO gates — a run that regresses past these thresholds fails CI."""
+
+    @pytest.mark.eval
+    def test_pass_rate_meets_target(
+        self, eval_report: EvalReport, app_settings: AppSettings
+    ) -> None:
+        # Assert
+        pass_rate = float(eval_report.summary["pass_rate"])  # type: ignore[arg-type]
+        assert pass_rate >= app_settings.eval_min_pass_rate, (
+            f"pass_rate {pass_rate} < target {app_settings.eval_min_pass_rate}"
+        )
+
+    @pytest.mark.eval
+    def test_p95_latency_within_budget(
+        self, eval_report: EvalReport, app_settings: AppSettings
+    ) -> None:
+        # Assert
+        p95 = float(eval_report.summary["p95_latency_s"])  # type: ignore[arg-type]
+        assert p95 <= app_settings.eval_max_p95_latency_s, (
+            f"p95 latency {p95}s > budget {app_settings.eval_max_p95_latency_s}s"
+        )
+
+    @pytest.mark.eval
+    def test_avg_output_tokens_within_budget(
+        self, eval_report: EvalReport, app_settings: AppSettings
+    ) -> None:
+        # Assert
+        avg_out = float(eval_report.summary["avg_output_tokens"])  # type: ignore[arg-type]
+        assert avg_out <= app_settings.eval_max_avg_output_tokens, (
+            f"avg output tokens {avg_out} > budget {app_settings.eval_max_avg_output_tokens}"
+        )

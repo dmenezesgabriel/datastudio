@@ -41,13 +41,18 @@ def eval_cases(
         api_key=app_settings.openai_api_key,
         api_base=app_settings.openai_base_url,
     ).get_chat_model()
+    sql_engine = DuckDbSqlEngine(app_settings.duckdb_path)
 
     raw = json.loads(_CASES_PATH.read_text())
     return [
         EvalCase(
             id=spec["id"],
             question=spec["question"],
-            checks=[deserialize_check(c, judge_model) for c in spec.get("checks", [])],
+            checks=[
+                deserialize_check(c, judge_model, sql_engine)
+                for c in spec.get("checks", [])
+            ],
+            tags=spec.get("tags", []),
         )
         for spec in raw["cases"]
         if spec["id"] in selected_ids
@@ -63,9 +68,22 @@ def eval_report(app_settings: AppSettings, eval_cases: list[EvalCase]) -> EvalRe
         api_key=app_settings.openai_api_key,
         api_base=app_settings.openai_base_url,
     ).get_chat_model()
+    format_chat_model = LiteLLMLanguageModel(
+        model_name=app_settings.format_model_name,
+        temperature=app_settings.language_model_temperature,
+        api_key=app_settings.openai_api_key,
+        api_base=app_settings.openai_base_url,
+    ).get_chat_model()
 
     sql_engine = DuckDbSqlEngine(app_settings.duckdb_path)
-    runner = EvalRunner(chat_model, sql_engine, app_settings.language_model_name)
+    runner = EvalRunner(
+        chat_model,
+        sql_engine,
+        app_settings.language_model_name,
+        format_chat_model=format_chat_model,
+        input_price_per_m=app_settings.input_token_price_per_million,
+        output_price_per_m=app_settings.output_token_price_per_million,
+    )
     report = runner.run(eval_cases)
 
     output_path = _REPORTS_DIR / f"eval_report_{int(time.time())}.json"

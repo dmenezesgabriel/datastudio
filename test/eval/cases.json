@@ -3,193 +3,446 @@
     {
       "id": "movies_warner_bros_volume",
       "question": "How many films has Warner Bros. released in the dataset?",
+      "tags": [
+        "aggregation",
+        "filter",
+        "easy"
+      ],
+      "gold_sql": "SELECT COUNT(*) FROM movies WHERE Distributor = 'Warner Bros.'",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "COUNT"},
-        {"type": "result_set", "expected_value": "318"},
-        {"type": "rubric", "rubric": "The answer should clearly state the number of films and attribute it to Warner Bros."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT COUNT(*) FROM movies WHERE Distributor = 'Warner Bros.'"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should clearly state the number of films and attribute it to Warner Bros."
+        }
       ]
     },
     {
       "id": "movies_critically_acclaimed",
       "question": "How many films received a Rotten Tomatoes score above 90?",
+      "tags": [
+        "aggregation",
+        "filter",
+        "easy"
+      ],
+      "gold_sql": "SELECT COUNT(*) FROM movies WHERE \"Rotten Tomatoes Rating\" > 90",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "COUNT"},
-        {"type": "result_set", "expected_value": "259"}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT COUNT(*) FROM movies WHERE \"Rotten Tomatoes Rating\" > 90"
+        }
       ]
     },
     {
       "id": "movies_drama_imdb_rating",
       "question": "What is the average IMDB rating for Drama films?",
+      "tags": [
+        "aggregation",
+        "filter",
+        "easy"
+      ],
+      "gold_sql": "SELECT ROUND(AVG(\"IMDB Rating\"),2) FROM movies WHERE \"Major Genre\" = 'Drama'",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "AVG"},
-        {"type": "result_set", "expected_value": "6.77"},
-        {"type": "rubric", "rubric": "The answer should state a numeric rating value and mention Drama as the genre."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(AVG(\"IMDB Rating\"),2) FROM movies WHERE \"Major Genre\" = 'Drama'"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state a numeric rating value and mention Drama as the genre."
+        }
       ]
     },
     {
       "id": "taxi_total_trips",
       "question": "What is the total number of taxi trips recorded in the dataset?",
+      "tags": [
+        "aggregation",
+        "easy"
+      ],
+      "gold_sql": "SELECT COUNT(*) FROM nyc_taxi",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "COUNT"},
-        {"type": "result_set", "expected_value": "7475949"}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT COUNT(*) FROM nyc_taxi"
+        }
       ]
     },
     {
       "id": "taxi_total_revenue",
       "question": "What is the total revenue generated across all taxi trips?",
+      "tags": [
+        "aggregation",
+        "easy"
+      ],
+      "gold_sql": "SELECT SUM(total_amount) FROM nyc_taxi",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "SUM"},
-        {"type": "result_set", "expected_value": "145047454"},
-        {"type": "rubric", "rubric": "The answer should state a dollar amount representing total revenue."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT SUM(total_amount) FROM nyc_taxi"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state a dollar amount representing total revenue."
+        }
       ]
     },
     {
       "id": "taxi_dominant_payment_type",
       "question": "What is the most commonly used payment type code for taxi trips?",
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ],
+      "gold_sql": "SELECT payment_type FROM nyc_taxi GROUP BY payment_type ORDER BY COUNT(*) DESC LIMIT 1",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "COUNT"},
-        {"type": "result_set", "expected_value": "1"}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT payment_type FROM nyc_taxi GROUP BY payment_type ORDER BY COUNT(*) DESC LIMIT 1"
+        }
       ]
     },
     {
       "id": "cars_japan_fuel_efficiency",
       "question": "What is the average fuel efficiency in miles per gallon for Japanese cars?",
+      "tags": [
+        "aggregation",
+        "filter",
+        "easy"
+      ],
+      "gold_sql": "SELECT ROUND(AVG(Miles_per_Gallon),1) FROM cars WHERE Origin = 'Japan'",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "AVG"},
-        {"type": "result_set", "expected_value": "30.5"},
-        {"type": "rubric", "rubric": "The answer should state a numeric MPG value and reference Japanese cars."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(AVG(Miles_per_Gallon),1) FROM cars WHERE Origin = 'Japan'"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state a numeric MPG value and reference Japanese cars."
+        }
       ]
     },
     {
       "id": "cars_us_efficiency_improvement",
       "question": "By how many miles per gallon did average fuel efficiency improve for US-manufactured cars between 1970 and 1980?",
+      "tags": [
+        "conditional_aggregation",
+        "date",
+        "comparison",
+        "hard"
+      ],
+      "gold_sql": "SELECT ROUND(AVG(Miles_per_Gallon) FILTER(WHERE date_part('year',Year)=1980) - AVG(Miles_per_Gallon) FILTER(WHERE date_part('year',Year)=1970),1) FROM cars WHERE Origin='USA'",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "result_set", "expected_value": "10.6"},
-        {"type": "rubric", "rubric": "The answer should state the improvement as a number and mention the time period 1970 to 1980."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(AVG(Miles_per_Gallon) FILTER(WHERE date_part('year',Year)=1980) - AVG(Miles_per_Gallon) FILTER(WHERE date_part('year',Year)=1970),1) FROM cars WHERE Origin='USA'"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state the improvement as a number and mention the time period 1970 to 1980."
+        }
       ]
     },
     {
       "id": "weather_extreme_heat_days",
       "question": "How many days in Seattle had maximum temperatures exceeding 30 degrees Celsius?",
+      "tags": [
+        "aggregation",
+        "filter",
+        "easy"
+      ],
+      "gold_sql": "SELECT COUNT(*) FROM seattle_weather WHERE temp_max > 30",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "COUNT"},
-        {"type": "result_set", "expected_value": "53"}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT COUNT(*) FROM seattle_weather WHERE temp_max > 30"
+        }
       ]
     },
     {
       "id": "weather_summer_sunshine",
       "question": "What percentage of days during summer months (June, July, and August) in Seattle were sunny?",
+      "tags": [
+        "percentage",
+        "date",
+        "filter",
+        "medium"
+      ],
+      "gold_sql": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE weather='sun')/COUNT(*),1) FROM seattle_weather WHERE date_part('month',date) IN (6,7,8)",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "result_set", "expected_value": "68.2"},
-        {"type": "rubric", "rubric": "The answer should state a percentage and reference the summer period or the months June through August."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE weather='sun')/COUNT(*),1) FROM seattle_weather WHERE date_part('month',date) IN (6,7,8)"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state a percentage and reference the summer period or the months June through August."
+        }
       ]
     },
     {
       "id": "olist_total_gmv",
       "question": "What is the total gross merchandise value generated across all orders on the platform?",
+      "tags": [
+        "aggregation",
+        "easy"
+      ],
+      "gold_sql": "SELECT ROUND(SUM(price),1) FROM olist_order_items",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "SUM"},
-        {"type": "result_set", "expected_value": "13591643.7"},
-        {"type": "rubric", "rubric": "The answer should state a total monetary amount representing gross merchandise value across all platform orders."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(SUM(price),1) FROM olist_order_items"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state a total monetary amount representing gross merchandise value across all platform orders."
+        }
       ]
     },
     {
       "id": "olist_top_revenue_category",
-      "question": "Which product category generated the highest revenue on the platform?",
+      "question": "Which product category, by its English name, generated the highest revenue on the platform?",
+      "tags": [
+        "join",
+        "group_by",
+        "ranking",
+        "hard"
+      ],
+      "gold_sql": "SELECT t.product_category_name_english FROM olist_order_items oi JOIN olist_products p ON oi.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1 ORDER BY SUM(oi.price) DESC LIMIT 1",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "SUM"},
-        {"type": "result_set", "expected_value": "health_beauty"},
-        {"type": "rubric", "rubric": "The answer should name a specific product category and attribute it to the highest revenue position."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT t.product_category_name_english FROM olist_order_items oi JOIN olist_products p ON oi.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1 ORDER BY SUM(oi.price) DESC LIMIT 1"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should name a specific product category and attribute it to the highest revenue position."
+        }
       ]
     },
     {
       "id": "olist_on_time_delivery_rate",
       "question": "What percentage of delivered orders arrived on or before the estimated delivery date?",
+      "tags": [
+        "percentage",
+        "date",
+        "filter",
+        "medium"
+      ],
+      "gold_sql": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_delivered_customer_date <= order_estimated_delivery_date)/COUNT(*),2) FROM olist_orders WHERE order_status='delivered' AND order_delivered_customer_date IS NOT NULL",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "COUNT"},
-        {"type": "result_set", "expected_value": "91.89"},
-        {"type": "rubric", "rubric": "The answer should state a percentage and reference on-time delivery or the estimated delivery date."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_delivered_customer_date <= order_estimated_delivery_date)/COUNT(*),2) FROM olist_orders WHERE order_status='delivered' AND order_delivered_customer_date IS NOT NULL"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state a percentage and reference on-time delivery or the estimated delivery date."
+        }
       ]
     },
     {
       "id": "olist_average_order_value",
       "question": "What is the average order value across all purchases on the platform?",
+      "tags": [
+        "subquery",
+        "aggregation",
+        "medium"
+      ],
+      "gold_sql": "SELECT ROUND(AVG(order_total),2) FROM (SELECT order_id, SUM(payment_value) order_total FROM olist_order_payments GROUP BY order_id)",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "AVG"},
-        {"type": "result_set", "expected_value": "160.99"},
-        {"type": "rubric", "rubric": "The answer should state a monetary amount representing the average value per order."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(AVG(order_total),2) FROM (SELECT order_id, SUM(payment_value) order_total FROM olist_order_payments GROUP BY order_id)"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state a monetary amount representing the average value per order."
+        }
       ]
     },
     {
       "id": "olist_avg_review_score",
       "question": "What is the platform's average customer satisfaction score based on order reviews?",
+      "tags": [
+        "aggregation",
+        "easy"
+      ],
+      "gold_sql": "SELECT ROUND(AVG(review_score),2) FROM olist_order_reviews",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "AVG"},
-        {"type": "result_set", "expected_value": "4.09"},
-        {"type": "rubric", "rubric": "The answer should state a numeric score out of 5 representing average customer satisfaction across all reviews."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(AVG(review_score),2) FROM olist_order_reviews"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state a numeric score out of 5 representing average customer satisfaction across all reviews."
+        }
       ]
     },
     {
       "id": "olist_five_star_review_share",
       "question": "What percentage of customer reviews received the highest possible rating of 5 stars?",
+      "tags": [
+        "percentage",
+        "filter",
+        "medium"
+      ],
+      "gold_sql": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE review_score=5)/COUNT(*),2) FROM olist_order_reviews",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "COUNT"},
-        {"type": "result_set", "expected_value": "57.78"},
-        {"type": "rubric", "rubric": "The answer should state a percentage and attribute it to 5-star or top-rated reviews."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE review_score=5)/COUNT(*),2) FROM olist_order_reviews"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state a percentage and attribute it to 5-star or top-rated reviews."
+        }
       ]
     },
     {
       "id": "olist_credit_card_payment_share",
       "question": "What percentage of payment transactions on the platform were made using credit card?",
+      "tags": [
+        "percentage",
+        "filter",
+        "medium"
+      ],
+      "gold_sql": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE payment_type='credit_card')/COUNT(*),2) FROM olist_order_payments",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "COUNT"},
-        {"type": "result_set", "expected_value": "73.92"},
-        {"type": "rubric", "rubric": "The answer should state a percentage and reference credit card as the payment method."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE payment_type='credit_card')/COUNT(*),2) FROM olist_order_payments"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state a percentage and reference credit card as the payment method."
+        }
       ]
     },
     {
       "id": "olist_cancellation_rate",
-      "question": "What is the overall order cancellation rate on the platform?",
+      "question": "What percentage of all orders placed on the platform were cancelled?",
+      "tags": [
+        "percentage",
+        "filter",
+        "medium"
+      ],
+      "gold_sql": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_status='canceled')/COUNT(*),2) FROM olist_orders",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "rubric", "rubric": "The answer should state a percentage representing the share of orders that were cancelled, around 0.63%."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_status='canceled')/COUNT(*),2) FROM olist_orders"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state a percentage representing the share of orders that were cancelled, around 0.63%."
+        }
       ]
     },
     {
       "id": "olist_top_customer_state",
       "question": "Which Brazilian state has the highest number of registered customers?",
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ],
+      "gold_sql": "SELECT customer_state FROM olist_customers GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "COUNT"},
-        {"type": "result_set", "expected_value": "SP"},
-        {"type": "rubric", "rubric": "The answer should name a Brazilian state abbreviation or full name and associate it with the largest customer concentration."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT customer_state FROM olist_customers GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should name a Brazilian state abbreviation or full name and associate it with the largest customer concentration."
+        }
       ]
     },
     {
       "id": "olist_avg_delivery_days",
       "question": "On average, how many days does it take from order placement to delivery to the customer?",
+      "tags": [
+        "date",
+        "aggregation",
+        "filter",
+        "medium"
+      ],
+      "gold_sql": "SELECT ROUND(AVG(date_diff('day', order_purchase_timestamp, order_delivered_customer_date)),1) FROM olist_orders WHERE order_delivered_customer_date IS NOT NULL",
       "checks": [
-        {"type": "sql_valid"},
-        {"type": "sql_contains", "value": "AVG"},
-        {"type": "result_set", "expected_value": "12.5"},
-        {"type": "rubric", "rubric": "The answer should state a number of days representing the average end-to-end delivery time from purchase to delivery."}
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(AVG(date_diff('day', order_purchase_timestamp, order_delivered_customer_date)),1) FROM olist_orders WHERE order_delivered_customer_date IS NOT NULL"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state a number of days representing the average end-to-end delivery time from purchase to delivery."
+        }
       ]
     }
   ]
