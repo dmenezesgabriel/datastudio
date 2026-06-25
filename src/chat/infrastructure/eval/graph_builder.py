@@ -1,6 +1,5 @@
 from langchain_core.language_models import BaseChatModel
 
-from shared.application.ports.sql_engine_port import SqlEnginePort
 from chat.infrastructure.eval.metrics import MetricsRecorder
 from chat.infrastructure.eval.timed_node import TimedNode
 from chat.infrastructure.graph.nodes.execute_sql import ExecuteSql
@@ -12,6 +11,7 @@ from chat.infrastructure.graph.nodes.repair_sql import RepairSql
 from chat.infrastructure.graph.nodes.select_tables import SelectTables
 from chat.infrastructure.graph.text2sql_graph import ChatNode, wire_text2sql_graph
 from chat.infrastructure.graph.types import TypedChatGraph
+from shared.application.ports.sql_engine_port import SqlEnginePort
 
 
 def build_eval_graph(
@@ -38,11 +38,7 @@ def build_eval_graph(
         "get_schema": TimedNode("get_schema", GetSchema(sql_engine), recorder),
         "generate_sql": TimedNode("generate_sql", GenerateSql(chat_model), recorder),
         "execute_sql": TimedNode("execute_sql", ExecuteSql(sql_engine), recorder),
-        "repair_sql": TimedNode(
-            "repair_sql", RepairSql(chat_model, sql_engine), recorder
-        ),
-        "format_response": TimedNode(
-            "format_response", FormatResponse(fast_model), recorder
-        ),
+        "repair_sql": TimedNode("repair_sql", RepairSql(chat_model, sql_engine), recorder),
+        "format_response": TimedNode("format_response", FormatResponse(fast_model), recorder),
     }
     return wire_text2sql_graph(nodes)

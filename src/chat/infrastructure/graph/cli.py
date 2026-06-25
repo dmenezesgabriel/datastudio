@@ -2,11 +2,11 @@ import argparse
 from typing import cast
 
 from chat.domain.value_objects.chat_state import ChatState
-from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
 from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
 from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
 from chat.infrastructure.graph.types import TypedChatGraph
 from shared.infrastructure.config.settings import AppSettings
+from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -47,9 +47,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="API base URL (default: from settings)",
     )
     # kept for backwards-compatibility, no longer forwarded
-    parser.add_argument(
-        "--system-prompt", default=None, metavar="TEXT", help=argparse.SUPPRESS
-    )
+    parser.add_argument("--system-prompt", default=None, metavar="TEXT", help=argparse.SUPPRESS)
     mode_group = parser.add_mutually_exclusive_group(required=True)
     mode_group.add_argument(
         "--message",
@@ -150,9 +148,7 @@ def main() -> None:
         api_base=api_base,
     ).get_chat_model()
     sql_engine = DuckDbSqlEngine(settings.duckdb_path)
-    graph = build_text2sql_graph(
-        chat_model, sql_engine, format_chat_model=format_chat_model
-    )
+    graph = build_text2sql_graph(chat_model, sql_engine, format_chat_model=format_chat_model)
     if args.interactive:
         run_interactive(graph)
         return

@@ -19,9 +19,7 @@ class CheckResult(TypedDict):
     type: str
     value: str  # rubric text for RubricCheck; empty string for SqlValidCheck
     passed: bool
-    reasoning: (
-        str  # LLM explanation for RubricCheck; empty string for deterministic checks
-    )
+    reasoning: str  # LLM explanation for RubricCheck; empty string for deterministic checks
 
 
 class Check(Protocol):
@@ -51,9 +49,7 @@ class ResponseIncludesCheck:
     def evaluate(self, state: ChatState) -> CheckResult:
         response = cast(dict[str, object], state).get("response") or ""
         passed = self.value.lower() in str(response).lower()
-        return CheckResult(
-            type="response_includes", value=self.value, passed=passed, reasoning=""
-        )
+        return CheckResult(type="response_includes", value=self.value, passed=passed, reasoning="")
 
 
 class SqlValidCheck:
@@ -106,11 +102,7 @@ class ResultSetCheck:
         else:
             cells = [v for row in rows for v in row.values()]
         passed = any(_value_matches(cell, self.expected_value) for cell in cells)
-        label = (
-            f"{self.column}={self.expected_value}"
-            if self.column
-            else self.expected_value
-        )
+        label = f"{self.column}={self.expected_value}" if self.column else self.expected_value
         return CheckResult(type="result_set", value=label, passed=passed, reasoning="")
 
 
@@ -167,9 +159,7 @@ class ExecutionMatchCheck:
         gold = self.engine.execute_query(self.gold_sql)
         passed = _result_sets_match(candidate, gold, self.order_matters)
         reasoning = (
-            ""
-            if passed
-            else f"expected {gold.row_count} gold row(s), got {candidate.row_count}"
+            "" if passed else f"expected {gold.row_count} gold row(s), got {candidate.row_count}"
         )
         return CheckResult(
             type="execution_match",
@@ -179,14 +169,12 @@ class ExecutionMatchCheck:
         )
 
 
-def _result_sets_match(
-    candidate: QueryResult, gold: QueryResult, order_matters: bool
-) -> bool:
+def _result_sets_match(candidate: QueryResult, gold: QueryResult, order_matters: bool) -> bool:
     """Compare two result sets row-wise with numeric tolerance."""
     if candidate.row_count != gold.row_count:
         return False
     if order_matters:
-        return all(_row_covers(c, g) for c, g in zip(candidate.rows, gold.rows))
+        return all(_row_covers(c, g) for c, g in zip(candidate.rows, gold.rows, strict=True))
     return _rows_cover_unordered(candidate.rows, gold.rows)
 
 
@@ -210,9 +198,7 @@ def _rows_cover_unordered(
     return True
 
 
-def _row_covers(
-    candidate_row: tuple[object, ...], gold_row: tuple[object, ...]
-) -> bool:
+def _row_covers(candidate_row: tuple[object, ...], gold_row: tuple[object, ...]) -> bool:
     """True when every gold cell value is present in the candidate row (multiset)."""
     pool = list(candidate_row)
     for gold_cell in gold_row:
@@ -231,9 +217,7 @@ _JUDGE_SYSTEM_PROMPT = (
     "decide whether the response satisfies the rubric."
 )
 
-_JUDGE_HUMAN_TEMPLATE = (
-    "Question: {question}\n\nResponse: {response}\n\nRubric: {rubric}"
-)
+_JUDGE_HUMAN_TEMPLATE = "Question: {question}\n\nResponse: {response}\n\nRubric: {rubric}"
 
 
 class _RubricVerdict(BaseModel):
@@ -315,6 +299,4 @@ def deserialize_check(
         case "rubric":
             return RubricCheck(model=judge_model, rubric=spec["rubric"])
         case _:
-            raise ValueError(
-                f"Unknown check type {check_type!r}; expected one of {valid}"
-            )
+            raise ValueError(f"Unknown check type {check_type!r}; expected one of {valid}")

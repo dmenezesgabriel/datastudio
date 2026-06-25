@@ -22,7 +22,7 @@ class QueryResult:
 
     def to_dict_list(self) -> list[dict[str, object]]:
         """Returns each row as a dict keyed by column name."""
-        return [dict(zip(self.columns, row)) for row in self.rows]
+        return [dict(zip(self.columns, row, strict=True)) for row in self.rows]
 
     def to_markdown_table(self) -> str:
         """Returns a GFM pipe table string, or empty string when there are no rows."""

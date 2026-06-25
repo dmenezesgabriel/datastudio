@@ -4,7 +4,6 @@ from typing import Protocol, cast
 from langchain_core.language_models import BaseChatModel
 from langgraph.graph import END, START, StateGraph  # pyright: ignore[reportMissingTypeStubs]
 
-from shared.application.ports.sql_engine_port import SqlEnginePort
 from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.graph.nodes.execute_sql import ExecuteSql
 from chat.infrastructure.graph.nodes.format_response import FormatResponse
@@ -14,10 +13,13 @@ from chat.infrastructure.graph.nodes.list_tables import ListTables
 from chat.infrastructure.graph.nodes.repair_sql import MAX_REPAIR_ATTEMPTS, RepairSql
 from chat.infrastructure.graph.nodes.select_tables import SelectTables
 from chat.infrastructure.graph.types import TypedChatGraph
+from shared.application.ports.sql_engine_port import SqlEnginePort
 
 
 class ChatNode(Protocol):
-    """Structural contract for a callable that accepts ChatState and returns a partial state dict."""
+    """Structural contract for a callable that accepts ChatState and returns
+    a partial state dict.
+    """
 
     def __call__(self, state: ChatState) -> Mapping[str, object]: ...
 

@@ -5,12 +5,12 @@ from typing import cast
 
 from langchain_core.language_models import BaseChatModel
 
-from shared.application.ports.sql_engine_port import SqlEnginePort
 from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.eval.checks import Check, CheckResult
 from chat.infrastructure.eval.graph_builder import build_eval_graph
 from chat.infrastructure.eval.metrics import EvalCollector, NodeMetrics
 from chat.infrastructure.eval.token_callback import TokenCountingCallback
+from shared.application.ports.sql_engine_port import SqlEnginePort
 
 
 @dataclass
@@ -131,11 +131,9 @@ class EvalRunner:
         """Run all cases sequentially and return a consolidated report."""
         results = [self._run_case(case) for case in cases]
         return EvalReport(
-            run_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            run_at=datetime.datetime.now(datetime.UTC).isoformat(),
             model=self._model_name,
-            summary=compute_summary(
-                results, self._input_price_per_m, self._output_price_per_m
-            ),
+            summary=compute_summary(results, self._input_price_per_m, self._output_price_per_m),
             cases=results,
         )
 

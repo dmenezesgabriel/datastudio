@@ -58,9 +58,7 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.message,
         }
-        payload.update(
-            {k: v for k, v in record.__dict__.items() if k not in self._STDLIB_ATTRS}
-        )
+        payload.update({k: v for k, v in record.__dict__.items() if k not in self._STDLIB_ATTRS})
         exc_info = record.exc_info
         if exc_info is not None and exc_info[0] is not None:
             payload["exception"] = self.formatException(exc_info)
@@ -69,6 +67,4 @@ class JsonFormatter(logging.Formatter):
         return payload
 
     def _to_iso_timestamp(self, created: float) -> str:
-        return datetime.datetime.fromtimestamp(
-            created, tz=datetime.timezone.utc
-        ).isoformat()
+        return datetime.datetime.fromtimestamp(created, tz=datetime.UTC).isoformat()
