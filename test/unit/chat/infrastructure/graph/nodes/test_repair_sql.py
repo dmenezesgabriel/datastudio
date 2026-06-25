@@ -63,9 +63,7 @@ class TestRepairSqlFinalAttempt:
         # arrange — first candidate fails to execute, second succeeds
         good = QueryResult(columns=["c"], rows=[(318,)], row_count=1)
         model = FakeSqlCandidateModel(["BAD SQL", "GOOD SQL"])
-        engine = FakeSqlEngine(
-            results_by_sql={"GOOD SQL": good}, error=ValueError("bad")
-        )
+        engine = FakeSqlEngine(results_by_sql={"GOOD SQL": good}, error=ValueError("bad"))
         # act — attempts=1 makes this the final (2nd) attempt
         result = RepairSql(model, engine, candidate_count=2)(_state(attempts=1))
         # assert
@@ -80,3 +78,13 @@ class TestRepairSqlFinalAttempt:
         result = RepairSql(model, engine, candidate_count=2)(_state(attempts=1))
         # assert
         assert result["sql_query"] == "FIRST"
+
+    def test_stops_generating_after_first_successful_candidate(self) -> None:
+        # arrange — first candidate executes cleanly; second must never be generated
+        good = QueryResult(columns=["c"], rows=[(1,)], row_count=1)
+        model = FakeSqlCandidateModel(["FIRST SQL", "SECOND SQL"])
+        engine = FakeSqlEngine(results_by_sql={"FIRST SQL": good})
+        # act
+        RepairSql(model, engine, candidate_count=2)(_state(attempts=1))
+        # assert — model called exactly once (early exit after first success)
+        assert len(model.runnable.all_messages) == 1

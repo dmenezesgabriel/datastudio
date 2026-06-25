@@ -67,9 +67,19 @@ class RepairSql:
         return {"sql_query": self._best_candidate(state), "repair_attempts": attempt}
 
     def _best_candidate(self, state: ChatState) -> str:
-        """Generate diverse candidates and return the first that executes cleanly."""
-        candidates = [self._repair_once(state, hint) for hint in self._hints()]
-        return next((sql for sql in candidates if self._executes(sql)), candidates[0])
+        """Generate candidates one at a time and return the first that executes cleanly.
+
+        Stops early on success so failing cases pay for at most one extra LLM call
+        beyond what already executed successfully.
+        """
+        first: str | None = None
+        for hint in self._hints():
+            sql = self._repair_once(state, hint)
+            if first is None:
+                first = sql
+            if self._executes(sql):
+                return sql
+        return first or ""
 
     def _repair_once(self, state: ChatState, hint: str) -> str:
         return self._model.invoke(self._build_messages(state, hint)).sql
