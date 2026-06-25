@@ -39,3 +39,5 @@ class AppSettings(BaseSettings):
     eval_min_pass_rate: float = 0.8
     eval_max_p95_latency_s: float = 180.0
     eval_max_avg_output_tokens: float = 3000.0
+    # Cases run through a bounded thread pool; the ceiling is LLM rate limits.
+    eval_max_workers: int = 4

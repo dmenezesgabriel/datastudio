@@ -3,6 +3,7 @@
 import datetime
 import math
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Literal, cast
 
@@ -130,6 +131,7 @@ class EvalRunner:
         runner = EvalRunner(
             graph_factory=lambda r: build_eval_graph(model, engine, r),
             model_name="openai/glm-5",
+            max_workers=4,
         )
         report = runner.run(cases)
     """
@@ -140,22 +142,41 @@ class EvalRunner:
         model_name: str,
         input_price_per_m: float = 0.0,
         output_price_per_m: float = 0.0,
+        max_workers: int = 1,
     ) -> None:
-        """Store the factory and pricing; graph construction happens per case in run()."""
+        """Store the factory, pricing, and concurrency; graphs are built per case in run().
+
+        max_workers > 1 runs cases through a bounded thread pool. Each case
+        already gets its own graph + collector, and the SqlEnginePort opens a
+        fresh read-only connection per call, so cases are isolated — keep the
+        bound modest since the real ceiling is upstream LLM rate limits.
+        """
         self._graph_factory = graph_factory
         self._model_name = model_name
         self._input_price_per_m = input_price_per_m
         self._output_price_per_m = output_price_per_m
+        self._max_workers = max_workers
 
     def run(self, cases: list[EvalCase]) -> EvalReport:
-        """Run all cases sequentially and return a consolidated report."""
-        results = [self._run_case(case) for case in cases]
+        """Run all cases and return a consolidated report."""
+        results = self._run_cases(cases)
         return EvalReport(
             run_at=datetime.datetime.now(datetime.UTC).isoformat(),
             model=self._model_name,
             summary=compute_summary(results, self._input_price_per_m, self._output_price_per_m),
             cases=results,
         )
+
+    def _run_cases(self, cases: list[EvalCase]) -> list[CaseResult]:
+        """Run cases sequentially, or via a thread pool when max_workers > 1.
+
+        Results keep input order in both paths (ThreadPoolExecutor.map preserves
+        ordering), so the report is deterministic regardless of completion order.
+        """
+        if self._max_workers <= 1:
+            return [self._run_case(case) for case in cases]
+        with ThreadPoolExecutor(max_workers=self._max_workers) as pool:
+            return list(pool.map(self._run_case, cases))
 
     def _run_case(self, case: EvalCase) -> CaseResult:
         collector = EvalCollector()

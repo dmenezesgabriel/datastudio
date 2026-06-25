@@ -149,6 +149,7 @@ def main() -> None:
         model_name=settings.language_model_name,
         input_price_per_m=settings.input_token_price_per_million,
         output_price_per_m=settings.output_token_price_per_million,
+        max_workers=settings.eval_max_workers,
     )
     report = runner.run(cases)
 

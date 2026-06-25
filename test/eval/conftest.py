@@ -82,6 +82,7 @@ def eval_report(app_settings: AppSettings, eval_cases: list[EvalCase]) -> EvalRe
         model_name=app_settings.language_model_name,
         input_price_per_m=app_settings.input_token_price_per_million,
         output_price_per_m=app_settings.output_token_price_per_million,
+        max_workers=app_settings.eval_max_workers,
     )
     report = runner.run(eval_cases)
 

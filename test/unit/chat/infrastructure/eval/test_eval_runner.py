@@ -1,5 +1,7 @@
 """Unit tests for EvalRunner using a fake graph factory."""
 
+import threading
+import time
 from collections.abc import Mapping
 from typing import Any, cast
 
@@ -7,6 +9,51 @@ from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.eval.metrics import MetricsRecorder
 from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner
 from shared.domain.value_objects.query_result import QueryResult
+
+
+def _state_for(question: str, response: str) -> Mapping[str, object]:
+    """Minimal successful ChatState used by the concurrency fakes."""
+    return cast(
+        ChatState,
+        {
+            "question": question,
+            "tables": [],
+            "schema": "",
+            "sql_query": "SELECT 1",
+            "sql_error": "",
+            "query_result": QueryResult(columns=["n"], rows=[(1,)], row_count=1),
+            "response": response,
+        },
+    )
+
+
+class _BarrierGraph:
+    """Fake graph whose invoke blocks on a shared barrier to force overlap.
+
+    If cases run concurrently the barrier releases all parties; if they run
+    sequentially the first wait() times out, raising BrokenBarrierError.
+    """
+
+    def __init__(self, barrier: threading.Barrier) -> None:
+        self._barrier = barrier
+
+    def invoke(self, state: Any, config: Any = None) -> Mapping[str, object]:
+        """Rendezvous at the barrier, then return a successful state."""
+        self._barrier.wait()
+        return _state_for(state.get("question", ""), "ok")
+
+
+class _PerQuestionDelayGraph:
+    """Fake graph that sleeps per-question so earlier cases can finish last."""
+
+    def __init__(self, delays: dict[str, float]) -> None:
+        self._delays = delays
+
+    def invoke(self, state: Any, config: Any = None) -> Mapping[str, object]:
+        """Sleep the configured delay for this question, echoing it as response."""
+        question = str(state.get("question", ""))
+        time.sleep(self._delays.get(question, 0.0))
+        return _state_for(question, question)
 
 
 class _FakeGraph:
@@ -171,6 +218,49 @@ class TestEvalRunnerErrorHandling:
         # assert — both cases present; second one passed
         assert len(report.cases) == 2
         assert report.cases[1].passed is True
+
+
+class TestEvalRunnerConcurrency:
+    """max_workers > 1 runs cases through a bounded thread pool, order preserved."""
+
+    def test_cases_run_concurrently_when_workers_allow(self) -> None:
+        """Two cases rendezvous at a barrier, proving they execute in parallel."""
+        # arrange — barrier needs both cases inside invoke() at once, else it times out
+        barrier = threading.Barrier(2, timeout=3.0)
+        runner = EvalRunner(
+            graph_factory=lambda _recorder: _BarrierGraph(barrier),
+            model_name="test-model",
+            max_workers=2,
+        )
+        cases = [
+            EvalCase(id="c1", question="q1", checks=[]),
+            EvalCase(id="c2", question="q2", checks=[]),
+        ]
+        # act
+        report = runner.run(cases)
+        # assert — neither case hit a BrokenBarrierError, so they overlapped
+        assert all(c.error is None for c in report.cases)
+        assert {c.case_id for c in report.cases} == {"c1", "c2"}
+
+    def test_results_keep_input_order_despite_completion_order(self) -> None:
+        """The first case finishes last, yet results stay in input order."""
+        # arrange — c0 sleeps longest, so c1/c2 complete before it
+        graph = _PerQuestionDelayGraph({"q0": 0.06, "q1": 0.0, "q2": 0.0})
+        runner = EvalRunner(
+            graph_factory=lambda _recorder: graph,
+            model_name="test-model",
+            max_workers=3,
+        )
+        cases = [
+            EvalCase(id="c0", question="q0", checks=[]),
+            EvalCase(id="c1", question="q1", checks=[]),
+            EvalCase(id="c2", question="q2", checks=[]),
+        ]
+        # act
+        report = runner.run(cases)
+        # assert — output order mirrors input order, not completion order
+        assert [c.case_id for c in report.cases] == ["c0", "c1", "c2"]
+        assert [c.response for c in report.cases] == ["q0", "q1", "q2"]
 
 
 class TestEvalRunnerNodeMetrics:
