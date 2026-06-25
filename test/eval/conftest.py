@@ -1,3 +1,5 @@
+"""Session-scoped pytest fixtures for the eval test suite."""
+
 import json
 import time
 from dataclasses import asdict
@@ -8,6 +10,7 @@ import pytest
 from chat.infrastructure.eval.checks import deserialize_check
 from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner
 from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
+from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
 from shared.infrastructure.config.settings import AppSettings
 from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
 
@@ -17,13 +20,12 @@ _REPORTS_DIR = Path("reports")
 
 @pytest.fixture(scope="session")
 def app_settings() -> AppSettings:
+    """Load AppSettings once per session from the project .env file."""
     return AppSettings()  # type: ignore[call-arg]
 
 
 @pytest.fixture(scope="session")
-def eval_cases(
-    request: pytest.FixtureRequest, app_settings: AppSettings
-) -> list[EvalCase]:
+def eval_cases(request: pytest.FixtureRequest, app_settings: AppSettings) -> list[EvalCase]:
     """Load and deserialise only the cases selected by pytest (respects -k).
 
     Example:
@@ -48,10 +50,7 @@ def eval_cases(
         EvalCase(
             id=spec["id"],
             question=spec["question"],
-            checks=[
-                deserialize_check(c, judge_model, sql_engine)
-                for c in spec.get("checks", [])
-            ],
+            checks=[deserialize_check(c, judge_model, sql_engine) for c in spec.get("checks", [])],
             tags=spec.get("tags", []),
         )
         for spec in raw["cases"]
@@ -77,10 +76,10 @@ def eval_report(app_settings: AppSettings, eval_cases: list[EvalCase]) -> EvalRe
 
     sql_engine = DuckDbSqlEngine(app_settings.duckdb_path)
     runner = EvalRunner(
-        chat_model,
-        sql_engine,
-        app_settings.language_model_name,
-        format_chat_model=format_chat_model,
+        graph_factory=lambda recorder: build_text2sql_graph(
+            chat_model, sql_engine, format_chat_model, recorder=recorder
+        ),
+        model_name=app_settings.language_model_name,
         input_price_per_m=app_settings.input_token_price_per_million,
         output_price_per_m=app_settings.output_token_price_per_million,
     )

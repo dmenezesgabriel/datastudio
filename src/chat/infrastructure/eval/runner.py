@@ -1,16 +1,16 @@
+"""Eval runner: orchestrates EvalCases through the instrumented graph."""
+
 import datetime
 import math
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import cast
 
-from langchain_core.language_models import BaseChatModel
-
 from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.eval.checks import Check, CheckResult
-from chat.infrastructure.eval.graph_builder import build_eval_graph
-from chat.infrastructure.eval.metrics import EvalCollector, NodeMetrics
+from chat.infrastructure.eval.metrics import EvalCollector, MetricsRecorder, NodeMetrics
 from chat.infrastructure.eval.token_callback import TokenCountingCallback
-from shared.application.ports.sql_engine_port import SqlEnginePort
+from chat.infrastructure.graph.types import TypedChatGraph
 
 
 @dataclass
@@ -103,27 +103,29 @@ def compute_summary(
 class EvalRunner:
     """Runs EvalCases through the instrumented graph and returns an EvalReport.
 
-    The judge model for RubricCheck is already baked into the Check objects at
-    deserialisation time, so this class only drives the text2sql pipeline.
+    Accepts a graph_factory callable so that graph construction (and the
+    dependencies it needs — models, engines) stays outside this class. Each
+    case receives a fresh EvalCollector; the factory is called once per case
+    with that collector so metrics are isolated per case.
 
     Example:
-        runner = EvalRunner(chat_model, sql_engine, "openai/glm-5")
+        runner = EvalRunner(
+            graph_factory=lambda r: build_text2sql_graph(model, engine, recorder=r),
+            model_name="openai/glm-5",
+        )
         report = runner.run(cases)
     """
 
     def __init__(
         self,
-        chat_model: BaseChatModel,
-        sql_engine: SqlEnginePort,
+        graph_factory: Callable[[MetricsRecorder], TypedChatGraph],
         model_name: str,
-        format_chat_model: BaseChatModel | None = None,
         input_price_per_m: float = 0.0,
         output_price_per_m: float = 0.0,
     ) -> None:
-        self._chat_model = chat_model
-        self._sql_engine = sql_engine
+        """Store the factory and pricing; graph construction happens per case in run()."""
+        self._graph_factory = graph_factory
         self._model_name = model_name
-        self._format_chat_model = format_chat_model
         self._input_price_per_m = input_price_per_m
         self._output_price_per_m = output_price_per_m
 
@@ -139,12 +141,7 @@ class EvalRunner:
 
     def _run_case(self, case: EvalCase) -> CaseResult:
         collector = EvalCollector()
-        graph = build_eval_graph(
-            self._chat_model,
-            self._sql_engine,
-            collector,
-            self._format_chat_model,
-        )
+        graph = self._graph_factory(collector)
         callback = TokenCountingCallback(collector)
         try:
             raw = graph.invoke(  # pyright: ignore[reportUnknownMemberType]
