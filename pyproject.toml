@@ -32,8 +32,11 @@ target-version = "py312"
 line-length = 100
 
 [tool.ruff.lint]
-# E/W: pycodestyle  F: pyflakes  I: isort  B: bugbear  UP: pyupgrade  N: pep8-naming
-select = ["E", "W", "F", "I", "B", "UP", "N"]
+# D: pydocstyle  E/W: pycodestyle  F: pyflakes  I: isort  B: bugbear  UP: pyupgrade  N: pep8-naming
+select = ["D", "E", "W", "F", "I", "B", "UP", "N"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.bandit]
 targets = ["src"]
