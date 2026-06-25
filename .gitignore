@@ -221,3 +221,5 @@ __marimo__/
 
 # Local development data (downloaded datasets + DuckDB file)
 dev_data/
+
+mutants
