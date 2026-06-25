@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import cast
 
 from chat.infrastructure.eval.checks import deserialize_check
+from chat.infrastructure.eval.graph_builder import build_eval_graph
 from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner
 from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
 from shared.application.ports.sql_engine_port import SqlEnginePort
@@ -142,10 +143,10 @@ def main() -> None:
     sql_engine = DuckDbSqlEngine(settings.duckdb_path)
     cases = _load_cases(Path(args.cases), judge_model, sql_engine)
     runner = EvalRunner(
-        chat_model,
-        sql_engine,
-        settings.language_model_name,
-        format_chat_model=format_chat_model,
+        graph_factory=lambda recorder: build_eval_graph(
+            chat_model, sql_engine, recorder, format_chat_model
+        ),
+        model_name=settings.language_model_name,
         input_price_per_m=settings.input_token_price_per_million,
         output_price_per_m=settings.output_token_price_per_million,
     )
