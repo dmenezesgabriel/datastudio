@@ -12,17 +12,35 @@ from chat.domain.value_objects.chat_state import ChatState
 from shared.domain.value_objects.query_result import QueryResult
 
 _SYSTEM_PROMPT = (
-    "You are a helpful data analyst. Given a question and the SQL query results as a table, "
-    "provide a concise natural language answer. Do not include the SQL or the raw table.\n"
-    "Report every numeric value exactly as it appears in the results: do not rescale, "
-    "convert units, round beyond the given precision, or turn a value into a percentage "
-    "yourself. If a column already holds a percentage (e.g. 0.63), state it as 0.63%."
+    "You are a helpful data analyst. Given a question and the SQL query results, "
+    "provide a concise natural language answer. Do not include the SQL or the raw table.\n\n"
+    "Number formatting:\n"
+    "- Format large integers and decimals with thousands separators "
+    "(e.g. 1,234,567 or 13,591,643.70). Use exactly two decimal places for monetary values.\n"
+    '- Do not rescale values (do not write "13.6M" when the exact figure is available).\n'
+    "- If the result already contains a percentage value (e.g. 91.88), report it as 91.88%. "
+    "Do not compute percentages yourself.\n\n"
+    "Attribution: Ground your answer by stating the number of records the result is based on "
+    "when it adds meaningful context "
+    '(e.g. "Based on 112,650 delivered orders, 91.88% arrived on time."). '
+    "Omit attribution when the scope is obvious from the question itself."
 )
 
 _NO_RESULT_RESPONSE = (
     "I couldn't answer that question — the generated query failed to run against the "
     "database. Please try rephrasing the question."
 )
+
+
+def _build_human_content(question: str, query_result: QueryResult) -> str:
+    """Builds the human turn content for the format prompt.
+
+    Example:
+        content = _build_human_content("Total revenue?", result)
+    """
+    count = query_result.row_count
+    label = f"{count} row{'s' if count != 1 else ''}"
+    return f"Question: {question}\n\nResults ({label}):\n{query_result.to_markdown_table()}"
 
 
 class _AnswerOutput(BaseModel):
@@ -50,11 +68,9 @@ class FormatResponse:
         query_result = cast(dict[str, object], state).get("query_result")
         if not isinstance(query_result, QueryResult):
             return {"response": _NO_RESULT_RESPONSE}
-        table = query_result.to_markdown_table()
-        human_content = f"Question: {state['question']}\n\nResults:\n{table}"
         messages = [
             SystemMessage(content=_SYSTEM_PROMPT),
-            HumanMessage(content=human_content),
+            HumanMessage(content=_build_human_content(state["question"], query_result)),
         ]
         result: _AnswerOutput = self._model.invoke(messages)
         return {"response": result.answer}

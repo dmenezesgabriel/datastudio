@@ -54,6 +54,31 @@ class TestFormatResponse:
         assert "How many orders?" in combined
 
 
+class TestFormatResponseHumanContent:
+    def test_includes_row_count_for_single_row(self) -> None:
+        # arrange — _state() returns row_count=1
+        model = FakeStructuredChatModel(answer="42 orders.")
+        # act
+        FormatResponse(model)(_state())
+        # assert
+        combined = " ".join(str(m.content) for m in model.last_runnable.last_messages)
+        assert "1 row" in combined
+
+    def test_uses_plural_label_for_multiple_rows(self) -> None:
+        # arrange
+        model = FakeStructuredChatModel(answer="ans.")
+        state = ChatState(  # type: ignore[call-arg]
+            question="How many orders?",
+            sql_query="SELECT COUNT(*) FROM orders",
+            query_result=QueryResult(columns=["a", "b"], rows=[(1, 2), (3, 4)], row_count=2),
+        )
+        # act
+        FormatResponse(model)(state)
+        # assert
+        combined = " ".join(str(m.content) for m in model.last_runnable.last_messages)
+        assert "2 rows" in combined
+
+
 class TestFormatResponseWithoutResult:
     def test_returns_failure_message_without_calling_model(self) -> None:
         # arrange — repair loop exhausted; no query_result in state
