@@ -1,20 +1,21 @@
-from typing import Literal, TypedDict
+from typing import TypedDict
 
-from chat.domain.value_objects.sub_query_result import SubQueryResult
 from shared.domain.value_objects.query_result import QueryResult
 
 
 class ChatState(TypedDict):
     """Graph state shared across all nodes in the chat LangGraph.
 
-    Fields are populated progressively as the graph executes.
+    Fields are populated progressively as the graph executes. The flow is a
+    single path: list_tables → select_tables → get_schema → generate_sql →
+    execute_sql → (repair_sql loop on failure) → format_response.
     """
 
     question: str
-    complexity: Literal["simple", "complex"]
     tables: list[str]
     schema: str
     sql_query: str
+    sql_error: str  # message from the last failed execution; "" when successful
+    repair_attempts: int  # number of times repair_sql has regenerated the query
     query_result: QueryResult
-    sub_results: list[SubQueryResult]
     response: str

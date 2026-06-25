@@ -52,3 +52,18 @@ class TestFormatResponse:
         # assert
         combined = " ".join(str(m.content) for m in model.last_runnable.last_messages)
         assert "How many orders?" in combined
+
+
+class TestFormatResponseWithoutResult:
+    def test_returns_failure_message_without_calling_model(self) -> None:
+        # arrange — repair loop exhausted; no query_result in state
+        model = FakeStructuredChatModel(answer="should not be used")
+        state = ChatState(  # type: ignore[call-arg]
+            question="How many orders?",
+            sql_error="Binder Error: no such column",
+        )
+        # act
+        result = FormatResponse(model)(state)
+        # assert — a clear, honest message and no wasted LLM call
+        assert "couldn't" in str(result["response"]).lower()
+        assert model.last_runnable.last_messages == []

@@ -10,36 +10,32 @@ from test.unit.chat.infrastructure.graph.nodes.fake_structured_chat_model import
 
 _EXPECTED_NODES = frozenset(
     {
-        "classify_query",
         "list_tables",
         "select_tables",
         "get_schema",
         "generate_sql",
         "execute_sql",
+        "repair_sql",
         "format_response",
-        "decompose_query",
-        "synthesize_answer",
     }
 )
-_EXPECTED_SIMPLE_EDGES = frozenset(
+_EXPECTED_EDGES = frozenset(
     {
-        ("__start__", "classify_query"),
-        ("classify_query", "list_tables"),
+        ("__start__", "list_tables"),
         ("list_tables", "select_tables"),
         ("select_tables", "get_schema"),
-        # get_schema → generate_sql / decompose_query are conditional — not here
+        ("get_schema", "generate_sql"),
         ("generate_sql", "execute_sql"),
-        ("execute_sql", "format_response"),
+        # execute_sql → repair_sql / format_response is conditional — not here
+        ("repair_sql", "execute_sql"),
         ("format_response", "__end__"),
-        ("decompose_query", "synthesize_answer"),
-        ("synthesize_answer", "__end__"),
     }
 )
 
 
 def _make_graph() -> TypedChatGraph:
     chat_model = FakeStructuredChatModel(
-        sql="SELECT 1", answer="One row.", tables=["orders"], complexity="simple"
+        sql="SELECT 1", answer="One row.", tables=["orders"]
     )
     sql_engine = FakeSqlEngine(
         tables=["orders"],
@@ -76,9 +72,7 @@ class TestBuildText2SqlGraph:
 class TestFormatModelInjection:
     def test_format_response_uses_separate_model_when_provided(self) -> None:
         # arrange — two distinct models; only the format model has the answer
-        sql_model = FakeStructuredChatModel(
-            sql="SELECT 1", tables=["orders"], complexity="simple"
-        )
+        sql_model = FakeStructuredChatModel(sql="SELECT 1", tables=["orders"])
         format_model = FakeStructuredChatModel(
             answer="One row.", sql="SELECT 1", tables=["orders"]
         )
@@ -110,53 +104,33 @@ class TestGraphTopology:
     def test_non_conditional_edges_are_correct(self) -> None:
         # arrange / act
         graph = _make_graph()
-        # assert — conditional edges (classify_query routing) are in builder.branches,
-        # not builder.edges; only check deterministic edges here
+        # assert — the execute_sql routing is a branch, not a deterministic edge
         edges = frozenset((src, dst) for src, dst in graph.builder.edges)
-        assert edges == _EXPECTED_SIMPLE_EDGES
+        assert edges == _EXPECTED_EDGES
 
-    def test_get_schema_has_conditional_branches(self) -> None:
+    def test_execute_sql_has_conditional_branches(self) -> None:
         # arrange / act
         graph = _make_graph()
-        # assert — routing targets are registered as branches from get_schema
-        branches = graph.builder.branches.get("get_schema", {})
-        assert branches  # at least one branch defined from get_schema
+        # assert — routing targets are registered as branches from execute_sql
+        branches = graph.builder.branches.get("execute_sql", {})
+        assert branches  # at least one branch defined from execute_sql
 
-    def test_simple_path_routes_to_list_tables(self) -> None:
-        # arrange — complexity="simple" routes through the standard pipeline
+
+class TestRepairLoop:
+    def test_persistently_failing_sql_terminates_with_failure_message(self) -> None:
+        # arrange — every execution errors, so repairs cannot recover
         chat_model = FakeStructuredChatModel(
-            sql="SELECT 1",
-            answer="Simple answer.",
-            tables=["orders"],
-            complexity="simple",
+            sql="SELECT bad FROM movies", answer="unused", tables=["movies"]
         )
         sql_engine = FakeSqlEngine(
-            tables=["orders"],
-            schemas={"orders": "-- orders\nid INT"},
-            query_result=QueryResult(columns=["id"], rows=[(1,)], row_count=1),
+            tables=["movies"],
+            schemas={"movies": "-- movies\nDistributor VARCHAR"},
+            error=ValueError("Binder Error: no such column bad"),
         )
         graph = build_text2sql_graph(chat_model, sql_engine)
         # act
-        result = graph.invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
-        # assert — format_response produced the answer
-        assert result["response"] == "Simple answer."
-
-    def test_complex_path_routes_to_decompose_query(self) -> None:
-        # arrange — complexity="complex" routes through decompose_query → synthesize_answer
-        chat_model = FakeStructuredChatModel(
-            sql="SELECT AVG(m) FROM cars",
-            answer="Improved by 10 MPG.",
-            tables=["cars"],
-            complexity="complex",
-            sub_questions=["Avg MPG 1970?", "Avg MPG 1980?"],
-        )
-        sql_engine = FakeSqlEngine(
-            tables=["cars"],
-            schemas={"cars": "-- cars\nMiles_per_Gallon FLOAT"},
-            query_result=QueryResult(columns=["avg"], rows=[(20.0,)], row_count=1),
-        )
-        graph = build_text2sql_graph(chat_model, sql_engine)
-        # act
-        result = graph.invoke({"question": "By how many MPG did cars improve?"})  # pyright: ignore[reportUnknownMemberType]
-        # assert — synthesize_answer produced the answer (same fake model → same answer field)
-        assert result["response"] == "Improved by 10 MPG."
+        result = graph.invoke({"question": "How many films?"})  # pyright: ignore[reportUnknownMemberType]
+        # assert — the loop is bounded (it returns) and degrades gracefully
+        assert "couldn't" in str(result["response"]).lower()
+        # initial execution + at least one repair re-execution occurred
+        assert len(sql_engine.executed_sql) >= 3
