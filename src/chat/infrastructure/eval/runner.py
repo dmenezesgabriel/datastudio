@@ -128,7 +128,7 @@ class EvalRunner:
 
     Example:
         runner = EvalRunner(
-            graph_factory=lambda r: build_text2sql_graph(model, engine, recorder=r),
+            graph_factory=lambda r: build_eval_graph(model, engine, r),
             model_name="openai/glm-5",
         )
         report = runner.run(cases)

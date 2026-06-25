@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 
 from chat.infrastructure.eval.checks import deserialize_check
+from chat.infrastructure.eval.graph_builder import build_eval_graph
 from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner
 from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
-from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
 from shared.infrastructure.config.settings import AppSettings
 from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
 
@@ -76,8 +76,8 @@ def eval_report(app_settings: AppSettings, eval_cases: list[EvalCase]) -> EvalRe
 
     sql_engine = DuckDbSqlEngine(app_settings.duckdb_path)
     runner = EvalRunner(
-        graph_factory=lambda recorder: build_text2sql_graph(
-            chat_model, sql_engine, format_chat_model, recorder=recorder
+        graph_factory=lambda recorder: build_eval_graph(
+            chat_model, sql_engine, recorder, format_chat_model
         ),
         model_name=app_settings.language_model_name,
         input_price_per_m=app_settings.input_token_price_per_million,

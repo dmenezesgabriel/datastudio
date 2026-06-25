@@ -48,7 +48,7 @@ class NullMetricsRecorder:
     can be used uniformly in both production and eval builds.
 
     Example:
-        graph = build_text2sql_graph(llm, engine, recorder=NullMetricsRecorder())
+        graph = build_eval_graph(llm, engine, NullMetricsRecorder())
     """
 
     current_node: str = ""

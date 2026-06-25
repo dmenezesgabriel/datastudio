@@ -1,8 +1,10 @@
 """Unit tests for build_text2sql_graph and wire_text2sql_graph."""
 
+import inspect
+
 from langgraph.graph.state import CompiledStateGraph  # pyright: ignore[reportMissingTypeStubs]
 
-from chat.infrastructure.eval.metrics import EvalCollector
+from chat.infrastructure.graph import text2sql_graph as graph_module
 from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
 from chat.infrastructure.graph.types import TypedChatGraph
 from shared.domain.value_objects.query_result import QueryResult
@@ -147,37 +149,12 @@ class TestRepairLoop:
         assert len(sql_engine.executed_sql) >= 3
 
 
-class TestRecorderInjection:
-    """When a MetricsRecorder is passed, nodes are wrapped with TimedNode."""
+class TestLayeringBoundary:
+    """The production graph module must not depend on the eval harness."""
 
-    def test_node_latencies_are_recorded_when_recorder_provided(self) -> None:
-        """Node metrics are populated in the recorder after graph invocation."""
-        # arrange
-        recorder = EvalCollector()
-        chat_model = FakeStructuredChatModel(sql="SELECT 1", answer="One row.", tables=["orders"])
-        sql_engine = FakeSqlEngine(
-            tables=["orders"],
-            schemas={"orders": "-- orders\nid INT"},
-            query_result=QueryResult(columns=["id"], rows=[(1,)], row_count=1),
-        )
-        graph = build_text2sql_graph(chat_model, sql_engine, recorder=recorder)
-        # act
-        graph.invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
-        # assert — at least some nodes recorded latency
-        assert recorder.node_metrics, "expected at least one timed node"
-        assert any(m.latency_s >= 0.0 for m in recorder.node_metrics.values())
-
-    def test_without_recorder_graph_still_returns_response(self) -> None:
-        """Omitting recorder leaves the graph behaviour unchanged."""
-        # arrange — no recorder passed (default None)
-        chat_model = FakeStructuredChatModel(sql="SELECT 1", answer="One row.", tables=["orders"])
-        sql_engine = FakeSqlEngine(
-            tables=["orders"],
-            schemas={"orders": "-- orders\nid INT"},
-            query_result=QueryResult(columns=["id"], rows=[(1,)], row_count=1),
-        )
-        graph = build_text2sql_graph(chat_model, sql_engine)
-        # act
-        result = graph.invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
-        # assert — unchanged behaviour
-        assert result["response"] == "One row."
+    def test_graph_module_does_not_import_eval(self) -> None:
+        """text2sql_graph stays free of chat.infrastructure.eval imports (SoC)."""
+        # arrange / act — inspect the module source for any eval coupling
+        source = inspect.getsource(graph_module)
+        # assert — eval instrumentation belongs in eval/, not the production builder
+        assert "infrastructure.eval" not in source

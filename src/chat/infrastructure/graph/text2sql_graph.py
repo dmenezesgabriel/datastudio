@@ -7,8 +7,6 @@ from langchain_core.language_models import BaseChatModel
 from langgraph.graph import END, START, StateGraph  # pyright: ignore[reportMissingTypeStubs]
 
 from chat.domain.value_objects.chat_state import ChatState
-from chat.infrastructure.eval.metrics import MetricsRecorder
-from chat.infrastructure.eval.timed_node import TimedNode
 from chat.infrastructure.graph.nodes.execute_sql import ExecuteSql
 from chat.infrastructure.graph.nodes.format_response import FormatResponse
 from chat.infrastructure.graph.nodes.generate_sql import GenerateSql
@@ -47,7 +45,6 @@ def build_text2sql_graph(
     chat_model: BaseChatModel,
     sql_engine: SqlEnginePort,
     format_chat_model: BaseChatModel | None = None,
-    recorder: MetricsRecorder | None = None,
 ) -> TypedChatGraph:
     """Builds and compiles the text2sql LangGraph.
 
@@ -56,26 +53,29 @@ def build_text2sql_graph(
         sql_engine: Database engine for listing tables and executing queries.
         format_chat_model: Optional cheaper/faster model for the trivial nodes
             (table selection and response formatting). Defaults to chat_model.
-        recorder: When provided, every node is wrapped in TimedNode so latency
-            and token usage are attributed per node. Pass EvalCollector for eval
-            runs; omit for production.
 
     Example:
         graph = build_text2sql_graph(llm, engine)
         result = graph.invoke({"question": "How many trips in April?"})
         print(result["response"])
     """
-    nodes = _build_nodes(chat_model, sql_engine, format_chat_model)
-    if recorder is not None:
-        nodes = {name: TimedNode(name, node, recorder) for name, node in nodes.items()}
-    return wire_text2sql_graph(nodes)
+    return wire_text2sql_graph(build_text2sql_nodes(chat_model, sql_engine, format_chat_model))
 
 
-def _build_nodes(
+def build_text2sql_nodes(
     chat_model: BaseChatModel,
     sql_engine: SqlEnginePort,
     format_chat_model: BaseChatModel | None = None,
 ) -> dict[str, ChatNode]:
+    """Builds the named, unwrapped pipeline nodes for the text2sql graph.
+
+    Exposed so the eval harness can wrap these nodes (e.g. in TimedNode) before
+    wiring, keeping instrumentation out of the production builder.
+
+    Example:
+        nodes = build_text2sql_nodes(llm, engine)
+        graph = wire_text2sql_graph(nodes)
+    """
     fast_model = format_chat_model or chat_model
     return {
         "list_tables": ListTables(sql_engine),
