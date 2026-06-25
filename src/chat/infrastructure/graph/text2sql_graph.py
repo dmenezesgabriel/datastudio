@@ -24,6 +24,10 @@ class ChatNode(Protocol):
     def __call__(self, state: ChatState) -> Mapping[str, object]: ...
 
 
+def _route_by_complexity(state: ChatState) -> str:
+    return state["complexity"]
+
+
 def build_text2sql_graph(
     chat_model: BaseChatModel,
     sql_engine: SqlEnginePort,
@@ -79,9 +83,9 @@ def wire_text2sql_graph(nodes: dict[str, ChatNode]) -> TypedChatGraph:
     builder.add_edge("list_tables", "select_tables")
     builder.add_edge("select_tables", "get_schema")
     # routing after schema: simple → generate SQL; complex → decompose
-    builder.add_conditional_edges(  # pyright: ignore[reportUnknownMemberType,reportUnknownArgumentType,reportUnknownLambdaType]
+    builder.add_conditional_edges(  # pyright: ignore[reportUnknownMemberType]
         "get_schema",
-        lambda state: state["complexity"],  # type: ignore[index]
+        _route_by_complexity,
         {"simple": "generate_sql", "complex": "decompose_query"},
     )
     # simple path
