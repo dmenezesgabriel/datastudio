@@ -47,9 +47,13 @@ class TestAppSettings:
         assert settings.language_model_name == "openai/glm-5"
 
     def test_ignores_unknown_keys_in_env_file(
-        self, tmp_path: pytest.TempPathFactory
+        self, tmp_path: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        # Arrange — env file contains fields unknown to AppSettings
+        # Arrange — env file contains fields unknown to AppSettings. Clear the
+        # process env first: importing litellm elsewhere runs load_dotenv(),
+        # which would otherwise shadow _env_file (os.environ outranks it).
+        for key in ("OPENAI_API_KEY", "KAGGLE_USERNAME", "KAGGLE_KEY"):
+            monkeypatch.delenv(key, raising=False)
         env_file = tmp_path / ".env"  # type: ignore[operator]
         env_file.write_text(
             "OPENAI_API_KEY=test-key\nKAGGLE_USERNAME=someone\nKAGGLE_KEY=secret\n"
