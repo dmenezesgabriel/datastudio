@@ -38,6 +38,12 @@ select = ["D", "E", "W", "F", "I", "B", "UP", "N"]
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.ruff.lint.per-file-ignores]
+# Test method names are self-documenting; adding docstrings to every test
+# would be pure boilerplate noise. Module/package docstrings (D100/D104) are
+# still valuable but also suppressed here so test packages stay clutter-free.
+"test/**/*.py" = ["D"]
+
 [tool.bandit]
 targets = ["src"]
 # pre-commit hook passes -ll (report LOW severity and above); keep in sync if changing
