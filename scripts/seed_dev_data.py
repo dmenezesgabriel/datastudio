@@ -28,9 +28,7 @@ class SeedSettings(BaseSettings):
         print(settings.kaggle_username)
     """
 
-    model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     kaggle_username: str | None = None
     kaggle_key: str | None = None
@@ -96,6 +94,11 @@ _READ_SQL: dict[str, str] = {
 }
 
 
+def _escape_path(path: object) -> str:
+    """Return a path string safe for single-quoted DuckDB string literals."""
+    return str(path).replace("'", "''")
+
+
 class KaggleClient:
     """Authenticated Kaggle API client for downloading dataset zips.
 
@@ -115,7 +118,7 @@ class KaggleClient:
         url = f"{self._BASE_URL}/{dataset_slug}"
         print(f"  downloading {dataset_slug} from Kaggle ...", end=" ", flush=True)
         request = urllib.request.Request(url, headers=self._auth_header)
-        with urllib.request.urlopen(request) as response:
+        with urllib.request.urlopen(request, timeout=60) as response:
             data = response.read()
         print(f"done ({len(data) // 1024} KB)")
         return data
@@ -126,13 +129,16 @@ def _download_public_file(url: str, dest: Path) -> None:
         print(f"  already downloaded: {dest.name}")
         return
     print(f"  downloading {dest.name} ...", end=" ", flush=True)
-    urllib.request.urlretrieve(url, dest)
+    with urllib.request.urlopen(url, timeout=60) as response:  # nosec B310
+        dest.write_bytes(response.read())
     print(f"done ({dest.stat().st_size // 1024} KB)")
 
 
 def _load_table(conn: duckdb.DuckDBPyConnection, name: str, source_sql: str) -> None:
-    conn.execute(f"CREATE OR REPLACE TABLE {name} AS {source_sql}")
-    count = conn.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0]  # type: ignore[index]
+    quoted = '"' + name.replace('"', '""') + '"'
+    conn.execute(f"CREATE OR REPLACE TABLE {quoted} AS {source_sql}")
+    row = conn.execute(f"SELECT COUNT(*) FROM {quoted}").fetchone()
+    count = row[0] if row else 0
     print(f"  loaded {name}: {count:,} rows")
 
 
@@ -146,7 +152,7 @@ def _seed_public(
         ext = ds.url.rsplit(".", 1)[-1]
         dest = data_dir / f"{ds.name}.{ext}"
         _download_public_file(ds.url, dest)
-        source_sql = _READ_SQL[ds.fmt].format(path=dest)
+        source_sql = _READ_SQL[ds.fmt].format(path=_escape_path(dest))
         _load_table(conn, ds.name, source_sql)
 
 
@@ -173,7 +179,7 @@ def _seed_kaggle(
             if not dest.exists() and zip_bytes is not None:
                 with zipfile.ZipFile(io.BytesIO(zip_bytes)) as z:
                     z.extract(csv_name, path=dataset_dir)
-            source_sql = _READ_SQL["csv"].format(path=dest)
+            source_sql = _READ_SQL["csv"].format(path=_escape_path(dest))
             _load_table(conn, table_name, source_sql)
 
 
@@ -198,9 +204,7 @@ def seed(
         if not skip_kaggle:
             settings = SeedSettings()
             if settings.kaggle_username is None or settings.kaggle_key is None:
-                print(
-                    "Warning: KAGGLE_USERNAME or KAGGLE_KEY not set — skipping Kaggle datasets."
-                )
+                print("Warning: KAGGLE_USERNAME or KAGGLE_KEY not set — skipping Kaggle datasets.")
             else:
                 client = KaggleClient(settings.kaggle_username, settings.kaggle_key)
                 _seed_kaggle(conn, data_dir, client, _KAGGLE_DATASETS)
