@@ -41,3 +41,5 @@ class AppSettings(BaseSettings):
     eval_max_avg_output_tokens: float = 3000.0
     # Cases run through a bounded thread pool; the ceiling is LLM rate limits.
     eval_max_workers: int = 4
+    # Per-question wall-clock ceiling in the CLI; None disables it in the eval runner.
+    query_timeout_s: float = 120.0

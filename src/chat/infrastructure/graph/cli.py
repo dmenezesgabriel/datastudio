@@ -1,6 +1,7 @@
 """CLI entrypoint for the Text-to-SQL LangGraph pipeline."""
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 from typing import cast
 
 from chat.domain.value_objects.chat_state import ChatState
@@ -91,31 +92,47 @@ def resolve_model_config(
     return model_name, temperature, api_key, api_base
 
 
-def invoke_graph(graph: TypedChatGraph, message: str) -> str:
+_TIMEOUT_RESPONSE = (
+    "This query is taking longer than expected. Please try again or rephrase your question."
+)
+
+
+def invoke_graph(graph: TypedChatGraph, message: str, *, timeout_s: float | None = None) -> str:
     """Invokes the compiled LangGraph with a user question and returns the response.
 
+    Times out gracefully after ``timeout_s`` seconds when provided.
+
     Example:
-        response = invoke_graph(graph, "How many trips were there?")
+        response = invoke_graph(graph, "How many trips were there?", timeout_s=120.0)
     """
-    raw = graph.invoke(cast(ChatState, {"question": message}))  # pyright: ignore[reportUnknownMemberType]
-    result = cast(ChatState, raw)
-    return result["response"]
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(
+            graph.invoke,  # pyright: ignore[reportUnknownMemberType,reportUnknownArgumentType]
+            cast(ChatState, {"question": message}),
+        )
+        try:
+            raw = future.result(timeout=timeout_s)
+        except TimeoutError:
+            return _TIMEOUT_RESPONSE
+    return cast(ChatState, raw)["response"]
 
 
-def run_non_interactive(message: str, graph: TypedChatGraph) -> None:
+def run_non_interactive(
+    message: str, graph: TypedChatGraph, timeout_s: float | None = None
+) -> None:
     """Sends a single message, prints the response, and returns.
 
     Example:
-        run_non_interactive("How many trips?", graph)
+        run_non_interactive("How many trips?", graph, timeout_s=120.0)
     """
-    print(invoke_graph(graph, message))
+    print(invoke_graph(graph, message, timeout_s=timeout_s))
 
 
-def run_interactive(graph: TypedChatGraph) -> None:
+def run_interactive(graph: TypedChatGraph, timeout_s: float | None = None) -> None:
     """Runs a REPL loop until EOF or empty input.
 
     Example:
-        run_interactive(graph)
+        run_interactive(graph, timeout_s=120.0)
     """
     while True:
         try:
@@ -127,7 +144,7 @@ def run_interactive(graph: TypedChatGraph) -> None:
             break
         if not message:
             break
-        print(invoke_graph(graph, message))
+        print(invoke_graph(graph, message, timeout_s=timeout_s))
 
 
 def main() -> None:
@@ -155,6 +172,6 @@ def main() -> None:
     sql_engine = DuckDbSqlEngine(settings.duckdb_path)
     graph = build_text2sql_graph(chat_model, sql_engine, format_chat_model=format_chat_model)
     if args.interactive:
-        run_interactive(graph)
+        run_interactive(graph, timeout_s=settings.query_timeout_s)
         return
-    run_non_interactive(args.message, graph)
+    run_non_interactive(args.message, graph, timeout_s=settings.query_timeout_s)

@@ -1,4 +1,5 @@
 import argparse
+import time
 from dataclasses import dataclass
 from typing import cast
 
@@ -20,6 +21,14 @@ class FakeSettings:
     openai_base_url: str = "https://settings.base"
     language_model_name: str = "settings/model"
     language_model_temperature: float = 0.5
+
+
+class _SlowFakeGraph:
+    """Graph fake whose invoke outlasts any test-level timeout."""
+
+    def invoke(self, input: ChatState) -> ChatState:  # noqa: A002
+        time.sleep(0.05)  # 50 ms — longer than any timeout used in tests
+        return cast(ChatState, {"response": "too slow"})
 
 
 class FakeGraph:
@@ -148,6 +157,30 @@ class TestInvokeGraph:
         invoke_graph(graph, "what is 2+2?")  # pyright: ignore[reportArgumentType]
         # assert
         assert graph.last_input == cast(ChatState, {"question": "what is 2+2?"})
+
+    def test_returns_timeout_message_when_exceeded(self) -> None:
+        # arrange
+        graph = _SlowFakeGraph()
+        # act
+        result = invoke_graph(graph, "question", timeout_s=0.001)  # pyright: ignore[reportArgumentType]
+        # assert
+        assert "taking longer" in result
+
+    def test_returns_response_within_generous_timeout(self) -> None:
+        # arrange
+        graph = FakeGraph(response="the answer")
+        # act
+        result = invoke_graph(graph, "question", timeout_s=10.0)  # pyright: ignore[reportArgumentType]
+        # assert
+        assert result == "the answer"
+
+    def test_no_timeout_preserves_existing_behaviour(self) -> None:
+        # arrange
+        graph = FakeGraph(response="the answer")
+        # act — no timeout_s arg; must behave exactly as before
+        result = invoke_graph(graph, "question")  # pyright: ignore[reportArgumentType]
+        # assert
+        assert result == "the answer"
 
 
 class TestRunNonInteractive:

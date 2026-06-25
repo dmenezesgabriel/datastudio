@@ -61,6 +61,14 @@ class TestAppSettings:
         settings = AppSettings(_env_file=str(env_file))  # type: ignore[call-arg]
         assert settings.openai_api_key == "test-key"
 
+    def test_query_timeout_defaults_to_120(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # Arrange
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+        # Act
+        settings = AppSettings(_env_file=None)  # type: ignore[call-arg]
+        # Assert
+        assert settings.query_timeout_s == 120.0
+
 
 class TestAppSettingsLogLevel:
     def test_default_log_level_is_info(self, monkeypatch: pytest.MonkeyPatch) -> None:
