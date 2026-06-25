@@ -21,8 +21,20 @@ def app_settings() -> AppSettings:
 
 
 @pytest.fixture(scope="session")
-def eval_cases(app_settings: AppSettings) -> list[EvalCase]:
-    """Load and deserialise all cases from cases.json."""
+def eval_cases(
+    request: pytest.FixtureRequest, app_settings: AppSettings
+) -> list[EvalCase]:
+    """Load and deserialise only the cases selected by pytest (respects -k).
+
+    Example:
+        uv run pytest test/eval/ -m eval -k "olist_total_gmv or olist_avg_review_score"
+    """
+    selected_ids = {
+        item.callspec.params["case_id"]  # type: ignore[attr-defined]
+        for item in request.session.items
+        if hasattr(item, "callspec") and "case_id" in item.callspec.params
+    }
+
     judge_model = LiteLLMLanguageModel(
         model_name=app_settings.language_model_name,
         temperature=0.0,
@@ -38,6 +50,7 @@ def eval_cases(app_settings: AppSettings) -> list[EvalCase]:
             checks=[deserialize_check(c, judge_model) for c in spec.get("checks", [])],
         )
         for spec in raw["cases"]
+        if spec["id"] in selected_ids
     ]
 
 
