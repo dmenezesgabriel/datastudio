@@ -1,12 +1,15 @@
+"""Unit tests for build_text2sql_graph and wire_text2sql_graph."""
+
 from langgraph.graph.state import CompiledStateGraph  # pyright: ignore[reportMissingTypeStubs]
 
-from shared.domain.value_objects.query_result import QueryResult
+from chat.infrastructure.eval.metrics import EvalCollector
 from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
 from chat.infrastructure.graph.types import TypedChatGraph
-from test.unit.shared.infrastructure.sql_engine.fake_sql_engine import FakeSqlEngine
+from shared.domain.value_objects.query_result import QueryResult
 from test.unit.chat.infrastructure.graph.nodes.fake_structured_chat_model import (
     FakeStructuredChatModel,
 )
+from test.unit.shared.infrastructure.sql_engine.fake_sql_engine import FakeSqlEngine
 
 _EXPECTED_NODES = frozenset(
     {
@@ -34,9 +37,7 @@ _EXPECTED_EDGES = frozenset(
 
 
 def _make_graph() -> TypedChatGraph:
-    chat_model = FakeStructuredChatModel(
-        sql="SELECT 1", answer="One row.", tables=["orders"]
-    )
+    chat_model = FakeStructuredChatModel(sql="SELECT 1", answer="One row.", tables=["orders"])
     sql_engine = FakeSqlEngine(
         tables=["orders"],
         schemas={"orders": "-- orders\nid INT"},
@@ -46,13 +47,17 @@ def _make_graph() -> TypedChatGraph:
 
 
 class TestBuildText2SqlGraph:
+    """build_text2sql_graph returns a runnable compiled graph."""
+
     def test_returns_compiled_state_graph(self) -> None:
+        """Return type is a CompiledStateGraph, ready for invoke()."""
         # arrange / act
         graph = _make_graph()
         # assert
         assert isinstance(graph, CompiledStateGraph)
 
     def test_invoke_returns_response_key(self) -> None:
+        """Invoking the graph produces a natural-language response."""
         # arrange
         graph = _make_graph()
         # act
@@ -61,6 +66,7 @@ class TestBuildText2SqlGraph:
         assert result["response"] == "One row."
 
     def test_invoke_propagates_tables_through_state(self) -> None:
+        """Tables listed by the engine flow through state to downstream nodes."""
         # arrange
         graph = _make_graph()
         # act
@@ -70,20 +76,19 @@ class TestBuildText2SqlGraph:
 
 
 class TestFormatModelInjection:
+    """format_chat_model is used for table selection and response formatting."""
+
     def test_format_response_uses_separate_model_when_provided(self) -> None:
+        """When format_chat_model is given, the format node uses it, not chat_model."""
         # arrange — two distinct models; only the format model has the answer
         sql_model = FakeStructuredChatModel(sql="SELECT 1", tables=["orders"])
-        format_model = FakeStructuredChatModel(
-            answer="One row.", sql="SELECT 1", tables=["orders"]
-        )
+        format_model = FakeStructuredChatModel(answer="One row.", sql="SELECT 1", tables=["orders"])
         sql_engine = FakeSqlEngine(
             tables=["orders"],
             schemas={"orders": "-- orders\nid INT"},
             query_result=QueryResult(columns=["id"], rows=[(1,)], row_count=1),
         )
-        graph = build_text2sql_graph(
-            sql_model, sql_engine, format_chat_model=format_model
-        )
+        graph = build_text2sql_graph(sql_model, sql_engine, format_chat_model=format_model)
         # act
         result = graph.invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
         # assert — format model was invoked (its answer field is in the response)
@@ -95,6 +100,7 @@ class TestGraphTopology:
     """Verifies that all expected nodes are wired and reachable in the compiled graph."""
 
     def test_all_nodes_are_registered(self) -> None:
+        """All seven pipeline nodes appear in the compiled graph."""
         # arrange / act
         graph = _make_graph()
         # assert — builder.nodes holds the spec dict keyed by node name
@@ -102,6 +108,7 @@ class TestGraphTopology:
         assert registered == _EXPECTED_NODES
 
     def test_non_conditional_edges_are_correct(self) -> None:
+        """Deterministic edges match the expected linear pipeline structure."""
         # arrange / act
         graph = _make_graph()
         # assert — the execute_sql routing is a branch, not a deterministic edge
@@ -109,6 +116,7 @@ class TestGraphTopology:
         assert edges == _EXPECTED_EDGES
 
     def test_execute_sql_has_conditional_branches(self) -> None:
+        """execute_sql routes conditionally to repair_sql or format_response."""
         # arrange / act
         graph = _make_graph()
         # assert — routing targets are registered as branches from execute_sql
@@ -117,7 +125,10 @@ class TestGraphTopology:
 
 
 class TestRepairLoop:
+    """The repair loop retries SQL generation up to MAX_REPAIR_ATTEMPTS times."""
+
     def test_persistently_failing_sql_terminates_with_failure_message(self) -> None:
+        """When all repair attempts fail the graph still returns a response."""
         # arrange — every execution errors, so repairs cannot recover
         chat_model = FakeStructuredChatModel(
             sql="SELECT bad FROM movies", answer="unused", tables=["movies"]
@@ -134,3 +145,39 @@ class TestRepairLoop:
         assert "couldn't" in str(result["response"]).lower()
         # initial execution + at least one repair re-execution occurred
         assert len(sql_engine.executed_sql) >= 3
+
+
+class TestRecorderInjection:
+    """When a MetricsRecorder is passed, nodes are wrapped with TimedNode."""
+
+    def test_node_latencies_are_recorded_when_recorder_provided(self) -> None:
+        """Node metrics are populated in the recorder after graph invocation."""
+        # arrange
+        recorder = EvalCollector()
+        chat_model = FakeStructuredChatModel(sql="SELECT 1", answer="One row.", tables=["orders"])
+        sql_engine = FakeSqlEngine(
+            tables=["orders"],
+            schemas={"orders": "-- orders\nid INT"},
+            query_result=QueryResult(columns=["id"], rows=[(1,)], row_count=1),
+        )
+        graph = build_text2sql_graph(chat_model, sql_engine, recorder=recorder)
+        # act
+        graph.invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
+        # assert — at least some nodes recorded latency
+        assert recorder.node_metrics, "expected at least one timed node"
+        assert any(m.latency_s >= 0.0 for m in recorder.node_metrics.values())
+
+    def test_without_recorder_graph_still_returns_response(self) -> None:
+        """Omitting recorder leaves the graph behaviour unchanged."""
+        # arrange — no recorder passed (default None)
+        chat_model = FakeStructuredChatModel(sql="SELECT 1", answer="One row.", tables=["orders"])
+        sql_engine = FakeSqlEngine(
+            tables=["orders"],
+            schemas={"orders": "-- orders\nid INT"},
+            query_result=QueryResult(columns=["id"], rows=[(1,)], row_count=1),
+        )
+        graph = build_text2sql_graph(chat_model, sql_engine)
+        # act
+        result = graph.invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
+        # assert — unchanged behaviour
+        assert result["response"] == "One row."

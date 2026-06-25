@@ -1,3 +1,5 @@
+"""LangGraph assembly for the text-to-SQL pipeline."""
+
 from collections.abc import Mapping
 from typing import Protocol, cast
 
@@ -5,6 +7,8 @@ from langchain_core.language_models import BaseChatModel
 from langgraph.graph import END, START, StateGraph  # pyright: ignore[reportMissingTypeStubs]
 
 from chat.domain.value_objects.chat_state import ChatState
+from chat.infrastructure.eval.metrics import MetricsRecorder
+from chat.infrastructure.eval.timed_node import TimedNode
 from chat.infrastructure.graph.nodes.execute_sql import ExecuteSql
 from chat.infrastructure.graph.nodes.format_response import FormatResponse
 from chat.infrastructure.graph.nodes.generate_sql import GenerateSql
@@ -17,11 +21,14 @@ from shared.application.ports.sql_engine_port import SqlEnginePort
 
 
 class ChatNode(Protocol):
-    """Structural contract for a callable that accepts ChatState and returns
-    a partial state dict.
+    """Structural contract for a callable that accepts ChatState and returns a partial state dict.
+
+    Each graph node implements this protocol.
     """
 
-    def __call__(self, state: ChatState) -> Mapping[str, object]: ...
+    def __call__(self, state: ChatState) -> Mapping[str, object]:
+        """Process state and return a partial update dict."""
+        ...
 
 
 def _route_after_execution(state: ChatState) -> str:
@@ -40,6 +47,7 @@ def build_text2sql_graph(
     chat_model: BaseChatModel,
     sql_engine: SqlEnginePort,
     format_chat_model: BaseChatModel | None = None,
+    recorder: MetricsRecorder | None = None,
 ) -> TypedChatGraph:
     """Builds and compiles the text2sql LangGraph.
 
@@ -48,6 +56,9 @@ def build_text2sql_graph(
         sql_engine: Database engine for listing tables and executing queries.
         format_chat_model: Optional cheaper/faster model for the trivial nodes
             (table selection and response formatting). Defaults to chat_model.
+        recorder: When provided, every node is wrapped in TimedNode so latency
+            and token usage are attributed per node. Pass EvalCollector for eval
+            runs; omit for production.
 
     Example:
         graph = build_text2sql_graph(llm, engine)
@@ -55,6 +66,8 @@ def build_text2sql_graph(
         print(result["response"])
     """
     nodes = _build_nodes(chat_model, sql_engine, format_chat_model)
+    if recorder is not None:
+        nodes = {name: TimedNode(name, node, recorder) for name, node in nodes.items()}
     return wire_text2sql_graph(nodes)
 
 

@@ -1,3 +1,5 @@
+"""Per-node execution metrics for the eval pipeline."""
+
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
@@ -39,6 +41,28 @@ class NodeMetrics:
     output_tokens: int | None = None
 
 
+class NullMetricsRecorder:
+    """No-op MetricsRecorder for production graphs that don't need instrumentation.
+
+    Satisfies the MetricsRecorder protocol so TimedNode and TokenCountingCallback
+    can be used uniformly in both production and eval builds.
+
+    Example:
+        graph = build_text2sql_graph(llm, engine, recorder=NullMetricsRecorder())
+    """
+
+    current_node: str = ""
+
+    def set_node(self, name: str) -> None:
+        """No-op implementation."""
+
+    def record_latency(self, node: str, elapsed: float) -> None:
+        """No-op implementation."""
+
+    def record_tokens(self, node: str, input_t: int, output_t: int) -> None:
+        """No-op implementation."""
+
+
 @dataclass
 class EvalCollector:
     """Mutable accumulator for one graph run. Implements MetricsRecorder.
@@ -55,16 +79,19 @@ class EvalCollector:
     node_metrics: dict[str, NodeMetrics] = field(default_factory=dict[str, NodeMetrics])
 
     def set_node(self, name: str) -> None:
+        """Set current_node and initialise a NodeMetrics entry if absent."""
         self.current_node = name
         if name not in self.node_metrics:
             self.node_metrics[name] = NodeMetrics()
 
     def record_latency(self, node: str, elapsed: float) -> None:
+        """Store elapsed seconds for the given node."""
         if node not in self.node_metrics:
             self.node_metrics[node] = NodeMetrics()
         self.node_metrics[node].latency_s = elapsed
 
     def record_tokens(self, node: str, input_t: int, output_t: int) -> None:
+        """Accumulate token counts for the given node."""
         if node not in self.node_metrics:
             self.node_metrics[node] = NodeMetrics()
         metrics = self.node_metrics[node]
