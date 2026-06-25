@@ -26,6 +26,7 @@ class AppSettings(BaseSettings):
     openai_api_key: str
     openai_base_url: str = "https://opencode.ai/zen/go/v1"
     language_model_name: str = "openai/glm-5"
+    format_model_name: str = "openai/glm-5"
     language_model_temperature: float = 0.0
     duckdb_path: str = "./dev_data/datastudio.duckdb"
     log_level: Annotated[str, AfterValidator(_normalise_log_level)] = "INFO"

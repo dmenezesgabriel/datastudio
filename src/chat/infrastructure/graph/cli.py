@@ -143,8 +143,16 @@ def main() -> None:
         api_key=api_key,
         api_base=api_base,
     ).get_chat_model()
+    format_chat_model = LiteLLMLanguageModel(
+        model_name=settings.format_model_name,
+        temperature=temperature,
+        api_key=api_key,
+        api_base=api_base,
+    ).get_chat_model()
     sql_engine = DuckDbSqlEngine(settings.duckdb_path)
-    graph = build_text2sql_graph(chat_model, sql_engine)
+    graph = build_text2sql_graph(
+        chat_model, sql_engine, format_chat_model=format_chat_model
+    )
     if args.interactive:
         run_interactive(graph)
         return
