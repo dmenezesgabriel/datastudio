@@ -8,6 +8,7 @@ Usage:
 
 import argparse
 import json
+import time
 from dataclasses import asdict
 from pathlib import Path
 
@@ -16,6 +17,10 @@ from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner
 from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
 from shared.infrastructure.config.settings import AppSettings
 from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
+
+
+def _default_output_path() -> str:
+    return f"reports/eval_report_{int(time.time())}.json"
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
@@ -31,9 +36,9 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--output",
-        default="reports/eval_report.json",
+        default=_default_output_path(),
         metavar="PATH",
-        help="Path to write the JSON report (default: reports/eval_report.json)",
+        help="Path to write the JSON report (default: reports/eval_report_<epoch>.json)",
     )
     parser.add_argument(
         "--judge-model",

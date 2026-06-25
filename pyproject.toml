@@ -18,6 +18,7 @@ dependencies = [
 pythonpath = ["src"]
 markers = [
     "integration: hits real external APIs — run explicitly with -m integration",
+    "eval: end-to-end LLM eval cases — run explicitly with -m eval",
 ]
 
 [tool.pyright]
