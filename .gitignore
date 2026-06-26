@@ -223,3 +223,7 @@ __marimo__/
 dev_data/
 
 mutants
+
+# Frontend (Vite + json-render)
+frontend/node_modules/
+frontend/dist/
