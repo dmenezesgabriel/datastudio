@@ -227,3 +227,6 @@ mutants
 # Frontend (Vite + json-render)
 frontend/node_modules/
 frontend/dist/
+
+# Playwright CLI session artifacts (logs, page snapshots)
+.playwright-cli/
