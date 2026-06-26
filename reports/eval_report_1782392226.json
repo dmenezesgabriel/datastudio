@@ -1,0 +1,181 @@
+{
+  "run_at": "2026-06-25T12:57:06.017483+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "pass_rate": 1.0,
+    "avg_latency_s": 24.035,
+    "p95_latency_s": 26.95,
+    "total_input_tokens": 1041,
+    "total_output_tokens": 647,
+    "avg_output_tokens": 323.5,
+    "cost_usd": 0.0,
+    "by_tag": {
+      "join": {
+        "total": 1,
+        "passed": 1
+      },
+      "group_by": {
+        "total": 1,
+        "passed": 1
+      },
+      "ranking": {
+        "total": 1,
+        "passed": 1
+      },
+      "hard": {
+        "total": 1,
+        "passed": 1
+      },
+      "percentage": {
+        "total": 1,
+        "passed": 1
+      },
+      "filter": {
+        "total": 1,
+        "passed": 1
+      },
+      "medium": {
+        "total": 1,
+        "passed": 1
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "olist_top_revenue_category",
+      "question": "Which product category, by its English name, generated the highest revenue on the platform?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.021099554003740195,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 21.734738493003533,
+          "input_tokens": 129,
+          "output_tokens": 160
+        },
+        "get_schema": {
+          "latency_s": 0.0805561579982168,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 3.170320728997467,
+          "input_tokens": 270,
+          "output_tokens": 119
+        },
+        "execute_sql": {
+          "latency_s": 0.04409732000203803,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 1.8989690520029399,
+          "input_tokens": 159,
+          "output_tokens": 105
+        }
+      },
+      "sql_query": "SELECT t.product_category_name_english AS category, SUM(i.price) AS total_revenue FROM olist_order_items i JOIN olist_products p ON i.product_id = p.product_id JOIN olist_category_translation t ON p.product_category_name = t.product_category_name GROUP BY t.product_category_name_english ORDER BY total_revenue DESC LIMIT 1;",
+      "sql_valid": true,
+      "response": "The product category that generated the highest revenue is health_beauty, with a total revenue of 1258681.3399999682.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT t.product_category_name_english FROM olist_order_items oi JOIN olist_products p ON oi.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1 ORDER BY SUM(oi.price) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should name a specific product category and attribute it to the highest revenue position.",
+          "passed": true,
+          "reasoning": "The response explicitly names the product category 'health_beauty' and attributes it to the highest revenue position, satisfying the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "join",
+        "group_by",
+        "ranking",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "olist_cancellation_rate",
+      "question": "What percentage of all orders placed on the platform were cancelled?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.022164068999700248,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.4541842520047794,
+          "input_tokens": 124,
+          "output_tokens": 55
+        },
+        "get_schema": {
+          "latency_s": 0.04649902300297981,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 14.039804815001844,
+          "input_tokens": 211,
+          "output_tokens": 77
+        },
+        "execute_sql": {
+          "latency_s": 0.021573475998593494,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 5.535566423001001,
+          "input_tokens": 148,
+          "output_tokens": 131
+        }
+      },
+      "sql_query": "SELECT 100.0 * SUM(CASE WHEN order_status = 'canceled' THEN 1 ELSE 0 END) / COUNT(*) AS pct_cancelled FROM olist_orders;",
+      "sql_valid": true,
+      "response": "0.6285133898492573% of all orders placed on the platform were cancelled.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_status='canceled')/COUNT(*),2) FROM olist_orders",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage representing the share of orders that were cancelled, around 0.63%.",
+          "passed": true,
+          "reasoning": "The response provides the exact percentage of cancelled orders (0.6285133898492573%), which is approximately 0.63% as required by the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "percentage",
+        "filter",
+        "medium"
+      ]
+    }
+  ]
+}

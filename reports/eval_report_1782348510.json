@@ -1,0 +1,698 @@
+{
+  "run_at": "2026-06-25T00:48:30.274485+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 10,
+    "passed": 9,
+    "failed": 1,
+    "avg_latency_s": 11.857,
+    "total_input_tokens": 4535,
+    "total_output_tokens": 5451
+  },
+  "cases": [
+    {
+      "case_id": "movies_warner_bros_volume",
+      "question": "How many films has Warner Bros. released in the dataset?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 3.7877937099983683,
+          "input_tokens": 150,
+          "output_tokens": 141
+        },
+        "list_tables": {
+          "latency_s": 0.012421375002304558,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.6020493269970757,
+          "input_tokens": 81,
+          "output_tokens": 67
+        },
+        "get_schema": {
+          "latency_s": 0.019650030000775587,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 3.0500025609944714,
+          "input_tokens": 138,
+          "output_tokens": 221
+        },
+        "execute_sql": {
+          "latency_s": 0.01856088799831923,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 2.1305337970043183,
+          "input_tokens": 78,
+          "output_tokens": 141
+        }
+      },
+      "sql_query": "SELECT COUNT(*) FROM movies WHERE Distributor LIKE '%Warner Bros.%'",
+      "sql_valid": true,
+      "response": "Warner Bros. has released 318 films in the dataset.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "COUNT",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "318",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should clearly state the number of films and attribute it to Warner Bros.",
+          "passed": true,
+          "reasoning": "The response clearly states the number of films (318) and explicitly attributes this number to Warner Bros., satisfying the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "movies_critically_acclaimed",
+      "question": "How many films received a Rotten Tomatoes score above 90?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 3.274544188003347,
+          "input_tokens": 152,
+          "output_tokens": 246
+        },
+        "list_tables": {
+          "latency_s": 0.015917798998998478,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.6180870750031318,
+          "input_tokens": 83,
+          "output_tokens": 56
+        },
+        "get_schema": {
+          "latency_s": 0.01879817900044145,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 1.7183775629964657,
+          "input_tokens": 140,
+          "output_tokens": 77
+        },
+        "execute_sql": {
+          "latency_s": 0.015340238001954276,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 2.444879574002698,
+          "input_tokens": 80,
+          "output_tokens": 157
+        }
+      },
+      "sql_query": "SELECT COUNT(*) FROM movies WHERE \"Rotten Tomatoes Rating\" > 90;",
+      "sql_valid": true,
+      "response": "259 films received a Rotten Tomatoes score above 90.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "COUNT",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "259",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "movies_drama_imdb_rating",
+      "question": "What is the average IMDB rating for Drama films?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 2.229306306995568,
+          "input_tokens": 149,
+          "output_tokens": 176
+        },
+        "list_tables": {
+          "latency_s": 0.02184231299906969,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.547396175999893,
+          "input_tokens": 80,
+          "output_tokens": 195
+        },
+        "get_schema": {
+          "latency_s": 0.017539188993396237,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 1.3089518199994927,
+          "input_tokens": 137,
+          "output_tokens": 68
+        },
+        "execute_sql": {
+          "latency_s": 0.012316234002355486,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 3.573531277004804,
+          "input_tokens": 90,
+          "output_tokens": 263
+        }
+      },
+      "sql_query": "SELECT AVG(\"IMDB Rating\") FROM movies WHERE \"Major Genre\" = 'Drama';",
+      "sql_valid": true,
+      "response": "The average IMDB rating for Drama films is approximately 6.77.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "AVG",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "6.77",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a numeric rating value and mention Drama as the genre.",
+          "passed": true,
+          "reasoning": "The response states a numeric rating value (6.77) and mentions Drama as the genre, satisfying the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "taxi_total_trips",
+      "question": "What is the total number of taxi trips recorded in the dataset?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 0.9327067449994502,
+          "input_tokens": 151,
+          "output_tokens": 12
+        },
+        "list_tables": {
+          "latency_s": 0.01842894300352782,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.4764579710026737,
+          "input_tokens": 82,
+          "output_tokens": 60
+        },
+        "get_schema": {
+          "latency_s": 0.01615456999570597,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 1.2116192179964855,
+          "input_tokens": 168,
+          "output_tokens": 51
+        },
+        "execute_sql": {
+          "latency_s": 0.020817832999455277,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 2.2274322700031917,
+          "input_tokens": 82,
+          "output_tokens": 172
+        }
+      },
+      "sql_query": "SELECT COUNT(*) AS total_trips FROM nyc_taxi",
+      "sql_valid": true,
+      "response": "There are 7,475,949 taxi trips recorded in the dataset.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "COUNT",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "7475949",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "taxi_total_revenue",
+      "question": "What is the total revenue generated across all taxi trips?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 2.7854779730041628,
+          "input_tokens": 149,
+          "output_tokens": 187
+        },
+        "list_tables": {
+          "latency_s": 0.019332473006215878,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.3904270809944137,
+          "input_tokens": 80,
+          "output_tokens": 75
+        },
+        "get_schema": {
+          "latency_s": 0.018645995995029807,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 1.6008062690016231,
+          "input_tokens": 166,
+          "output_tokens": 56
+        },
+        "execute_sql": {
+          "latency_s": 0.027629983000224456,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 9.712819827000203,
+          "input_tokens": 84,
+          "output_tokens": 203
+        }
+      },
+      "sql_query": "SELECT SUM(total_amount) AS total_revenue FROM nyc_taxi",
+      "sql_valid": true,
+      "response": "The total revenue generated across all taxi trips is approximately $145,047,454.13.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "SUM",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "145047454",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a dollar amount representing total revenue.",
+          "passed": true,
+          "reasoning": "The response explicitly states a dollar amount ($145,047,454.13) representing the total revenue, which directly satisfies the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "taxi_dominant_payment_type",
+      "question": "What is the most commonly used payment type code for taxi trips?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 2.239047490998928,
+          "input_tokens": 151,
+          "output_tokens": 166
+        },
+        "list_tables": {
+          "latency_s": 0.01966065699525643,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.3102568250033073,
+          "input_tokens": 82,
+          "output_tokens": 67
+        },
+        "get_schema": {
+          "latency_s": 0.017331629002001137,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 1.211398030995042,
+          "input_tokens": 168,
+          "output_tokens": 56
+        },
+        "execute_sql": {
+          "latency_s": 0.025664724002126604,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 2.8754873479992966,
+          "input_tokens": 77,
+          "output_tokens": 233
+        }
+      },
+      "sql_query": "SELECT payment_type FROM nyc_taxi GROUP BY payment_type ORDER BY COUNT(*) DESC LIMIT 1",
+      "sql_valid": true,
+      "response": "The most commonly used payment type code for taxi trips is 1.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "COUNT",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "cars_japan_fuel_efficiency",
+      "question": "What is the average fuel efficiency in miles per gallon for Japanese cars?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 2.100712431994907,
+          "input_tokens": 152,
+          "output_tokens": 172
+        },
+        "list_tables": {
+          "latency_s": 0.015897920995485038,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 23.150602857000194,
+          "input_tokens": 83,
+          "output_tokens": 72
+        },
+        "get_schema": {
+          "latency_s": 0.017018947000906337,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 1.098630503001914,
+          "input_tokens": 105,
+          "output_tokens": 40
+        },
+        "execute_sql": {
+          "latency_s": 0.01951483700395329,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 1.7353851340012625,
+          "input_tokens": 93,
+          "output_tokens": 79
+        }
+      },
+      "sql_query": "SELECT AVG(Miles_per_Gallon) FROM cars WHERE Origin = 'Japan';",
+      "sql_valid": true,
+      "response": "The average fuel efficiency for Japanese cars is approximately 30.45 miles per gallon.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "AVG",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "30.5",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a numeric MPG value and reference Japanese cars.",
+          "passed": true,
+          "reasoning": "The response explicitly references Japanese cars and provides a numeric MPG value (30.45)."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "cars_us_efficiency_improvement",
+      "question": "By how many miles per gallon did average fuel efficiency improve for US-manufactured cars between 1970 and 1980?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 2.4709533480054233,
+          "input_tokens": 165,
+          "output_tokens": 153
+        },
+        "list_tables": {
+          "latency_s": 0.016467987996293232,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.7431297680013813,
+          "input_tokens": 96,
+          "output_tokens": 111
+        },
+        "get_schema": {
+          "latency_s": 0.01906101000349736,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 7.434867839998333,
+          "input_tokens": 118,
+          "output_tokens": 658
+        },
+        "execute_sql": {
+          "latency_s": 0.018617632005771156,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 4.279226266000478,
+          "input_tokens": 92,
+          "output_tokens": 85
+        }
+      },
+      "sql_query": "SELECT AVG(CASE WHEN EXTRACT(YEAR FROM Year) = 1980 THEN Miles_per_Gallon END) - AVG(CASE WHEN EXTRACT(YEAR FROM Year) = 1970 THEN Miles_per_Gallon END) AS mpg_improvement FROM cars WHERE Origin = 'US'",
+      "sql_valid": true,
+      "response": "The data is not available.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "10.6",
+          "passed": false,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state the improvement as a number and mention the time period 1970 to 1980.",
+          "passed": false,
+          "reasoning": "The response states that the data is not available, but it fails to provide the improvement as a number and does not mention the time period 1970 to 1980 as required by the rubric."
+        }
+      ],
+      "passed": false,
+      "error": null
+    },
+    {
+      "case_id": "weather_extreme_heat_days",
+      "question": "How many days in Seattle had maximum temperatures exceeding 30 degrees Celsius?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 1.6340788460001932,
+          "input_tokens": 152,
+          "output_tokens": 78
+        },
+        "list_tables": {
+          "latency_s": 0.019649312998808455,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.3107200270023895,
+          "input_tokens": 83,
+          "output_tokens": 60
+        },
+        "get_schema": {
+          "latency_s": 0.010567524004727602,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 1.6656958930034307,
+          "input_tokens": 87,
+          "output_tokens": 112
+        },
+        "execute_sql": {
+          "latency_s": 0.011856748998980038,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 2.1998052119961358,
+          "input_tokens": 79,
+          "output_tokens": 179
+        }
+      },
+      "sql_query": "SELECT COUNT(*) FROM seattle_weather WHERE temp_max > 30;",
+      "sql_valid": true,
+      "response": "53 days in Seattle had maximum temperatures exceeding 30 degrees Celsius.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "COUNT",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "53",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "weather_summer_sunshine",
+      "question": "What percentage of days during summer months (June, July, and August) in Seattle were sunny?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 1.9379231490020175,
+          "input_tokens": 158,
+          "output_tokens": 116
+        },
+        "list_tables": {
+          "latency_s": 0.017260735003219452,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.336383162000857,
+          "input_tokens": 89,
+          "output_tokens": 54
+        },
+        "get_schema": {
+          "latency_s": 0.020642338997276966,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 2.3336118579973117,
+          "input_tokens": 93,
+          "output_tokens": 219
+        },
+        "execute_sql": {
+          "latency_s": 0.021906454996496905,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 2.330351669996162,
+          "input_tokens": 92,
+          "output_tokens": 117
+        }
+      },
+      "sql_query": "SELECT 100.0 * SUM(CASE WHEN weather = 'sun' THEN 1 ELSE 0 END) / COUNT(*) AS sunny_percentage FROM seattle_weather WHERE EXTRACT(MONTH FROM date) IN (6, 7, 8);",
+      "sql_valid": true,
+      "response": "Approximately 68.21% of days during the summer months in Seattle were sunny.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "68.2",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage and reference the summer period or the months June through August.",
+          "passed": true,
+          "reasoning": "The response states a percentage (68.21%) and explicitly references the summer period ('summer months'), satisfying both conditions of the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null
+    }
+  ]
+}

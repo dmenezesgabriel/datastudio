@@ -1,0 +1,334 @@
+{
+  "run_at": "2026-06-25T11:00:38.120663+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0,
+    "pass_rate": 1.0,
+    "avg_latency_s": 28.975,
+    "p95_latency_s": 60.539,
+    "total_input_tokens": 1846,
+    "total_output_tokens": 1785,
+    "avg_output_tokens": 446.2,
+    "cost_usd": 0.0,
+    "by_tag": {
+      "aggregation": {
+        "total": 1,
+        "passed": 1
+      },
+      "filter": {
+        "total": 2,
+        "passed": 2
+      },
+      "easy": {
+        "total": 1,
+        "passed": 1
+      },
+      "conditional_aggregation": {
+        "total": 1,
+        "passed": 1
+      },
+      "date": {
+        "total": 1,
+        "passed": 1
+      },
+      "comparison": {
+        "total": 1,
+        "passed": 1
+      },
+      "hard": {
+        "total": 2,
+        "passed": 2
+      },
+      "join": {
+        "total": 1,
+        "passed": 1
+      },
+      "group_by": {
+        "total": 1,
+        "passed": 1
+      },
+      "ranking": {
+        "total": 1,
+        "passed": 1
+      },
+      "percentage": {
+        "total": 1,
+        "passed": 1
+      },
+      "medium": {
+        "total": 1,
+        "passed": 1
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "movies_warner_bros_volume",
+      "question": "How many films has Warner Bros. released in the dataset?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.014428219001274556,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 20.706319220997102,
+          "input_tokens": 124,
+          "output_tokens": 102
+        },
+        "get_schema": {
+          "latency_s": 0.01859543599857716,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 7.338855196998338,
+          "input_tokens": 289,
+          "output_tokens": 337
+        },
+        "execute_sql": {
+          "latency_s": 0.012957630002347287,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 32.448164031993656,
+          "input_tokens": 78,
+          "output_tokens": 176
+        }
+      },
+      "sql_query": "SELECT COUNT(*) FROM movies WHERE Distributor = 'Warner Bros.'",
+      "sql_valid": true,
+      "response": "Warner Bros. has released 318 films in the dataset.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM movies WHERE Distributor = 'Warner Bros.'",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should clearly state the number of films and attribute it to Warner Bros.",
+          "passed": true,
+          "reasoning": "The response clearly states the number of films (318) and attributes it to Warner Bros., satisfying the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "filter",
+        "easy"
+      ]
+    },
+    {
+      "case_id": "cars_us_efficiency_improvement",
+      "question": "By how many miles per gallon did average fuel efficiency improve for US-manufactured cars between 1970 and 1980?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.01672263199725421,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.562952435000625,
+          "input_tokens": 139,
+          "output_tokens": 154
+        },
+        "get_schema": {
+          "latency_s": 0.02047970700368751,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 23.359474313998362,
+          "input_tokens": 222,
+          "output_tokens": 139
+        },
+        "execute_sql": {
+          "latency_s": 0.018829797001671977,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 1.821091826997872,
+          "input_tokens": 104,
+          "output_tokens": 104
+        }
+      },
+      "sql_query": "SELECT\n  AVG(CASE WHEN date_part('year', Year) = 1980 THEN Miles_per_Gallon END) -\n  AVG(CASE WHEN date_part('year', Year) = 1970 THEN Miles_per_Gallon END) AS mpg_improvement\nFROM cars\nWHERE Origin = 'USA';",
+      "sql_valid": true,
+      "response": "The average fuel efficiency for US-manufactured cars improved by approximately 10.64 miles per gallon between 1970 and 1980.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(AVG(Miles_per_Gallon) FILTER(WHERE date_part('year',Year)=1980) - AVG(Miles_per_Gallon) FILTER(WHERE date_part('year',Year)=1970),1) FROM cars WHERE Origin='USA'",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state the improvement as a number and mention the time period 1970 to 1980.",
+          "passed": true,
+          "reasoning": "The response states the improvement as a number (approximately 10.64 miles per gallon) and explicitly mentions the time period between 1970 and 1980, satisfying both requirements of the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "conditional_aggregation",
+        "date",
+        "comparison",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "olist_top_revenue_category",
+      "question": "Which product category generated the highest revenue on the platform?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.01517405499907909,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 6.732568077997712,
+          "input_tokens": 123,
+          "output_tokens": 215
+        },
+        "get_schema": {
+          "latency_s": 0.0744964070036076,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 8.116360166000959,
+          "input_tokens": 264,
+          "output_tokens": 113
+        },
+        "execute_sql": {
+          "latency_s": 0.03568446199642494,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 2.011031965004804,
+          "input_tokens": 93,
+          "output_tokens": 95
+        }
+      },
+      "sql_query": "SELECT t.product_category_name_english AS product_category, SUM(oi.price) AS revenue\nFROM olist_order_items oi\nJOIN olist_products p ON oi.product_id = p.product_id\nJOIN olist_category_translation t ON p.product_category_name = t.product_category_name\nGROUP BY t.product_category_name_english\nORDER BY revenue DESC\nLIMIT 1;",
+      "sql_valid": true,
+      "response": "The health and beauty product category generated the highest revenue on the platform, with a total of approximately $1,258,681.34.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT t.product_category_name_english FROM olist_order_items oi JOIN olist_products p ON oi.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1 ORDER BY SUM(oi.price) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should name a specific product category and attribute it to the highest revenue position.",
+          "passed": true,
+          "reasoning": "The response explicitly names the 'health and beauty' product category and attributes it to the highest revenue position on the platform, fully satisfying the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "join",
+        "group_by",
+        "ranking",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "olist_credit_card_payment_share",
+      "question": "What percentage of payment transactions on the platform were made using credit card?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.014960180997150019,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.924616625998169,
+          "input_tokens": 126,
+          "output_tokens": 42
+        },
+        "get_schema": {
+          "latency_s": 0.03262768999411492,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 3.0357520550023764,
+          "input_tokens": 196,
+          "output_tokens": 116
+        },
+        "execute_sql": {
+          "latency_s": 0.012902473004942294,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 3.5549261800042586,
+          "input_tokens": 88,
+          "output_tokens": 192
+        }
+      },
+      "sql_query": "SELECT AVG(CASE WHEN payment_type = 'credit_card' THEN 1.0 ELSE 0.0 END) * 100 AS credit_card_pct\nFROM olist_order_payments;",
+      "sql_valid": true,
+      "response": "Approximately 73.92% of payment transactions on the platform were made using a credit card.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE payment_type='credit_card')/COUNT(*),2) FROM olist_order_payments",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage and reference credit card as the payment method.",
+          "passed": true,
+          "reasoning": "The response states a percentage (73.92%) and explicitly references credit card as the payment method, satisfying all criteria in the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "percentage",
+        "filter",
+        "medium"
+      ]
+    }
+  ]
+}

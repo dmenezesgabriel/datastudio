@@ -1,0 +1,1406 @@
+{
+  "run_at": "2026-06-25T01:52:44.205034+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 20,
+    "passed": 19,
+    "failed": 1,
+    "avg_latency_s": 43.118,
+    "total_input_tokens": 9675,
+    "total_output_tokens": 13894
+  },
+  "cases": [
+    {
+      "case_id": "movies_warner_bros_volume",
+      "question": "How many films has Warner Bros. released in the dataset?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 3.7816859250015114,
+          "input_tokens": 150,
+          "output_tokens": 194
+        },
+        "list_tables": {
+          "latency_s": 0.012758402001054492,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 9.818982755001343,
+          "input_tokens": 124,
+          "output_tokens": 246
+        },
+        "get_schema": {
+          "latency_s": 0.011192641999514308,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 8.379626819994883,
+          "input_tokens": 138,
+          "output_tokens": 196
+        },
+        "execute_sql": {
+          "latency_s": 0.010971169998811092,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 4.0848492570003145,
+          "input_tokens": 78,
+          "output_tokens": 189
+        }
+      },
+      "sql_query": "SELECT COUNT(*) FROM movies WHERE Distributor = 'Warner Bros.';",
+      "sql_valid": true,
+      "response": "Warner Bros. has released 318 films in the dataset.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "COUNT",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "318",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should clearly state the number of films and attribute it to Warner Bros.",
+          "passed": true,
+          "reasoning": "The response clearly states the number of films (318) and explicitly attributes this number to Warner Bros., satisfying the requirements of the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "movies_critically_acclaimed",
+      "question": "How many films received a Rotten Tomatoes score above 90?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 2.5831912779976847,
+          "input_tokens": 152,
+          "output_tokens": 151
+        },
+        "list_tables": {
+          "latency_s": 0.013252418997581117,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.826750318003178,
+          "input_tokens": 126,
+          "output_tokens": 111
+        },
+        "get_schema": {
+          "latency_s": 0.01132994700310519,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 2.1560321200013277,
+          "input_tokens": 140,
+          "output_tokens": 66
+        },
+        "execute_sql": {
+          "latency_s": 0.011180524998053443,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 3.145588133003912,
+          "input_tokens": 80,
+          "output_tokens": 178
+        }
+      },
+      "sql_query": "SELECT COUNT(*) FROM movies WHERE \"Rotten Tomatoes Rating\" > 90;",
+      "sql_valid": true,
+      "response": "259 films received a Rotten Tomatoes score above 90.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "COUNT",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "259",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "movies_drama_imdb_rating",
+      "question": "What is the average IMDB rating for Drama films?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 2.7313973210038966,
+          "input_tokens": 149,
+          "output_tokens": 195
+        },
+        "list_tables": {
+          "latency_s": 0.018594146997202188,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.5147910460000276,
+          "input_tokens": 123,
+          "output_tokens": 170
+        },
+        "get_schema": {
+          "latency_s": 0.021022191998781636,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 27.782305421002093,
+          "input_tokens": 137,
+          "output_tokens": 72
+        },
+        "execute_sql": {
+          "latency_s": 0.011501071006932762,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 3.674418019996665,
+          "input_tokens": 88,
+          "output_tokens": 238
+        }
+      },
+      "sql_query": "SELECT AVG(\"IMDB Rating\") AS average_imdb_rating FROM movies WHERE \"Major Genre\" = 'Drama';",
+      "sql_valid": true,
+      "response": "The average IMDB rating for Drama films is approximately 6.77.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "AVG",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "6.77",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a numeric rating value and mention Drama as the genre.",
+          "passed": true,
+          "reasoning": "The response states a numeric rating value (6.77) and mentions Drama as the genre."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "taxi_total_trips",
+      "question": "What is the total number of taxi trips recorded in the dataset?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 7.53677788299683,
+          "input_tokens": 151,
+          "output_tokens": 68
+        },
+        "list_tables": {
+          "latency_s": 0.013111016996845137,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.53593494699453,
+          "input_tokens": 125,
+          "output_tokens": 105
+        },
+        "get_schema": {
+          "latency_s": 0.020245453997631557,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 1.4815649559968733,
+          "input_tokens": 168,
+          "output_tokens": 59
+        },
+        "execute_sql": {
+          "latency_s": 0.010865921998629346,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 1.683890332998999,
+          "input_tokens": 82,
+          "output_tokens": 74
+        }
+      },
+      "sql_query": "SELECT COUNT(*) FROM nyc_taxi;",
+      "sql_valid": true,
+      "response": "The total number of taxi trips recorded in the dataset is 7,475,949.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "COUNT",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "7475949",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "taxi_total_revenue",
+      "question": "What is the total revenue generated across all taxi trips?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 3.1143504729989218,
+          "input_tokens": 149,
+          "output_tokens": 161
+        },
+        "list_tables": {
+          "latency_s": 0.012854050000896677,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.4435375850007404,
+          "input_tokens": 123,
+          "output_tokens": 48
+        },
+        "get_schema": {
+          "latency_s": 0.011228878000110853,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 7.566389413004799,
+          "input_tokens": 166,
+          "output_tokens": 53
+        },
+        "execute_sql": {
+          "latency_s": 0.027652154996758327,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 19.733116197996424,
+          "input_tokens": 84,
+          "output_tokens": 216
+        }
+      },
+      "sql_query": "SELECT SUM(total_amount) AS total_revenue FROM nyc_taxi",
+      "sql_valid": true,
+      "response": "The total revenue generated across all taxi trips is $145,047,454.13.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "SUM",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "145047454",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a dollar amount representing total revenue.",
+          "passed": true,
+          "reasoning": "The response explicitly states a dollar amount ($145,047,454.13) representing the total revenue, which directly satisfies the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "taxi_dominant_payment_type",
+      "question": "What is the most commonly used payment type code for taxi trips?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 15.739926399997785,
+          "input_tokens": 151,
+          "output_tokens": 112
+        },
+        "list_tables": {
+          "latency_s": 0.021933478994469624,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.17908771999646,
+          "input_tokens": 125,
+          "output_tokens": 79
+        },
+        "get_schema": {
+          "latency_s": 0.011686341000313405,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 16.266502282000147,
+          "input_tokens": 168,
+          "output_tokens": 44
+        },
+        "execute_sql": {
+          "latency_s": 0.021147416002349928,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 8.865114301996073,
+          "input_tokens": 77,
+          "output_tokens": 184
+        }
+      },
+      "sql_query": "SELECT payment_type FROM nyc_taxi GROUP BY payment_type ORDER BY COUNT(*) DESC LIMIT 1",
+      "sql_valid": true,
+      "response": "The most commonly used payment type code for taxi trips is 1.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "COUNT",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "cars_japan_fuel_efficiency",
+      "question": "What is the average fuel efficiency in miles per gallon for Japanese cars?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 19.998879728998872,
+          "input_tokens": 152,
+          "output_tokens": 263
+        },
+        "list_tables": {
+          "latency_s": 0.014401068998267874,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.3365108959987992,
+          "input_tokens": 126,
+          "output_tokens": 102
+        },
+        "get_schema": {
+          "latency_s": 0.019944612999097444,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 4.091703087004134,
+          "input_tokens": 105,
+          "output_tokens": 39
+        },
+        "execute_sql": {
+          "latency_s": 0.0112650279988884,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 3.4977158890033024,
+          "input_tokens": 93,
+          "output_tokens": 98
+        }
+      },
+      "sql_query": "SELECT AVG(Miles_per_Gallon) FROM cars WHERE Origin = 'Japan'",
+      "sql_valid": true,
+      "response": "The average fuel efficiency for Japanese cars is approximately 30.45 miles per gallon.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "AVG",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "30.5",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a numeric MPG value and reference Japanese cars.",
+          "passed": true,
+          "reasoning": "The response states a numeric MPG value (30.45) and explicitly references Japanese cars, satisfying all requirements of the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "cars_us_efficiency_improvement",
+      "question": "By how many miles per gallon did average fuel efficiency improve for US-manufactured cars between 1970 and 1980?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 17.602242883993313,
+          "input_tokens": 165,
+          "output_tokens": 133
+        },
+        "list_tables": {
+          "latency_s": 0.02057074799813563,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 18.307284337002784,
+          "input_tokens": 139,
+          "output_tokens": 154
+        },
+        "get_schema": {
+          "latency_s": 0.010890004996326752,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 48.73037901199859,
+          "input_tokens": 118,
+          "output_tokens": 889
+        },
+        "execute_sql": {
+          "latency_s": 0.011548959999345243,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 7.35964121100551,
+          "input_tokens": 92,
+          "output_tokens": 126
+        }
+      },
+      "sql_query": "SELECT AVG(CASE WHEN EXTRACT(YEAR FROM Year) = 1980 THEN Miles_per_Gallon END) - AVG(CASE WHEN EXTRACT(YEAR FROM Year) = 1970 THEN Miles_per_Gallon END) AS mpg_improvement FROM cars WHERE Origin = 'US'",
+      "sql_valid": true,
+      "response": "The data indicates that there was no improvement in average fuel efficiency for US-manufactured cars between 1970 and 1980.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "10.6",
+          "passed": false,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state the improvement as a number and mention the time period 1970 to 1980.",
+          "passed": false,
+          "reasoning": "The response mentions the time period 1970 to 1980, but it fails to state the improvement as a specific number. Instead, it states 'no improvement', which does not satisfy the rubric's requirement to state the improvement as a number."
+        }
+      ],
+      "passed": false,
+      "error": null
+    },
+    {
+      "case_id": "weather_extreme_heat_days",
+      "question": "How many days in Seattle had maximum temperatures exceeding 30 degrees Celsius?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 3.2291093730018474,
+          "input_tokens": 152,
+          "output_tokens": 92
+        },
+        "list_tables": {
+          "latency_s": 0.021393589006038383,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.402190253997105,
+          "input_tokens": 126,
+          "output_tokens": 104
+        },
+        "get_schema": {
+          "latency_s": 0.01959591099875979,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 24.0459709880015,
+          "input_tokens": 87,
+          "output_tokens": 86
+        },
+        "execute_sql": {
+          "latency_s": 0.020184111999697052,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 2.842196678997425,
+          "input_tokens": 79,
+          "output_tokens": 197
+        }
+      },
+      "sql_query": "SELECT COUNT(*) FROM seattle_weather WHERE temp_max > 30;",
+      "sql_valid": true,
+      "response": "There were 53 days in Seattle with maximum temperatures exceeding 30 degrees Celsius.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "COUNT",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "53",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "weather_summer_sunshine",
+      "question": "What percentage of days during summer months (June, July, and August) in Seattle were sunny?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 7.264399912004592,
+          "input_tokens": 158,
+          "output_tokens": 184
+        },
+        "list_tables": {
+          "latency_s": 0.020226145003107376,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.9764545780053595,
+          "input_tokens": 132,
+          "output_tokens": 109
+        },
+        "get_schema": {
+          "latency_s": 0.010913963997154497,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 51.694393273995956,
+          "input_tokens": 93,
+          "output_tokens": 412
+        },
+        "execute_sql": {
+          "latency_s": 0.020659372996306047,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 5.438553851003235,
+          "input_tokens": 92,
+          "output_tokens": 103
+        }
+      },
+      "sql_query": "SELECT 100.0 * COUNT(*) FILTER (WHERE weather = 'sun') / COUNT(*) AS sunny_percentage FROM seattle_weather WHERE EXTRACT(MONTH FROM date) IN (6, 7, 8);",
+      "sql_valid": true,
+      "response": "Approximately 68.21% of days during the summer months in Seattle were sunny.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "68.2",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage and reference the summer period or the months June through August.",
+          "passed": true,
+          "reasoning": "The response states a percentage (68.21%) and explicitly references the summer period ('summer months')."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "olist_total_gmv",
+      "question": "What is the total gross merchandise value generated across all orders on the platform?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 6.7193299580030725,
+          "input_tokens": 153,
+          "output_tokens": 212
+        },
+        "list_tables": {
+          "latency_s": 0.021910887997364625,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.9221623000048567,
+          "input_tokens": 127,
+          "output_tokens": 72
+        },
+        "get_schema": {
+          "latency_s": 0.011028017004719004,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 1.523456012000679,
+          "input_tokens": 98,
+          "output_tokens": 78
+        },
+        "execute_sql": {
+          "latency_s": 0.01174855099816341,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 12.787304533005226,
+          "input_tokens": 88,
+          "output_tokens": 240
+        }
+      },
+      "sql_query": "SELECT SUM(price) AS total_gmv FROM olist_order_items;",
+      "sql_valid": true,
+      "response": "The total gross merchandise value generated across all orders on the platform is approximately 13,591,643.70.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "SUM",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "13591643.7",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a total monetary amount representing gross merchandise value across all platform orders.",
+          "passed": true,
+          "reasoning": "The response explicitly states a total monetary amount (13,591,643.70) representing the gross merchandise value across all platform orders, which directly satisfies the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "olist_top_revenue_category",
+      "question": "Which product category generated the highest revenue on the platform?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 8.490094628003135,
+          "input_tokens": 149,
+          "output_tokens": 238
+        },
+        "list_tables": {
+          "latency_s": 0.012806626000383403,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 20.67015437399823,
+          "input_tokens": 123,
+          "output_tokens": 87
+        },
+        "get_schema": {
+          "latency_s": 0.0343277899955865,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 4.367527237998729,
+          "input_tokens": 170,
+          "output_tokens": 123
+        },
+        "execute_sql": {
+          "latency_s": 0.03229489999648649,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 11.128387905002455,
+          "input_tokens": 95,
+          "output_tokens": 99
+        }
+      },
+      "sql_query": "SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS product_category, SUM(oi.price) AS total_revenue FROM olist_order_items oi JOIN olist_products p ON oi.product_id = p.product_id LEFT JOIN olist_category_translation t ON p.product_category_name = t.product_category_name GROUP BY product_category ORDER BY total_revenue DESC LIMIT 1",
+      "sql_valid": true,
+      "response": "The product category that generated the highest revenue on the platform is health_beauty, with a total revenue of approximately $1,258,681.34.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "SUM",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "health_beauty",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should name a specific product category and attribute it to the highest revenue position.",
+          "passed": true,
+          "reasoning": "The response explicitly names 'health_beauty' as the specific product category and attributes it to the highest revenue position on the platform, fully satisfying the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "olist_on_time_delivery_rate",
+      "question": "What percentage of delivered orders arrived on or before the estimated delivery date?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 11.461547933002294,
+          "input_tokens": 152,
+          "output_tokens": 259
+        },
+        "list_tables": {
+          "latency_s": 0.02180000999942422,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 7.65528130200255,
+          "input_tokens": 126,
+          "output_tokens": 86
+        },
+        "get_schema": {
+          "latency_s": 0.01628645000164397,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 31.922135909000644,
+          "input_tokens": 109,
+          "output_tokens": 324
+        },
+        "execute_sql": {
+          "latency_s": 0.022130649005703162,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 13.909217250002257,
+          "input_tokens": 88,
+          "output_tokens": 249
+        }
+      },
+      "sql_query": "SELECT 100.0 * SUM(CASE WHEN order_delivered_customer_date <= order_estimated_delivery_date THEN 1 ELSE 0 END) / COUNT(*) AS percentage_on_time FROM olist_orders WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL",
+      "sql_valid": true,
+      "response": "Approximately 91.89% of delivered orders arrived on or before the estimated delivery date.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "COUNT",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "91.89",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage and reference on-time delivery or the estimated delivery date.",
+          "passed": true,
+          "reasoning": "The response states a percentage (91.89%) and explicitly references the estimated delivery date ('arrived on or before the estimated delivery date'), satisfying both conditions of the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "olist_average_order_value",
+      "question": "What is the average order value across all purchases on the platform?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 4.910515217001375,
+          "input_tokens": 151,
+          "output_tokens": 151
+        },
+        "list_tables": {
+          "latency_s": 0.021562741996604018,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 25.11288475800393,
+          "input_tokens": 125,
+          "output_tokens": 620
+        },
+        "get_schema": {
+          "latency_s": 0.011347751002176665,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 10.790193364002334,
+          "input_tokens": 89,
+          "output_tokens": 167
+        },
+        "execute_sql": {
+          "latency_s": 0.03834595700027421,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 10.917024846996355,
+          "input_tokens": 88,
+          "output_tokens": 198
+        }
+      },
+      "sql_query": "SELECT AVG(total_value) AS average_order_value FROM (SELECT order_id, SUM(payment_value) AS total_value FROM olist_order_payments GROUP BY order_id)",
+      "sql_valid": true,
+      "response": "The average order value across all purchases on the platform is approximately $160.99.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "AVG",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "160.99",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a monetary amount representing the average value per order.",
+          "passed": true,
+          "reasoning": "The response explicitly states a monetary amount, $160.99, which represents the average value per order, thus satisfying the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "olist_avg_review_score",
+      "question": "What is the platform's average customer satisfaction score based on order reviews?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 7.543948564998573,
+          "input_tokens": 152,
+          "output_tokens": 209
+        },
+        "list_tables": {
+          "latency_s": 0.013876943005016074,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.389150792994769,
+          "input_tokens": 126,
+          "output_tokens": 43
+        },
+        "get_schema": {
+          "latency_s": 0.01648258400382474,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 3.1587748340025428,
+          "input_tokens": 99,
+          "output_tokens": 37
+        },
+        "execute_sql": {
+          "latency_s": 0.0199634469972807,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 14.312110777995258,
+          "input_tokens": 89,
+          "output_tokens": 249
+        }
+      },
+      "sql_query": "SELECT AVG(review_score) AS average_satisfaction_score FROM olist_order_reviews",
+      "sql_valid": true,
+      "response": "The platform's average customer satisfaction score based on order reviews is approximately 4.09.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "AVG",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "4.09",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a numeric score out of 5 representing average customer satisfaction across all reviews.",
+          "passed": true,
+          "reasoning": "The response provides a numeric score (4.09) representing the average customer satisfaction based on order reviews, which satisfies the rubric's requirement for a numeric score out of 5."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "olist_five_star_review_share",
+      "question": "What percentage of customer reviews received the highest possible rating of 5 stars?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 2.1435324259946356,
+          "input_tokens": 153,
+          "output_tokens": 81
+        },
+        "list_tables": {
+          "latency_s": 0.019952075002947822,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.1021014580037445,
+          "input_tokens": 127,
+          "output_tokens": 40
+        },
+        "get_schema": {
+          "latency_s": 0.022087785997428,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 4.178689089996624,
+          "input_tokens": 100,
+          "output_tokens": 76
+        },
+        "execute_sql": {
+          "latency_s": 0.014001030001963954,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 20.36079676100053,
+          "input_tokens": 90,
+          "output_tokens": 233
+        }
+      },
+      "sql_query": "SELECT 100.0 * COUNT(*) FILTER (WHERE review_score = 5) / COUNT(*) AS percentage_five_star FROM olist_order_reviews",
+      "sql_valid": true,
+      "response": "Approximately 57.78% of customer reviews received the highest possible rating of 5 stars.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "COUNT",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "57.78",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage and attribute it to 5-star or top-rated reviews.",
+          "passed": true,
+          "reasoning": "The response states a percentage (57.78%) and explicitly attributes it to 5-star reviews, satisfying the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "olist_credit_card_payment_share",
+      "question": "What percentage of payment transactions on the platform were made using credit card?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 15.45743102599954,
+          "input_tokens": 152,
+          "output_tokens": 266
+        },
+        "list_tables": {
+          "latency_s": 0.0164272260008147,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 7.764299795002444,
+          "input_tokens": 126,
+          "output_tokens": 91
+        },
+        "get_schema": {
+          "latency_s": 0.019711772998562083,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 21.269147068000166,
+          "input_tokens": 90,
+          "output_tokens": 257
+        },
+        "execute_sql": {
+          "latency_s": 0.013782850001007318,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 10.234400576999178,
+          "input_tokens": 88,
+          "output_tokens": 194
+        }
+      },
+      "sql_query": "SELECT 100.0 * SUM(CASE WHEN payment_type = 'credit_card' THEN 1 ELSE 0 END) / COUNT(*) AS percentage_credit_card FROM olist_order_payments",
+      "sql_valid": true,
+      "response": "Approximately 73.92% of payment transactions on the platform were made using a credit card.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "COUNT",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "73.92",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage and reference credit card as the payment method.",
+          "passed": true,
+          "reasoning": "The response explicitly states a percentage (73.92%) and references credit card as the payment method used for the transactions."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "olist_cancellation_rate",
+      "question": "What is the overall order cancellation rate on the platform?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 7.360553679005534,
+          "input_tokens": 149,
+          "output_tokens": 212
+        },
+        "list_tables": {
+          "latency_s": 0.023572995996801183,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.8183039249997819,
+          "input_tokens": 123,
+          "output_tokens": 88
+        },
+        "get_schema": {
+          "latency_s": 0.019711890003236476,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 39.30085071099893,
+          "input_tokens": 106,
+          "output_tokens": 141
+        },
+        "execute_sql": {
+          "latency_s": 0.0204268549932749,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 4.56589250399702,
+          "input_tokens": 87,
+          "output_tokens": 96
+        }
+      },
+      "sql_query": "SELECT SUM(CASE WHEN order_status = 'canceled' THEN 1 ELSE 0 END)::FLOAT / COUNT(*) AS cancellation_rate FROM olist_orders;",
+      "sql_valid": true,
+      "response": "The overall order cancellation rate on the platform is approximately 0.63%.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage representing the share of orders that were cancelled, around 0.63%.",
+          "passed": true,
+          "reasoning": "The response explicitly states that the overall order cancellation rate is approximately 0.63%, which perfectly matches the rubric's requirement of stating a percentage around 0.63%."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "olist_top_customer_state",
+      "question": "Which Brazilian state has the highest number of registered customers?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 18.423532968001382,
+          "input_tokens": 149,
+          "output_tokens": 80
+        },
+        "list_tables": {
+          "latency_s": 0.013686735001101624,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 16.680296646998613,
+          "input_tokens": 123,
+          "output_tokens": 338
+        },
+        "get_schema": {
+          "latency_s": 0.02124827200168511,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 5.31568746999983,
+          "input_tokens": 86,
+          "output_tokens": 317
+        },
+        "execute_sql": {
+          "latency_s": 0.01892653499817243,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 11.740916096001456,
+          "input_tokens": 74,
+          "output_tokens": 227
+        }
+      },
+      "sql_query": "SELECT customer_state\nFROM olist_customers\nGROUP BY customer_state\nORDER BY COUNT(*) DESC\nLIMIT 1;",
+      "sql_valid": true,
+      "response": "The Brazilian state with the highest number of registered customers is SP (S\u00e3o Paulo).",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "COUNT",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "SP",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should name a Brazilian state abbreviation or full name and associate it with the largest customer concentration.",
+          "passed": true,
+          "reasoning": "The response explicitly names the Brazilian state using both its abbreviation (SP) and full name (S\u00e3o Paulo) and correctly associates it with having the highest number of registered customers, satisfying all conditions of the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "olist_avg_delivery_days",
+      "question": "On average, how many days does it take from order placement to delivery to the customer?",
+      "nodes": {
+        "classify_query": {
+          "latency_s": 6.94666819399572,
+          "input_tokens": 156,
+          "output_tokens": 195
+        },
+        "list_tables": {
+          "latency_s": 0.019644592997792643,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 16.359795739997935,
+          "input_tokens": 130,
+          "output_tokens": 50
+        },
+        "get_schema": {
+          "latency_s": 0.017328330002783332,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 36.54022350200103,
+          "input_tokens": 113,
+          "output_tokens": 599
+        },
+        "execute_sql": {
+          "latency_s": 0.026583364000543952,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 11.585448842997721,
+          "input_tokens": 93,
+          "output_tokens": 272
+        }
+      },
+      "sql_query": "SELECT AVG(date_diff('day', order_purchase_timestamp, order_delivered_customer_date)) AS avg_delivery_days FROM olist_orders WHERE order_delivered_customer_date IS NOT NULL;",
+      "sql_valid": true,
+      "response": "On average, it takes approximately 12.5 days from order placement to delivery to the customer.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_contains",
+          "value": "AVG",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "12.5",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a number of days representing the average end-to-end delivery time from purchase to delivery.",
+          "passed": true,
+          "reasoning": "The response states a number of days (12.5) representing the average end-to-end delivery time from order placement to delivery, which satisfies the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null
+    }
+  ]
+}

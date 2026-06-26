@@ -1,0 +1,87 @@
+{
+  "run_at": "2026-06-25T20:25:14.553435+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "pass_rate": 1.0,
+    "avg_latency_s": 5.752,
+    "p95_latency_s": 5.752,
+    "total_input_tokens": 536,
+    "total_output_tokens": 169,
+    "avg_output_tokens": 169.0,
+    "cost_usd": 0.0,
+    "by_tag": {
+      "aggregation": {
+        "total": 1,
+        "passed": 1
+      },
+      "easy": {
+        "total": 1,
+        "passed": 1
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "taxi_total_trips",
+      "question": "What is the total number of taxi trips recorded in the dataset?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.014312923012766987,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.393522430997109,
+          "input_tokens": 125,
+          "output_tokens": 62
+        },
+        "get_schema": {
+          "latency_s": 0.02427868900122121,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 1.1742782100045588,
+          "input_tokens": 270,
+          "output_tokens": 43
+        },
+        "execute_sql": {
+          "latency_s": 0.01471881200268399,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 2.1306091379956342,
+          "input_tokens": 141,
+          "output_tokens": 64
+        }
+      },
+      "sql_query": "SELECT COUNT(*) AS total_trips FROM nyc_taxi;",
+      "sql_valid": true,
+      "response": "The total number of taxi trips recorded in the dataset is 7475949.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM nyc_taxi",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "easy"
+      ]
+    }
+  ]
+}

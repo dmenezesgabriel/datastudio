@@ -1,0 +1,103 @@
+{
+  "run_at": "2026-06-25T21:21:47.795354+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "pass_rate": 0.0,
+    "avg_latency_s": 10.957,
+    "p95_latency_s": 10.957,
+    "total_input_tokens": 487,
+    "total_output_tokens": 413,
+    "avg_output_tokens": 413.0,
+    "cost_usd": 0.0,
+    "by_tag": {
+      "percentage": {
+        "total": 1,
+        "passed": 0
+      },
+      "date": {
+        "total": 1,
+        "passed": 0
+      },
+      "filter": {
+        "total": 1,
+        "passed": 0
+      },
+      "medium": {
+        "total": 1,
+        "passed": 0
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "olist_on_time_delivery_rate",
+      "question": "What percentage of delivered orders arrived on or before the estimated delivery date?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.015527989991824143,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 5.877104687009705,
+          "input_tokens": 126,
+          "output_tokens": 124
+        },
+        "get_schema": {
+          "latency_s": 0.037809372995980084,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 1.8313997429941082,
+          "input_tokens": 213,
+          "output_tokens": 115
+        },
+        "execute_sql": {
+          "latency_s": 0.02027950900082942,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 3.1749619460024405,
+          "input_tokens": 148,
+          "output_tokens": 174
+        }
+      },
+      "sql_query": "SELECT 100.0 * SUM(CASE WHEN order_delivered_customer_date <= order_estimated_delivery_date THEN 1 ELSE 0 END) / COUNT(*) AS pct_on_time FROM olist_orders WHERE order_status = 'delivered';",
+      "sql_valid": true,
+      "response": "91.88001409647795% of delivered orders arrived on or before the estimated delivery date.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_delivered_customer_date <= order_estimated_delivery_date)/COUNT(*),2) FROM olist_orders WHERE order_status='delivered' AND order_delivered_customer_date IS NOT NULL",
+          "passed": false,
+          "reasoning": "expected 1 gold row(s), got 1"
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage and reference on-time delivery or the estimated delivery date.",
+          "passed": true,
+          "reasoning": "The response explicitly states a percentage (91.88001409647795%) and directly references the estimated delivery date, satisfying all conditions of the rubric."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "percentage",
+        "date",
+        "filter",
+        "medium"
+      ]
+    }
+  ]
+}

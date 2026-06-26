@@ -1,0 +1,254 @@
+{
+  "run_at": "2026-06-25T12:54:06.499626+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 3,
+    "passed": 1,
+    "failed": 2,
+    "pass_rate": 0.333,
+    "avg_latency_s": 20.565,
+    "p95_latency_s": 37.134,
+    "total_input_tokens": 1365,
+    "total_output_tokens": 1443,
+    "avg_output_tokens": 481.0,
+    "cost_usd": 0.0,
+    "by_tag": {
+      "aggregation": {
+        "total": 1,
+        "passed": 1
+      },
+      "easy": {
+        "total": 1,
+        "passed": 1
+      },
+      "join": {
+        "total": 1,
+        "passed": 0
+      },
+      "group_by": {
+        "total": 1,
+        "passed": 0
+      },
+      "ranking": {
+        "total": 1,
+        "passed": 0
+      },
+      "hard": {
+        "total": 1,
+        "passed": 0
+      },
+      "percentage": {
+        "total": 1,
+        "passed": 0
+      },
+      "filter": {
+        "total": 1,
+        "passed": 0
+      },
+      "medium": {
+        "total": 1,
+        "passed": 0
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "taxi_total_revenue",
+      "question": "What is the total revenue generated across all taxi trips?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.014614478997827973,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.782325446998584,
+          "input_tokens": 123,
+          "output_tokens": 59
+        },
+        "get_schema": {
+          "latency_s": 0.025864320996333845,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 1.2272713460042723,
+          "input_tokens": 268,
+          "output_tokens": 49
+        },
+        "execute_sql": {
+          "latency_s": 0.024644742996315472,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 4.258867463999195,
+          "input_tokens": 84,
+          "output_tokens": 100
+        }
+      },
+      "sql_query": "SELECT SUM(total_amount) AS total_revenue FROM nyc_taxi",
+      "sql_valid": true,
+      "response": "The total revenue generated across all taxi trips is $145,047,454.13.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT SUM(total_amount) FROM nyc_taxi",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a dollar amount representing total revenue.",
+          "passed": true,
+          "reasoning": "The response explicitly states a dollar amount ($145,047,454.13) representing the total revenue, which directly satisfies the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "easy"
+      ]
+    },
+    {
+      "case_id": "olist_top_revenue_category",
+      "question": "Which product category generated the highest revenue on the platform?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.016397457002312876,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.96519871000055,
+          "input_tokens": 123,
+          "output_tokens": 225
+        },
+        "get_schema": {
+          "latency_s": 0.06691995599976508,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 6.8377526690019295,
+          "input_tokens": 246,
+          "output_tokens": 83
+        },
+        "execute_sql": {
+          "latency_s": 0.047535081997921225,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 3.2944031539955176,
+          "input_tokens": 97,
+          "output_tokens": 274
+        }
+      },
+      "sql_query": "SELECT p.product_category_name, SUM(o.price) AS total_revenue FROM olist_order_items o JOIN olist_products p ON o.product_id = p.product_id GROUP BY p.product_category_name ORDER BY total_revenue DESC LIMIT 1",
+      "sql_valid": true,
+      "response": "The product category \"beleza_saude\" generated the highest revenue, totaling approximately 1,258,681.34.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT t.product_category_name_english FROM olist_order_items oi JOIN olist_products p ON oi.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1 ORDER BY SUM(oi.price) DESC LIMIT 1",
+          "passed": false,
+          "reasoning": "expected 1 gold row(s), got 1"
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should name a specific product category and attribute it to the highest revenue position.",
+          "passed": true,
+          "reasoning": "The response explicitly names the product category \"beleza_saude\" and correctly attributes it to the highest revenue position, satisfying the rubric."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "join",
+        "group_by",
+        "ranking",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "olist_cancellation_rate",
+      "question": "What percentage of all orders placed on the platform were cancelled?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.019426352002483327,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 24.009236291996785,
+          "input_tokens": 124,
+          "output_tokens": 80
+        },
+        "get_schema": {
+          "latency_s": 0.04243442799634067,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 2.3214390559951426,
+          "input_tokens": 212,
+          "output_tokens": 74
+        },
+        "execute_sql": {
+          "latency_s": 0.015349501998571213,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "format_response": {
+          "latency_s": 10.725687849000678,
+          "input_tokens": 88,
+          "output_tokens": 499
+        }
+      },
+      "sql_query": "SELECT 100.0 * SUM(CASE WHEN order_status = 'canceled' THEN 1 ELSE 0 END) / COUNT(*) AS cancelled_percentage FROM olist_orders;",
+      "sql_valid": true,
+      "response": "Approximately 62.85% of all orders placed on the platform were cancelled.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_status='canceled')/COUNT(*),2) FROM olist_orders",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage representing the share of orders that were cancelled, around 0.63%.",
+          "passed": false,
+          "reasoning": "The response states that 62.85% of orders were cancelled, but the rubric specifies the correct percentage should be around 0.63%. The provided value is significantly incorrect."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "percentage",
+        "filter",
+        "medium"
+      ]
+    }
+  ]
+}
