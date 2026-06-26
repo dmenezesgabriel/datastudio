@@ -1,11 +1,9 @@
 """CLI entrypoint for the Text-to-SQL LangGraph pipeline."""
 
 import argparse
-from concurrent.futures import ThreadPoolExecutor
-from typing import cast
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
+from chat.infrastructure.graph.text2sql_engine_adapter import Text2SqlEngineAdapter
 from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
 from chat.infrastructure.graph.types import TypedChatGraph
 from shared.infrastructure.config.settings import AppSettings
@@ -92,29 +90,16 @@ def resolve_model_config(
     return model_name, temperature, api_key, api_base
 
 
-_TIMEOUT_RESPONSE = (
-    "This query is taking longer than expected. Please try again or rephrase your question."
-)
-
-
 def invoke_graph(graph: TypedChatGraph, message: str, *, timeout_s: float | None = None) -> str:
     """Invokes the compiled LangGraph with a user question and returns the response.
 
-    Times out gracefully after ``timeout_s`` seconds when provided.
+    Delegates to Text2SqlEngineAdapter so the timeout/fallback logic lives in one
+    place shared with the API.
 
     Example:
         response = invoke_graph(graph, "How many trips were there?", timeout_s=120.0)
     """
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(
-            graph.invoke,  # pyright: ignore[reportUnknownMemberType,reportUnknownArgumentType]
-            cast(ChatState, {"question": message}),
-        )
-        try:
-            raw = future.result(timeout=timeout_s)
-        except TimeoutError:
-            return _TIMEOUT_RESPONSE
-    return cast(ChatState, raw)["response"]
+    return Text2SqlEngineAdapter(graph, timeout_s=timeout_s).answer(message).response
 
 
 def run_non_interactive(
