@@ -8,11 +8,13 @@ from langgraph.graph import END, START, StateGraph  # pyright: ignore[reportMiss
 from langgraph.types import RetryPolicy
 
 from chat.domain.value_objects.chat_state import ChatState
+from chat.infrastructure.graph.nodes.assemble_view import AssembleView
 from chat.infrastructure.graph.nodes.execute_sql import ExecuteSql
 from chat.infrastructure.graph.nodes.format_response import FormatResponse
 from chat.infrastructure.graph.nodes.generate_sql import GenerateSql
 from chat.infrastructure.graph.nodes.get_schema import GetSchema
 from chat.infrastructure.graph.nodes.list_tables import ListTables
+from chat.infrastructure.graph.nodes.recommend_view import RecommendView
 from chat.infrastructure.graph.nodes.repair_sql import MAX_REPAIR_ATTEMPTS, RepairSql
 from chat.infrastructure.graph.nodes.select_tables import SelectTables
 from chat.infrastructure.graph.types import TypedChatGraph
@@ -86,6 +88,8 @@ def build_text2sql_nodes(
         "execute_sql": ExecuteSql(sql_engine),
         "repair_sql": RepairSql(chat_model, sql_engine),
         "format_response": FormatResponse(fast_model),
+        "recommend_view": RecommendView(fast_model),
+        "assemble_view": AssembleView(),
     }
 
 
@@ -102,7 +106,9 @@ def wire_text2sql_graph(nodes: dict[str, ChatNode]) -> TypedChatGraph:
 
     The flow is a single path with a repair loop: a failed execution routes to
     repair_sql (which regenerates the query) and back to execute_sql, up to
-    MAX_REPAIR_ATTEMPTS, before giving up and formatting a failure message.
+    MAX_REPAIR_ATTEMPTS, before giving up and formatting a failure message. The
+    tail then runs the presentation stage (recommend_view -> assemble_view) to
+    produce a renderable json-render tree from the result.
     Every node carries a RetryPolicy so transient infrastructure errors are
     retried with backoff instead of failing the run.
 
@@ -123,5 +129,7 @@ def wire_text2sql_graph(nodes: dict[str, ChatNode]) -> TypedChatGraph:
         {"repair_sql": "repair_sql", "format_response": "format_response"},
     )
     builder.add_edge("repair_sql", "execute_sql")
-    builder.add_edge("format_response", END)
+    builder.add_edge("format_response", "recommend_view")
+    builder.add_edge("recommend_view", "assemble_view")
+    builder.add_edge("assemble_view", END)
     return builder.compile()  # pyright: ignore[reportUnknownMemberType]

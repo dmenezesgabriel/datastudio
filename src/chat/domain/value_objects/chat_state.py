@@ -2,6 +2,8 @@
 
 from typing import NotRequired, TypedDict
 
+from chat.domain.value_objects.render_tree import RenderTree
+from chat.domain.value_objects.view_spec import ViewSpec
 from shared.domain.value_objects.query_result import QueryResult
 
 
@@ -26,3 +28,5 @@ class ChatState(TypedDict):
     repair_attempts: NotRequired[int]  # absent before the first repair
     query_result: NotRequired[QueryResult]  # absent until SQL executes cleanly
     response: str
+    view_spec: NotRequired[ViewSpec]  # absent until recommend_view runs
+    view: NotRequired[RenderTree]  # absent until assemble_view runs

@@ -22,6 +22,8 @@ _EXPECTED_NODES = frozenset(
         "execute_sql",
         "repair_sql",
         "format_response",
+        "recommend_view",
+        "assemble_view",
     }
 )
 _EXPECTED_EDGES = frozenset(
@@ -33,7 +35,10 @@ _EXPECTED_EDGES = frozenset(
         ("generate_sql", "execute_sql"),
         # execute_sql → repair_sql / format_response is conditional — not here
         ("repair_sql", "execute_sql"),
-        ("format_response", "__end__"),
+        # presentation stage runs after formatting on the success path
+        ("format_response", "recommend_view"),
+        ("recommend_view", "assemble_view"),
+        ("assemble_view", "__end__"),
     }
 )
 
@@ -102,7 +107,7 @@ class TestGraphTopology:
     """Verifies that all expected nodes are wired and reachable in the compiled graph."""
 
     def test_all_nodes_are_registered(self) -> None:
-        """All seven pipeline nodes appear in the compiled graph."""
+        """All pipeline nodes appear in the compiled graph."""
         # arrange / act
         graph = _make_graph()
         # assert — builder.nodes holds the spec dict keyed by node name
