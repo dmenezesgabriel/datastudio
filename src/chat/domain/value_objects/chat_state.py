@@ -20,6 +20,7 @@ class ChatState(TypedDict):
     before any later node reads them.
     """
 
+    request_id: NotRequired[str]  # UUID set by the engine adapter; absent in eval/test runs
     question: str
     tables: list[str]
     schema: str
