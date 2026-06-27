@@ -156,7 +156,8 @@ class TestInvokeGraph:
         # act
         invoke_graph(graph, "what is 2+2?")  # pyright: ignore[reportArgumentType]
         # assert
-        assert graph.last_input == cast(ChatState, {"question": "what is 2+2?"})
+        assert graph.last_input["question"] == "what is 2+2?"
+        assert "request_id" in graph.last_input
 
     def test_returns_timeout_message_when_exceeded(self) -> None:
         # arrange

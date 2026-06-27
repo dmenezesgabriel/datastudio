@@ -23,7 +23,8 @@ class TestText2SqlEngineAdapter:
         assert result.response == "There are 42 orders."
         assert result.sql_query == "SELECT 1"
         assert result.view is view
-        assert graph.last_input == {"question": "How many orders?"}
+        assert graph.last_input["question"] == "How many orders?"
+        assert "request_id" in graph.last_input
 
     def test_defaults_view_when_missing(self) -> None:
         # arrange — state without a view (e.g. an early failure)
