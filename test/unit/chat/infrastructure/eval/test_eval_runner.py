@@ -5,6 +5,8 @@ import time
 from collections.abc import Mapping
 from typing import Any, cast
 
+import pytest
+
 from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.eval.metrics import MetricsRecorder
 from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner
@@ -177,6 +179,20 @@ class TestEvalRunnerReport:
         report = runner.run([EvalCase(id="c1", question="q", checks=[])])
         assert isinstance(report, EvalReport)
 
+    def test_run_at_is_utc_iso_string(self) -> None:
+        # kills run__mutmut_3 (run_at=None) and mutmut_11 (datetime.now(None) → no tz)
+        runner = self._runner_with_response("ok")
+        report = runner.run([EvalCase(id="c1", question="q", checks=[])])
+        assert report.run_at is not None
+        assert "+00:00" in report.run_at
+
+    def test_summary_is_not_none(self) -> None:
+        # kills run__mutmut_5 (summary=None instead of compute_summary(...))
+        runner = self._runner_with_response("ok")
+        report = runner.run([EvalCase(id="c1", question="q", checks=[])])
+        assert report.summary is not None
+        assert isinstance(report.summary, dict)
+
 
 class TestEvalRunnerErrorHandling:
     """Graph exceptions are captured per-case; the run continues."""
@@ -218,6 +234,57 @@ class TestEvalRunnerErrorHandling:
         # assert — both cases present; second one passed
         assert len(report.cases) == 2
         assert report.cases[1].passed is True
+
+    def test_error_case_preserves_case_id_and_question(self) -> None:
+        # kills mutmut_73 (case_id=None) and mutmut_74 (question=None) in error path
+        runner = EvalRunner(
+            graph_factory=lambda _: _FakeGraph(raise_on_invoke=RuntimeError("boom")),
+            model_name="test-model",
+        )
+        report = runner.run([EvalCase(id="my-case", question="What?", checks=[])])
+        case = report.cases[0]
+        assert case.case_id == "my-case"
+        assert case.question == "What?"
+
+    def test_error_case_has_empty_string_defaults(self) -> None:
+        # kills mutmut_76 (sql_query=None), mutmut_78 (response=None),
+        # mutmut_93 (sql_query="XXXX"), mutmut_95 (response="XXXX")
+        runner = EvalRunner(
+            graph_factory=lambda _: _FakeGraph(raise_on_invoke=RuntimeError("boom")),
+            model_name="test-model",
+        )
+        report = runner.run([EvalCase(id="c1", question="q", checks=[])])
+        case = report.cases[0]
+        assert case.sql_query == ""
+        assert case.response == ""
+
+    def test_error_case_sql_valid_is_false(self) -> None:
+        # kills mutmut_77 (sql_valid=None) and mutmut_94 (sql_valid=True)
+        runner = EvalRunner(
+            graph_factory=lambda _: _FakeGraph(raise_on_invoke=RuntimeError("boom")),
+            model_name="test-model",
+        )
+        report = runner.run([EvalCase(id="c1", question="q", checks=[])])
+        assert report.cases[0].sql_valid is False
+
+    def test_error_case_check_results_is_empty_list(self) -> None:
+        # kills mutmut_79 (check_results=None)
+        runner = EvalRunner(
+            graph_factory=lambda _: _FakeGraph(raise_on_invoke=RuntimeError("boom")),
+            model_name="test-model",
+        )
+        report = runner.run([EvalCase(id="c1", question="q", checks=[])])
+        assert report.cases[0].check_results == []
+
+    def test_error_case_propagates_tags(self) -> None:
+        # kills mutmut_92 (tags= field missing from error CaseResult)
+        runner = EvalRunner(
+            graph_factory=lambda _: _FakeGraph(raise_on_invoke=RuntimeError("boom")),
+            model_name="test-model",
+        )
+        case = EvalCase(id="c1", question="q", checks=[], tags=["hard", "aggregation"])
+        report = runner.run([case])
+        assert report.cases[0].tags == ["hard", "aggregation"]
 
 
 class TestEvalRunnerConcurrency:
@@ -261,6 +328,219 @@ class TestEvalRunnerConcurrency:
         # assert — output order mirrors input order, not completion order
         assert [c.case_id for c in report.cases] == ["c0", "c1", "c2"]
         assert [c.response for c in report.cases] == ["q0", "q1", "q2"]
+
+
+class TestEvalRunnerCaseResultFields:
+    """CaseResult captures sql_query, sql_valid, check_results, tags, and passed."""
+
+    def _runner(self, response: str = "42") -> EvalRunner:
+        return EvalRunner(
+            graph_factory=lambda _recorder: _FakeGraph(response),
+            model_name="test-model",
+        )
+
+    def test_case_result_captures_sql_query(self) -> None:
+        # arrange — _FakeGraph returns sql_query="SELECT 1"
+        runner = self._runner()
+        # act
+        report = runner.run([EvalCase(id="c1", question="q", checks=[])])
+        # assert
+        assert report.cases[0].sql_query == "SELECT 1"
+
+    def test_case_result_captures_sql_valid_true(self) -> None:
+        # arrange — _FakeGraph returns a query_result, so sql_valid should be True
+        runner = self._runner()
+        # act
+        report = runner.run([EvalCase(id="c1", question="q", checks=[])])
+        # assert
+        assert report.cases[0].sql_valid is True
+
+    def test_case_result_propagates_tags(self) -> None:
+        # arrange
+        runner = self._runner()
+        case = EvalCase(id="c1", question="q", checks=[], tags=["aggregation", "hard"])
+        # act
+        report = runner.run([case])
+        # assert
+        assert report.cases[0].tags == ["aggregation", "hard"]
+
+    def test_check_receives_full_state_not_none(self) -> None:
+        # kills _run_case__mutmut_30 (c.evaluate(None) instead of c.evaluate(state))
+        received: list[object] = []
+
+        class _StateCapture:
+            def evaluate(self, state: object) -> dict[str, object]:
+                received.append(state)
+                return {"type": "t", "value": "", "passed": True, "reasoning": ""}
+
+        runner = EvalRunner(
+            graph_factory=lambda _recorder: _FakeGraph("ok"),
+            model_name="test-model",
+        )
+        runner.run([EvalCase(id="c1", question="q", checks=[_StateCapture()])])  # type: ignore[list-item]
+        assert len(received) == 1
+        assert received[0] is not None
+        # state must have "response" key (set by FakeGraph)
+        assert cast(Any, received[0]).get("response") == "ok"
+
+    def test_case_result_passed_true_when_all_checks_pass(self) -> None:
+        # arrange — a check that always passes
+        class _AlwaysPass:
+            def evaluate(self, state: object) -> dict[str, object]:
+                return {"type": "t", "value": "", "passed": True, "reasoning": ""}
+
+        runner = EvalRunner(
+            graph_factory=lambda _recorder: _FakeGraph(),
+            model_name="test-model",
+        )
+        case = EvalCase(id="c1", question="q", checks=[_AlwaysPass()])  # type: ignore[list-item]
+        # act
+        report = runner.run([case])
+        # assert
+        assert report.cases[0].passed is True
+        assert len(report.cases[0].check_results) == 1
+
+    def test_case_result_passed_false_when_any_check_fails(self) -> None:
+        # arrange
+        class _AlwaysFail:
+            def evaluate(self, state: object) -> dict[str, object]:
+                return {"type": "t", "value": "", "passed": False, "reasoning": "failed"}
+
+        runner = EvalRunner(
+            graph_factory=lambda _recorder: _FakeGraph(),
+            model_name="test-model",
+        )
+        case = EvalCase(id="c1", question="q", checks=[_AlwaysFail()])  # type: ignore[list-item]
+        # act
+        report = runner.run([case])
+        # assert
+        assert report.cases[0].passed is False
+
+
+class TestEvalRunnerDefaults:
+    """EvalRunner stores default parameter values as attributes."""
+
+    def test_default_input_price_per_m_is_zero(self) -> None:
+        # arrange — create without passing prices; mutmut_1 sets input_price_per_m=1.0
+        runner = EvalRunner(
+            graph_factory=lambda _recorder: _FakeGraph(),
+            model_name="test-model",
+        )
+        # act / assert
+        assert runner._input_price_per_m == 0.0
+
+    def test_default_output_price_per_m_is_zero(self) -> None:
+        # mutmut_2 sets output_price_per_m=1.0 as default
+        runner = EvalRunner(
+            graph_factory=lambda _recorder: _FakeGraph(),
+            model_name="test-model",
+        )
+        assert runner._output_price_per_m == 0.0
+
+    def test_default_max_workers_is_one(self) -> None:
+        # mutmut_3 sets max_workers=2 as default
+        runner = EvalRunner(
+            graph_factory=lambda _recorder: _FakeGraph(),
+            model_name="test-model",
+        )
+        assert runner._max_workers == 1
+
+
+class TestEvalRunnerCaseResultQuestion:
+    """CaseResult.question must match EvalCase.question (not None)."""
+
+    def test_case_result_question_matches_input_question(self) -> None:
+        # arrange — mutmut_32 sets question=None in CaseResult
+        runner = EvalRunner(
+            graph_factory=lambda _recorder: _FakeGraph(),
+            model_name="test-model",
+        )
+        case = EvalCase(id="c1", question="How many films?", checks=[])
+        # act
+        report = runner.run([case])
+        # assert — must propagate the question, not None
+        assert report.cases[0].question == "How many films?"
+
+
+class TestEvalRunnerCaseResultSqlQueryDefault:
+    """CaseResult.sql_query is "" when graph returns no sql_query key."""
+
+    def test_sql_query_defaults_to_empty_string_when_missing(self) -> None:
+        # arrange — a graph that returns state without sql_query key
+        class _NoSqlGraph:
+            def invoke(self, state: Any, config: Any = None) -> Any:
+                return cast(
+                    ChatState,
+                    {"question": "q", "response": "ok", "tables": [], "schema": ""},
+                )
+
+        runner = EvalRunner(
+            graph_factory=lambda _recorder: _NoSqlGraph(),
+            model_name="test-model",
+        )
+        case = EvalCase(id="c1", question="q", checks=[])
+        # act
+        report = runner.run([case])
+        # assert — mutmut_52 gives "None" but correct gives ""
+        assert report.cases[0].sql_query == ""
+
+
+class TestEvalRunnerCaseResultResponseDefault:
+    """CaseResult.response is "" when graph returns no response key."""
+
+    def test_response_defaults_to_empty_string_when_missing(self) -> None:
+        # kills mutmut_64 (default=None → str(None)="None"),
+        # mutmut_66 (default omitted → None), mutmut_69 (default="XXXX")
+        class _NoResponseGraph:
+            def invoke(self, state: Any, config: Any = None) -> Any:
+                return cast(
+                    ChatState, {"question": "q", "sql_query": "", "tables": [], "schema": ""}
+                )
+
+        runner = EvalRunner(
+            graph_factory=lambda _recorder: _NoResponseGraph(),
+            model_name="test-model",
+        )
+        report = runner.run([EvalCase(id="c1", question="q", checks=[])])
+        assert report.cases[0].response == ""
+
+
+class TestEvalRunnerPricing:
+    """EvalRunner passes input and output price per M tokens to compute_summary."""
+
+    def test_input_price_is_used_for_input_tokens(self) -> None:
+        # kills run__mutmut_16 (swaps input/output prices) and
+        # run__mutmut_17 (drops output_price arg — output defaults to 0)
+        # Strategy: use 1M input tokens, 0 output tokens, price input @ $1/M, output @ $0/M
+        def factory(recorder: MetricsRecorder) -> _FakeGraph:
+            recorder.record_tokens("gen", 1_000_000, 0)
+            return _FakeGraph()
+
+        runner = EvalRunner(
+            graph_factory=factory,
+            model_name="test-model",
+            input_price_per_m=1.0,
+            output_price_per_m=0.0,
+        )
+        report = runner.run([EvalCase(id="c1", question="q", checks=[])])
+        # 1M input tokens × $1/M = $1.000000 cost
+        assert report.summary["cost_usd"] == pytest.approx(1.0)
+
+    def test_output_price_is_used_for_output_tokens(self) -> None:
+        # kills run__mutmut_17 (drops output_price → output_price defaults to 0)
+        def factory(recorder: MetricsRecorder) -> _FakeGraph:
+            recorder.record_tokens("gen", 0, 1_000_000)
+            return _FakeGraph()
+
+        runner = EvalRunner(
+            graph_factory=factory,
+            model_name="test-model",
+            input_price_per_m=0.0,
+            output_price_per_m=2.0,
+        )
+        report = runner.run([EvalCase(id="c1", question="q", checks=[])])
+        # 1M output tokens × $2/M = $2.0 cost
+        assert report.summary["cost_usd"] == pytest.approx(2.0)
 
 
 class TestEvalRunnerNodeMetrics:
