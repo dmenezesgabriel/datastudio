@@ -1,8 +1,13 @@
+from decimal import Decimal
+
 from chat.domain.value_objects.view_spec import ChartSpec, KpiSpec, ViewSpec
 from chat.infrastructure.graph.view.render_tree_builder import (
+    _format_value,
     assemble_render_tree,
     build_chart_element,
     build_kpi_element,
+    build_markdown_element,
+    build_table_element,
     narrative_tree,
 )
 from shared.domain.value_objects.query_result import QueryResult
@@ -51,6 +56,20 @@ class TestAssembleRenderTree:
         # assert
         assert tree.elements["root"].children == ["narrative", "table"]
 
+    def test_root_element_type_is_stack(self) -> None:
+        # kills mutmut_52 ("XXStackXX"), mutmut_53 ("stack"), mutmut_54 ("STACK")
+        spec = ViewSpec(kpis=[], charts=[], show_table=False)
+        tree = assemble_render_tree(spec, _result(), "ok")
+        assert tree.elements["root"].type == "Stack"
+
+    def test_table_stored_under_table_key(self) -> None:
+        # kills mutmut_37 ("XXtableXX"), mutmut_38 ("TABLE")
+        spec = ViewSpec(kpis=[], charts=[], show_table=True)
+        tree = assemble_render_tree(spec, _result(), "ok")
+        assert "table" in tree.elements
+        assert "XXtableXX" not in tree.elements
+        assert "TABLE" not in tree.elements
+
     def test_drops_chart_referencing_missing_column(self) -> None:
         # arrange — one valid chart, one referencing a column not in the result
         spec = ViewSpec(
@@ -75,6 +94,12 @@ class TestBuildKpiElement:
         # assert
         assert element is not None
         assert element.props == {"label": "Total", "value": "100"}
+
+    def test_element_type_is_kpi_stat(self) -> None:
+        # kills mutmut_24 ("XXKpiStatXX"), mutmut_25 ("kpistat"), mutmut_26 ("KPISTAT")
+        element = build_kpi_element(KpiSpec(label="Total", value_column="revenue"), _single_row())
+        assert element is not None
+        assert element.type == "KpiStat"
 
     def test_returns_none_for_missing_column(self) -> None:
         # act
@@ -109,6 +134,27 @@ class TestBuildChartElement:
         assert element is not None
         assert element.props["labels"] == ["Jan", "Feb"]
         assert element.props["datasets"] == [{"label": "revenue", "data": [100, 200]}]
+
+    def test_element_type_is_chart_js(self) -> None:
+        # kills mutmut_47 ("XXChartJsXX"), mutmut_48 ("chartjs"), mutmut_49 ("CHARTJS")
+        element = build_chart_element(
+            ChartSpec(kind="bar", title="t", label_column="month", value_columns=["revenue"]),
+            _result(),
+        )
+        assert element is not None
+        assert element.type == "ChartJs"
+
+    def test_props_use_lowercase_kind_and_title_keys(self) -> None:
+        # kills mutmut_33 ("KIND"), mutmut_34 ("XXtitleXX"), mutmut_35 ("TITLE")
+        element = build_chart_element(
+            ChartSpec(kind="bar", title="Monthly", label_column="month", value_columns=["revenue"]),
+            _result(),
+        )
+        assert element is not None
+        assert "kind" in element.props
+        assert "title" in element.props
+        assert element.props["kind"] == "bar"
+        assert element.props["title"] == "Monthly"
 
     def test_returns_none_when_label_column_missing(self) -> None:
         # act
@@ -150,6 +196,35 @@ class TestBuildChartElement:
         assert element is None
 
 
+class TestBuildMarkdownElement:
+    def test_type_is_markdown(self) -> None:
+        element = build_markdown_element("hello")
+        assert element.type == "Markdown"
+
+    def test_text_prop_matches_input(self) -> None:
+        element = build_markdown_element("hello")
+        assert element.props["text"] == "hello"
+
+    def test_no_children(self) -> None:
+        assert build_markdown_element("x").children == []
+
+
+class TestBuildTableElement:
+    def test_type_is_data_table(self) -> None:
+        result = QueryResult(columns=["a", "b"], rows=[(1, 2)], row_count=1)
+        assert build_table_element(result).type == "DataTable"
+
+    def test_columns_prop_matches_result(self) -> None:
+        result = QueryResult(columns=["x", "y"], rows=[], row_count=0)
+        element = build_table_element(result)
+        assert element.props["columns"] == ["x", "y"]
+
+    def test_rows_prop_contains_all_rows(self) -> None:
+        result = QueryResult(columns=["n"], rows=[(1,), (2,)], row_count=2)
+        element = build_table_element(result)
+        assert element.props["rows"] == [[1], [2]]
+
+
 class TestNarrativeTree:
     def test_contains_only_narrative_under_root(self) -> None:
         # act
@@ -157,3 +232,29 @@ class TestNarrativeTree:
         # assert
         assert tree.elements["root"].children == ["narrative"]
         assert tree.elements["narrative"].props["text"] == "Could not answer."
+
+    def test_root_element_type_is_stack(self) -> None:
+        tree = narrative_tree("x")
+        assert tree.elements["root"].type == "Stack"
+
+    def test_root_key_is_root(self) -> None:
+        tree = narrative_tree("x")
+        assert tree.root == "root"
+
+
+class TestFormatValue:
+    def test_int_gets_thousands_separator(self) -> None:
+        assert _format_value(1234567) == "1,234,567"
+
+    def test_float_gets_two_decimal_places(self) -> None:
+        assert _format_value(1234.5) == "1,234.50"
+
+    def test_decimal_gets_two_decimal_places(self) -> None:
+        assert _format_value(Decimal("9.99")) == "9.99"
+
+    def test_bool_true_formats_as_string(self) -> None:
+        # bool is subclass of int; must be handled before int branch
+        assert _format_value(True) == "True"
+
+    def test_string_returns_as_is(self) -> None:
+        assert _format_value("hello") == "hello"

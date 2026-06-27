@@ -17,6 +17,14 @@ class TestGetSchema:
         result = GetSchema(engine)({"tables": ["x"]})  # type: ignore[arg-type]
         assert result["schema"] == "-- x\ncol INT"
 
+    def test_joins_multiple_schemas_with_double_newline(self) -> None:
+        # arrange — two schemas; separator must be \n\n (not a different string)
+        engine = FakeSqlEngine(schemas={"a": "-- a\nid INT", "b": "-- b\nname VARCHAR"})
+        # act
+        result = GetSchema(engine)({"tables": ["a", "b"]})  # type: ignore[arg-type]
+        # assert — the separator between the two schemas is exactly "\n\n"
+        assert result["schema"] == "-- a\nid INT\n\n-- b\nname VARCHAR"
+
     def test_returns_empty_string_for_no_tables(self) -> None:
         result = GetSchema(FakeSqlEngine())({"tables": []})  # type: ignore[arg-type]
         assert result == {"schema": ""}

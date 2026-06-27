@@ -32,6 +32,14 @@ class TestExecuteSqlErrorCapture:
         assert "query_result" not in result
         assert "Binder Error" in str(result["sql_error"])
 
+    def test_error_message_includes_exception_type_name(self) -> None:
+        # arrange — error format must be "{ExceptionType}: {message}"
+        engine = FakeSqlEngine(error=RuntimeError("timeout"))
+        # act
+        result = ExecuteSql(engine)({"sql_query": "SELECT 1"})  # type: ignore[arg-type]
+        # assert — type name is "RuntimeError", not "NoneType"
+        assert str(result["sql_error"]).startswith("RuntimeError:")
+
     def test_does_not_raise_on_failure(self) -> None:
         # arrange
         engine = FakeSqlEngine(error=RuntimeError("boom"))

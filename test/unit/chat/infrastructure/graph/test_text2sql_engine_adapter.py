@@ -43,3 +43,26 @@ class TestText2SqlEngineAdapterTimeout:
         # assert — graceful message, not the (eventual) graph output
         assert "longer than expected" in result.response
         assert result.sql_query == ""
+
+    def test_timeout_result_has_non_none_view(self) -> None:
+        # kills _timeout_result__mutmut_3 (view=None)
+        graph = FakeChatGraph({"response": "late", "sql_query": "x"}, delay_s=0.05)
+        result = _adapter(graph, timeout_s=0.01).answer("slow question")
+        assert result.view is not None
+
+    def test_timeout_result_view_contains_timeout_message(self) -> None:
+        # kills _timeout_result__mutmut_8: narrative_tree(None) vs correct arg
+        graph = FakeChatGraph({"response": "late", "sql_query": "x"}, delay_s=0.05)
+        result = _adapter(graph, timeout_s=0.01).answer("slow question")
+        # The narrative element must contain the actual timeout message
+        assert "longer than expected" in result.view.elements["narrative"].props["text"]
+
+
+class TestText2SqlToResult:
+    def test_non_string_sql_query_defaults_to_empty_string(self) -> None:
+        # kills _to_result__mutmut_23 (else "XXXX" instead of else "")
+        # arrange — state where sql_query is an int (not a str)
+        view = narrative_tree("answer")
+        graph = FakeChatGraph({"response": "answer", "sql_query": 0, "view": view})
+        result = _adapter(graph).answer("q")
+        assert result.sql_query == ""

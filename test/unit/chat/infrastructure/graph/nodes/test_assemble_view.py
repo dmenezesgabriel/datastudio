@@ -37,3 +37,17 @@ class TestAssembleView:
         assert isinstance(view, RenderTree)
         assert view.elements["root"].children == ["narrative"]
         assert view.elements["narrative"].props["text"] == "Could not answer."
+
+    def test_assembled_view_contains_narrative_text(self) -> None:
+        # arrange — checks that narrative is passed to assemble_render_tree (not None)
+        state = ChatState(  # type: ignore[call-arg]
+            question="Revenue?",
+            response="Revenue is up.",
+            query_result=QueryResult(columns=["month", "rev"], rows=[("Jan", 5)], row_count=1),
+            view_spec=ViewSpec(kpis=[], charts=[], show_table=False),
+        )
+        # act
+        result = AssembleView()(state)
+        # assert — narrative text must appear in the rendered tree elements
+        view = result["view"]
+        assert view.elements["narrative"].props["text"] == "Revenue is up."

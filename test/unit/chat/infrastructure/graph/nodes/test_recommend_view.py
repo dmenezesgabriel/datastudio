@@ -40,6 +40,15 @@ class TestRecommendView:
         assert "revenue" in combined
         assert "Jan" in combined
 
+    def test_prompt_includes_question(self) -> None:
+        # arrange — kills __call____mutmut_13 (_build_human_content(None, ...) loses question)
+        model = FakeViewRecommendationModel(_spec())
+        # act
+        RecommendView(model)(_state_with_result())
+        # assert — "Revenue by month?" must appear in the message
+        combined = " ".join(str(m.content) for m in model.last_runnable.last_messages)
+        assert "Revenue by month?" in combined
+
 
 class TestRecommendViewWithoutResult:
     def test_returns_empty_without_calling_model(self) -> None:

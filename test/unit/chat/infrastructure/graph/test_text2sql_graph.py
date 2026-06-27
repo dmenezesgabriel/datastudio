@@ -1,11 +1,14 @@
 """Unit tests for build_text2sql_graph and wire_text2sql_graph."""
 
 import inspect
+from typing import cast
 
 from langgraph.graph.state import CompiledStateGraph  # pyright: ignore[reportMissingTypeStubs]
 
+from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.graph import text2sql_graph as graph_module
-from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
+from chat.infrastructure.graph.nodes.repair_sql import MAX_REPAIR_ATTEMPTS
+from chat.infrastructure.graph.text2sql_graph import _route_after_execution, build_text2sql_graph
 from chat.infrastructure.graph.types import TypedChatGraph
 from shared.domain.value_objects.query_result import QueryResult
 from test.unit.chat.infrastructure.graph.nodes.fake_structured_chat_model import (
@@ -152,6 +155,31 @@ class TestRepairLoop:
         assert "couldn't" in str(result["response"]).lower()
         # initial execution + at least one repair re-execution occurred
         assert len(sql_engine.executed_sql) >= 3
+
+
+class TestRouteAfterExecution:
+    """Direct tests for _route_after_execution routing logic."""
+
+    def test_routes_to_format_response_when_query_result_present(self) -> None:
+        # kills mutmut_6/7/8 (wrong key: None / "XXquery_resultXX" / "QUERY_RESULT")
+        state = cast(
+            ChatState, {"query_result": QueryResult(columns=["id"], rows=[(1,)], row_count=1)}
+        )
+        assert _route_after_execution(state) == "format_response"
+
+    def test_routes_to_repair_sql_when_no_result_and_attempts_below_max(self) -> None:
+        state = cast(ChatState, {"repair_attempts": 0})
+        assert _route_after_execution(state) == "repair_sql"
+
+    def test_routes_to_format_response_when_attempts_equal_max(self) -> None:
+        # kills mutmut_18 (count <= MAX_REPAIR_ATTEMPTS instead of count < MAX_REPAIR_ATTEMPTS)
+        state = cast(ChatState, {"repair_attempts": MAX_REPAIR_ATTEMPTS})
+        assert _route_after_execution(state) == "format_response"
+
+    def test_routes_to_repair_sql_when_repair_attempts_missing(self) -> None:
+        # missing key defaults to 0, which is < MAX_REPAIR_ATTEMPTS
+        state = cast(ChatState, {})
+        assert _route_after_execution(state) == "repair_sql"
 
 
 class TestLayeringBoundary:

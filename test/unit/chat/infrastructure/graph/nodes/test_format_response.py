@@ -60,9 +60,10 @@ class TestFormatResponseHumanContent:
         model = FakeStructuredChatModel(answer="42 orders.")
         # act
         FormatResponse(model)(_state())
-        # assert
+        # assert — "1 row)" (closing paren from "Results (1 row):"); mutmut_7 gives "1 rowXXXX)"
         combined = " ".join(str(m.content) for m in model.last_runnable.last_messages)
-        assert "1 row" in combined
+        assert "1 row)" in combined
+        assert "1 rows)" not in combined
 
     def test_uses_plural_label_for_multiple_rows(self) -> None:
         # arrange
