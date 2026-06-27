@@ -18,8 +18,9 @@ _SYSTEM_PROMPT = (
     "- Format large integers and decimals with thousands separators "
     "(e.g. 1,234,567 or 13,591,643.70). Use exactly two decimal places for monetary values.\n"
     '- Do not rescale values (do not write "13.6M" when the exact figure is available).\n'
-    "- If the result already contains a percentage value (e.g. 91.88), report it as 91.88%. "
-    "Do not compute percentages yourself.\n\n"
+    "- Report every numeric value exactly as it appears in the results; never multiply or "
+    "divide it. Never convert between fractions and percentages: in a percentage column, "
+    "0.63 means 0.63% (not 63%) and 91.88 means 91.88%. Do not compute percentages yourself.\n\n"
     "Attribution: Ground your answer by stating the number of records the result is based on "
     "when it adds meaningful context "
     '(e.g. "Based on 112,650 delivered orders, 91.88% arrived on time."). '

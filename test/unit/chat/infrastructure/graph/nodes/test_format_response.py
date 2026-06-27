@@ -80,6 +80,21 @@ class TestFormatResponseHumanContent:
         assert "2 rows" in combined
 
 
+class TestFormatResponseSystemPrompt:
+    def test_forbids_converting_fractions_and_percentages(self) -> None:
+        # Regression: glm-5 rendered a 0.63% result (raw value 0.6285) as "62.85%" by
+        # treating an already-percentage value as a fraction. The prompt must forbid any
+        # fraction<->percentage conversion and show the small-value example explicitly.
+        model = FakeStructuredChatModel(answer="x")
+        # act
+        FormatResponse(model)(_state())
+        # assert
+        system = next(m for m in model.last_runnable.last_messages if isinstance(m, SystemMessage))
+        text = str(system.content)
+        assert "never convert between fractions and percentages" in text.lower()
+        assert "0.63%" in text
+
+
 class TestFormatResponseWithoutResult:
     def test_returns_failure_message_without_calling_model(self) -> None:
         # arrange — repair loop exhausted; no query_result in state
