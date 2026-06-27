@@ -1,5 +1,38 @@
 # Data Studio
 
+## Running
+
+**Backend**
+```sh
+uv run uvicorn chat.infrastructure.api.app:create_app --factory --host 127.0.0.1 --port 8000 --reload
+```
+
+**Frontend dev server**
+```sh
+cd frontend && npm run dev
+```
+
+**Frontend build** (required for backend to serve the SPA)
+```sh
+cd frontend && npm run build
+```
+
+**CLI** (direct graph invocation, no HTTP)
+```sh
+uv run python main.py -m "your question here"
+```
+
+**Tests**
+```sh
+uv run pytest test/unit/ -q
+uv run pytest test/unit/ --cov=src --cov-report=term-missing -q
+```
+
+**Eval**
+```sh
+uv run python scripts/run_eval.py
+```
+
 ## References
 
 - https://arxiv.org/html/2511.10192v1
