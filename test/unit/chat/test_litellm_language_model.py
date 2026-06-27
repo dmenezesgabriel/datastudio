@@ -20,6 +20,17 @@ class FakeChatLiteLLM(BaseChatModel):
 
 
 class TestLiteLLMLanguageModel:
+    def test_default_temperature_is_zero(self) -> None:
+        # arrange — no temperature arg; kills __init____mutmut_1 (default=1.0)
+        with patch(
+            "chat.infrastructure.graph.litellm_language_model.ChatLiteLLM",
+            FakeChatLiteLLM,
+        ):
+            sut = LiteLLMLanguageModel(model_name="gpt-4o")
+            result = sut.get_chat_model()
+        # assert — default must be 0.0, not 1.0
+        assert result.temperature == 0.0  # type: ignore[union-attr]
+
     def test_get_chat_model_returns_base_chat_model(self) -> None:
         # Arrange
         with patch(
