@@ -46,3 +46,19 @@ class TestGenerateSql:
         # assert
         combined = " ".join(str(m.content) for m in model.last_runnable.last_messages)
         assert "How many orders?" in combined
+
+
+class TestGenerateSqlSystemPrompt:
+    def test_instructs_excluding_nulls_from_rate_populations(self) -> None:
+        # Regression: the model intermittently divided a rate by COUNT(*) including rows
+        # whose measured column is NULL (unknown), counting "unknown" as failing the
+        # condition and yielding a subtly wrong percentage. The prompt must require NULL
+        # exclusion from both numerator and denominator.
+        model = FakeStructuredChatModel(sql="SELECT 1")
+        # act
+        GenerateSql(model)(_state())
+        # assert
+        system = next(m for m in model.last_runnable.last_messages if isinstance(m, SystemMessage))
+        text = str(system.content).lower()
+        assert "null" in text
+        assert "numerator" in text and "denominator" in text

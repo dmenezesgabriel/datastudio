@@ -19,6 +19,9 @@ _SYSTEM_PROMPT = (
     "- For literal filters, reuse the sample values shown in the schema comments "
     "(`-- e.g. ...`), matching their exact spelling and case.\n"
     "- Use DuckDB date/time functions (date_diff, date_part, strftime) for date logic.\n"
+    "- When aggregating or computing a rate over a column that may be NULL, treat NULL as "
+    "unknown, not as a value: exclude NULL rows from both the numerator and the denominator "
+    "(e.g. WHERE <col> IS NOT NULL). Never count NULL as zero or as failing a condition.\n"
     "- Reference columns exactly as named in the schema."
 )
 
