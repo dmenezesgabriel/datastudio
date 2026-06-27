@@ -111,3 +111,13 @@ class TestAppSettingsLogLevel:
         # Act / Assert
         with pytest.raises(ValidationError, match="log_level"):
             AppSettings(_env_file=None)  # type: ignore[call-arg]
+
+    def test_error_message_lists_valid_levels(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # arrange — error must list valid choices so users know what to fix
+        # kills mutmut_4 (valid=None) and mutmut_6 (raise ValueError(None))
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+        monkeypatch.setenv("LOG_LEVEL", "VERBOSE")
+        with pytest.raises(ValidationError) as exc_info:
+            AppSettings(_env_file=None)  # type: ignore[call-arg]
+        err = str(exc_info.value)
+        assert "DEBUG" in err or "INFO" in err

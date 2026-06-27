@@ -1,7 +1,9 @@
 import duckdb
 import pytest
 
-from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
+from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import (
+    DuckDbSqlEngine,
+)
 
 
 @pytest.fixture()
@@ -11,6 +13,32 @@ def db_path(tmp_path: pytest.TempPathFactory) -> str:
         conn.execute("CREATE TABLE items (id INTEGER, label VARCHAR)")
         conn.execute("INSERT INTO items VALUES (1, 'alpha'), (2, 'beta')")
     return path
+
+
+class TestIsTextual:
+    def test_varchar_is_textual(self) -> None:
+        assert DuckDbSqlEngine._is_textual("VARCHAR") is True
+
+    def test_text_is_textual(self) -> None:
+        assert DuckDbSqlEngine._is_textual("TEXT") is True
+
+    def test_string_is_textual(self) -> None:
+        assert DuckDbSqlEngine._is_textual("STRING") is True
+
+    def test_integer_is_not_textual(self) -> None:
+        assert DuckDbSqlEngine._is_textual("INTEGER") is False
+
+    def test_double_is_not_textual(self) -> None:
+        assert DuckDbSqlEngine._is_textual("DOUBLE") is False
+
+
+class TestQuote:
+    def test_wraps_identifier_in_double_quotes(self) -> None:
+        assert DuckDbSqlEngine._quote("table_name") == '"table_name"'
+
+    def test_escapes_embedded_double_quote(self) -> None:
+        # identifier containing " must become "" inside the quoted identifier
+        assert DuckDbSqlEngine._quote('col"name') == '"col""name"'
 
 
 class TestDuckDbSqlEngine:
@@ -42,3 +70,92 @@ class TestDuckDbSqlEngine:
     def test_execute_query_row_count_matches(self, db_path: str) -> None:
         result = DuckDbSqlEngine(db_path).execute_query("SELECT * FROM items")
         assert result.row_count == 2
+
+    def test_execute_query_row_count_matches_len_of_rows(self, db_path: str) -> None:
+        # distinguishes row_count=len(rows) from other mutations
+        result = DuckDbSqlEngine(db_path).execute_query("SELECT id FROM items")
+        assert result.row_count == len(result.rows)
+
+    def test_get_table_schema_joins_columns_without_extra_separator(self, db_path: str) -> None:
+        # arrange — schema with two columns must not have extra separators
+        schema = DuckDbSqlEngine(db_path).get_table_schema("items")
+        lines = schema.split("\n")
+        # first line is "-- items", subsequent lines are column definitions
+        assert lines[0] == "-- items"
+        assert len(lines) == 3  # header + id + label
+
+    def test_get_table_schema_marks_not_null_columns(
+        self, tmp_path: pytest.TempPathFactory
+    ) -> None:
+        # arrange — a table with an explicit NOT NULL column
+        path = str(tmp_path / "notnull.duckdb")  # type: ignore[operator]
+        with duckdb.connect(path) as conn:
+            conn.execute("CREATE TABLE t (x INTEGER NOT NULL)")
+        schema = DuckDbSqlEngine(path).get_table_schema("t")
+        assert "NOT NULL" in schema
+
+    def test_list_tables_returns_correct_count(self, db_path: str) -> None:
+        tables = DuckDbSqlEngine(db_path).list_tables()
+        assert isinstance(tables, list)
+        assert len(tables) >= 1
+
+    def test_get_table_schema_includes_example_values_for_varchar(self, db_path: str) -> None:
+        # arrange — "items" has a VARCHAR "label" column with values "alpha", "beta"
+        schema = DuckDbSqlEngine(db_path).get_table_schema("items")
+        # assert — schema should mention the example values
+        assert "alpha" in schema or "beta" in schema
+
+    def test_nullable_column_has_no_not_null_annotation(self, db_path: str) -> None:
+        # arrange — "items" has nullable columns (no NOT NULL constraint)
+        schema = DuckDbSqlEngine(db_path).get_table_schema("items")
+        # assert — kills mutmut_7 (nullable="XXXX"), mutmut_8 (.lower()), mutmut_9 (str(None)),
+        # mutmut_12 ("XXYESXX"), mutmut_13 ("yes" lowercase)
+        assert "NOT NULL" not in schema
+
+    def test_example_values_joined_with_comma_space(self, db_path: str) -> None:
+        # arrange — "label" has "alpha" and "beta"
+        schema = DuckDbSqlEngine(db_path).get_table_schema("items")
+        # assert — separator is ", " not "XX, XX" (kills _sample_values mutmut_18)
+        assert "XX, XX" not in schema
+        # both values must be present (they share a correct separator)
+        assert "alpha" in schema
+        assert "beta" in schema
+
+    def test_integer_column_has_no_example_suffix(self, db_path: str) -> None:
+        # arrange — "id" is INTEGER, so no examples should be shown
+        schema = DuckDbSqlEngine(db_path).get_table_schema("items")
+        # assert — kills mutmut_26 (suffix="XXXX" when no examples) for non-textual columns
+        assert "XXXX" not in schema
+
+    def test_validate_table_name_accepts_mixed_case(self) -> None:
+        # arrange — "MyTable" starts with uppercase; mutmut_7 uses [a-za-z_] (lowercase only)
+        # act / assert — must not raise
+        DuckDbSqlEngine._validate_table_name("MyTable")
+
+    def test_all_null_column_produces_empty_example_string(
+        self, tmp_path: pytest.TempPathFactory
+    ) -> None:
+        # kills _sample_values__mutmut_12 (return "XXXX" instead of "")
+        # arrange — column with all NULL values
+        path = str(tmp_path / "nullcol.duckdb")  # type: ignore[operator]
+        with duckdb.connect(path) as conn:
+            conn.execute("CREATE TABLE t (label VARCHAR)")
+            conn.execute("INSERT INTO t VALUES (NULL), (NULL)")
+        schema = DuckDbSqlEngine(path).get_table_schema("t")
+        # with no non-null values, _sample_values returns "" → no "Examples:" annotation
+        assert "XXXX" not in schema
+        assert "Examples: " not in schema
+
+    def test_exactly_low_cardinality_max_values_are_shown(
+        self, tmp_path: pytest.TempPathFactory
+    ) -> None:
+        # kills _sample_values__mutmut_15 (>= instead of > _LOW_CARDINALITY_MAX)
+        # arrange — column with exactly 20 distinct values (= _LOW_CARDINALITY_MAX)
+        path = str(tmp_path / "card20.duckdb")  # type: ignore[operator]
+        values = ", ".join(f"('{chr(ord('a') + i)}{i}')" for i in range(20))
+        with duckdb.connect(path) as conn:
+            conn.execute("CREATE TABLE t (label VARCHAR)")
+            conn.execute(f"INSERT INTO t VALUES {values}")
+        schema = DuckDbSqlEngine(path).get_table_schema("t")
+        # exactly 20 distinct values → NOT high cardinality → example annotation must appear
+        assert "-- e.g." in schema

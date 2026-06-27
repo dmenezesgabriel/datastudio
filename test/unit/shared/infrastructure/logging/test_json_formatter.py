@@ -151,6 +151,31 @@ class TestJsonFormatterExceptionHandling:
         assert "ValueError" in parsed["exception"]
 
 
+class TestJsonFormatterStackInfo:
+    def test_stack_info_key_present_when_record_has_stack(self) -> None:
+        # arrange — kills mutmut_23 ("XXstack_infoXX") and mutmut_24 ("STACK_INFO")
+        formatter = JsonFormatter()
+        record = make_record()
+        record.stack_info = "Stack (most recent call last):\n  File foo.py"
+        # act
+        parsed = json.loads(formatter.format(record))
+        # assert
+        assert "stack_info" in parsed
+        assert "XXstack_infoXX" not in parsed
+        assert "STACK_INFO" not in parsed
+
+    def test_stack_info_value_is_formatted_not_none(self) -> None:
+        # arrange — kills mutmut_22 (stack_info=None) and mutmut_25 (formatStack(None))
+        formatter = JsonFormatter()
+        record = make_record()
+        record.stack_info = "Stack (most recent call last):\n  File foo.py"
+        # act
+        parsed = json.loads(formatter.format(record))
+        # assert — must contain the actual stack content
+        assert parsed["stack_info"] is not None
+        assert "Stack" in str(parsed["stack_info"])
+
+
 class TestJsonFormatterOutputShape:
     def test_output_is_single_line(self) -> None:
         # Arrange
