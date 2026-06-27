@@ -17,9 +17,11 @@ from chat.infrastructure.persistence.in_memory_conversation_repository import (
     InMemoryConversationRepository,
 )
 from shared.infrastructure.config.settings import AppSettings
+from shared.infrastructure.logging.logger_factory import get_logger
+from shared.infrastructure.logging.logging_config import configure_logging
 from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 def build_send_message(settings: AppSettings) -> SendMessage:
@@ -44,6 +46,9 @@ def create_app() -> FastAPI:
         app = create_app()
     """
     settings = AppSettings()  # type: ignore[call-arg]
+    configure_logging(settings.log_level)
+    # LiteLLM emits INFO for every LLM call — reduces noise in our structured stream.
+    logging.getLogger("LiteLLM").setLevel(logging.WARNING)
     app = FastAPI(title="datastudio chat")
     app.include_router(ChatRouter(build_send_message(settings)).router)
     _mount_frontend(app, settings.frontend_dist_path)

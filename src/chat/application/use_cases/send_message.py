@@ -4,6 +4,9 @@ from chat.application.ports.conversation_repository import ConversationRepositor
 from chat.application.ports.text2sql_port import Text2SqlPort
 from chat.domain.entities.conversation import Conversation
 from chat.domain.value_objects.text2sql_result import Text2SqlResult
+from shared.infrastructure.logging.logger_factory import get_logger
+
+_logger = get_logger(__name__)
 
 
 class SendMessage:
@@ -26,9 +29,15 @@ class SendMessage:
 
     def execute(self, conversation_id: str, question: str) -> Text2SqlResult:
         """Record the question, answer it, persist both turns, return the result."""
-        conversation = self._repository.get(conversation_id) or Conversation.new(conversation_id)
+        existing = self._repository.get(conversation_id)
+        _logger.info(
+            "send_message.start",
+            extra={"conversation_id": conversation_id, "is_new": existing is None},
+        )
+        conversation = existing or Conversation.new(conversation_id)
         conversation.append_user_message(question)
         result = self._engine.answer(question)
         conversation.append_assistant_message(result)
         self._repository.save(conversation)
+        _logger.info("send_message.complete", extra={"conversation_id": conversation_id})
         return result
