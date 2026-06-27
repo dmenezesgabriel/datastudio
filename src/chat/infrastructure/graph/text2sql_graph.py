@@ -17,6 +17,7 @@ from chat.infrastructure.graph.nodes.list_tables import ListTables
 from chat.infrastructure.graph.nodes.recommend_view import RecommendView
 from chat.infrastructure.graph.nodes.repair_sql import MAX_REPAIR_ATTEMPTS, RepairSql
 from chat.infrastructure.graph.nodes.select_tables import SelectTables
+from chat.infrastructure.graph.observable_node import ObservableNode
 from chat.infrastructure.graph.types import TypedChatGraph
 from shared.application.ports.sql_engine_port import SqlEnginePort
 
@@ -62,7 +63,9 @@ def build_text2sql_graph(
         result = graph.invoke({"question": "How many trips in April?"})
         print(result["response"])
     """
-    return wire_text2sql_graph(build_text2sql_nodes(chat_model, sql_engine, format_chat_model))
+    nodes = build_text2sql_nodes(chat_model, sql_engine, format_chat_model)
+    observed = {name: ObservableNode(name, node) for name, node in nodes.items()}
+    return wire_text2sql_graph(observed)
 
 
 def build_text2sql_nodes(
@@ -101,7 +104,7 @@ def build_text2sql_nodes(
 _NODE_RETRY_POLICY = RetryPolicy(max_attempts=3)
 
 
-def wire_text2sql_graph(nodes: dict[str, ChatNode]) -> TypedChatGraph:
+def wire_text2sql_graph(nodes: Mapping[str, ChatNode]) -> TypedChatGraph:
     """Wires a set of named ChatNode callables into a compiled LangGraph.
 
     The flow is a single path with a repair loop: a failed execution routes to
