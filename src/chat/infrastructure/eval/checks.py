@@ -10,6 +10,8 @@ from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
 from chat.domain.value_objects.chat_state import ChatState
+from chat.domain.value_objects.render_tree import RenderTree
+from chat.domain.value_objects.view_spec import ViewSpec
 from chat.infrastructure.eval._result_matching import result_sets_match, value_matches
 from shared.application.ports.sql_engine_port import SqlEnginePort
 from shared.domain.value_objects.query_result import QueryResult
@@ -212,6 +214,67 @@ class RubricCheck:
         )
 
 
+def _referenced_columns(view_spec: ViewSpec) -> list[str]:
+    """Collect every result column the ViewSpec references across its KPIs and charts."""
+    columns = [kpi.value_column for kpi in view_spec.kpis]
+    for chart in view_spec.charts:
+        columns.append(chart.label_column)
+        columns.extend(chart.value_columns)
+    return columns
+
+
+class ViewIntegrityCheck:
+    """Passes when every column the recommend_view ViewSpec references exists in the result.
+
+    Guards the generative-UI path: assemble_view silently drops KPIs/charts that name a
+    missing column, so a hallucinated column would degrade the view without failing any
+    SQL/narrative check. This asserts "no invented columns" — it passes vacuously when there
+    is no view_spec (the SQL-failure / narrative-only path), so it never penalises the
+    legitimate single-row KPI or null-label drop rules in render_tree_builder.
+
+    Example:
+        check = ViewIntegrityCheck()
+        result = check.evaluate(state)  # {"type": "view_integrity", "passed": True, ...}
+    """
+
+    def evaluate(self, state: ChatState) -> CheckResult:
+        """Return passed when no ViewSpec column is absent from the query result."""
+        data = cast(dict[str, object], state)
+        view_spec = data.get("view_spec")
+        query_result = data.get("query_result")
+        if not isinstance(view_spec, ViewSpec) or not isinstance(query_result, QueryResult):
+            return CheckResult(type="view_integrity", value="", passed=True, reasoning="")
+        missing = [c for c in _referenced_columns(view_spec) if c not in query_result.columns]
+        reasoning = "" if not missing else f"columns not in result: {missing}"
+        return CheckResult(type="view_integrity", value="", passed=not missing, reasoning=reasoning)
+
+
+@dataclass
+class ViewContainsCheck:
+    """Passes when the assembled render tree contains at least one element of element_type.
+
+    Asserts the LLM chose the right presentation for a question — e.g. a multi-row
+    category result should yield a "ChartJs" element, a single headline metric a "KpiStat".
+
+    Example:
+        check = ViewContainsCheck(element_type="ChartJs")
+        result = check.evaluate(state)  # {"type": "view_contains", "passed": True, ...}
+    """
+
+    element_type: str
+
+    def evaluate(self, state: ChatState) -> CheckResult:
+        """Return passed when any element in state["view"] has type == element_type."""
+        view = cast(dict[str, object], state).get("view")
+        passed = isinstance(view, RenderTree) and any(
+            element.type == self.element_type for element in view.elements.values()
+        )
+        reasoning = "" if passed else f"no {self.element_type} element in view"
+        return CheckResult(
+            type="view_contains", value=self.element_type, passed=passed, reasoning=reasoning
+        )
+
+
 def deserialize_check(
     spec: dict[str, str], judge_model: BaseChatModel, sql_engine: SqlEnginePort
 ) -> Check:
@@ -230,6 +293,8 @@ def deserialize_check(
         "result_set",
         "execution_match",
         "rubric",
+        "view_integrity",
+        "view_contains",
     )
     match check_type:
         case "response_includes":
@@ -245,5 +310,9 @@ def deserialize_check(
             return ExecutionMatchCheck(gold_sql=spec["gold_sql"], engine=sql_engine)
         case "rubric":
             return RubricCheck(model=judge_model, rubric=spec["rubric"])
+        case "view_integrity":
+            return ViewIntegrityCheck()
+        case "view_contains":
+            return ViewContainsCheck(element_type=spec["element_type"])
         case _:
             raise ValueError(f"Unknown check type {check_type!r}; expected one of {valid}")

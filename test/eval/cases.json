@@ -20,6 +20,13 @@
         {
           "type": "rubric",
           "rubric": "The answer should clearly state the number of films and attribute it to Warner Bros."
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
         }
       ]
     },
@@ -39,6 +46,9 @@
         {
           "type": "execution_match",
           "gold_sql": "SELECT COUNT(*) FROM movies WHERE \"Rotten Tomatoes Rating\" > 90"
+        },
+        {
+          "type": "view_integrity"
         }
       ]
     },
@@ -62,6 +72,9 @@
         {
           "type": "rubric",
           "rubric": "The answer should state a numeric rating value and mention Drama as the genre."
+        },
+        {
+          "type": "view_integrity"
         }
       ]
     },
@@ -80,6 +93,13 @@
         {
           "type": "execution_match",
           "gold_sql": "SELECT COUNT(*) FROM nyc_taxi"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
         }
       ]
     },
@@ -102,6 +122,13 @@
         {
           "type": "rubric",
           "rubric": "The answer should state a dollar amount representing total revenue."
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
         }
       ]
     },
@@ -121,6 +148,9 @@
         {
           "type": "execution_match",
           "gold_sql": "SELECT payment_type FROM nyc_taxi GROUP BY payment_type ORDER BY COUNT(*) DESC LIMIT 1"
+        },
+        {
+          "type": "view_integrity"
         }
       ]
     },
@@ -144,6 +174,9 @@
         {
           "type": "rubric",
           "rubric": "The answer should state a numeric MPG value and reference Japanese cars."
+        },
+        {
+          "type": "view_integrity"
         }
       ]
     },
@@ -168,6 +201,9 @@
         {
           "type": "rubric",
           "rubric": "The answer should state the improvement as a number and mention the time period 1970 to 1980."
+        },
+        {
+          "type": "view_integrity"
         }
       ]
     },
@@ -187,6 +223,9 @@
         {
           "type": "execution_match",
           "gold_sql": "SELECT COUNT(*) FROM seattle_weather WHERE temp_max > 30"
+        },
+        {
+          "type": "view_integrity"
         }
       ]
     },
@@ -211,6 +250,9 @@
         {
           "type": "rubric",
           "rubric": "The answer should state a percentage and reference the summer period or the months June through August."
+        },
+        {
+          "type": "view_integrity"
         }
       ]
     },
@@ -233,6 +275,13 @@
         {
           "type": "rubric",
           "rubric": "The answer should state a total monetary amount representing gross merchandise value across all platform orders."
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
         }
       ]
     },
@@ -257,6 +306,9 @@
         {
           "type": "rubric",
           "rubric": "The answer should name a specific product category and attribute it to the highest revenue position."
+        },
+        {
+          "type": "view_integrity"
         }
       ]
     },
@@ -281,6 +333,9 @@
         {
           "type": "rubric",
           "rubric": "The answer should state a percentage and reference on-time delivery or the estimated delivery date."
+        },
+        {
+          "type": "view_integrity"
         }
       ]
     },
@@ -304,6 +359,9 @@
         {
           "type": "rubric",
           "rubric": "The answer should state a monetary amount representing the average value per order."
+        },
+        {
+          "type": "view_integrity"
         }
       ]
     },
@@ -326,6 +384,13 @@
         {
           "type": "rubric",
           "rubric": "The answer should state a numeric score out of 5 representing average customer satisfaction across all reviews."
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
         }
       ]
     },
@@ -349,6 +414,9 @@
         {
           "type": "rubric",
           "rubric": "The answer should state a percentage and attribute it to 5-star or top-rated reviews."
+        },
+        {
+          "type": "view_integrity"
         }
       ]
     },
@@ -372,6 +440,9 @@
         {
           "type": "rubric",
           "rubric": "The answer should state a percentage and reference credit card as the payment method."
+        },
+        {
+          "type": "view_integrity"
         }
       ]
     },
@@ -395,6 +466,9 @@
         {
           "type": "rubric",
           "rubric": "The answer should state a percentage representing the share of orders that were cancelled, around 0.63%."
+        },
+        {
+          "type": "view_integrity"
         }
       ]
     },
@@ -418,6 +492,9 @@
         {
           "type": "rubric",
           "rubric": "The answer should name a Brazilian state abbreviation or full name and associate it with the largest customer concentration."
+        },
+        {
+          "type": "view_integrity"
         }
       ]
     },
@@ -442,6 +519,90 @@
         {
           "type": "rubric",
           "rubric": "The answer should state a number of days representing the average end-to-end delivery time from purchase to delivery."
+        },
+        {
+          "type": "view_integrity"
+        }
+      ]
+    },
+    {
+      "id": "taxi_trips_by_payment_type",
+      "question": "How many taxi trips were taken with each payment type code?",
+      "tags": [
+        "group_by",
+        "chart",
+        "medium"
+      ],
+      "gold_sql": "SELECT payment_type, COUNT(*) AS trips FROM nyc_taxi GROUP BY payment_type ORDER BY trips DESC",
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT payment_type, COUNT(*) AS trips FROM nyc_taxi GROUP BY payment_type ORDER BY trips DESC"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "ChartJs"
+        }
+      ]
+    },
+    {
+      "id": "olist_top5_categories_revenue",
+      "question": "Which five product categories, by their English name, generated the most revenue, and how much did each generate?",
+      "tags": [
+        "join",
+        "group_by",
+        "ranking",
+        "chart",
+        "hard"
+      ],
+      "gold_sql": "SELECT t.product_category_name_english AS category, ROUND(SUM(oi.price),2) AS revenue FROM olist_order_items oi JOIN olist_products p ON oi.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1 ORDER BY revenue DESC LIMIT 5",
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT t.product_category_name_english AS category, ROUND(SUM(oi.price),2) AS revenue FROM olist_order_items oi JOIN olist_products p ON oi.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1 ORDER BY revenue DESC LIMIT 5"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "ChartJs"
+        }
+      ]
+    },
+    {
+      "id": "seattle_monthly_avg_high",
+      "question": "What is the average maximum temperature in Seattle for each month of the year?",
+      "tags": [
+        "group_by",
+        "date",
+        "chart",
+        "medium"
+      ],
+      "gold_sql": "SELECT date_part('month', date) AS month, ROUND(AVG(temp_max),1) AS avg_high FROM seattle_weather GROUP BY 1 ORDER BY 1",
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT date_part('month', date) AS month, ROUND(AVG(temp_max),1) AS avg_high FROM seattle_weather GROUP BY 1 ORDER BY 1"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "ChartJs"
         }
       ]
     }

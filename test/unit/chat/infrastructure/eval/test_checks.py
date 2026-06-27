@@ -3,12 +3,16 @@ from typing import cast
 import pytest
 
 from chat.domain.value_objects.chat_state import ChatState
+from chat.domain.value_objects.render_tree import RenderElement, RenderTree
+from chat.domain.value_objects.view_spec import ChartSpec, KpiSpec, ViewSpec
 from chat.infrastructure.eval.checks import (
     ExecutionMatchCheck,
     ResponseIncludesCheck,
     ResultSetCheck,
     RubricCheck,
     SqlValidCheck,
+    ViewContainsCheck,
+    ViewIntegrityCheck,
     deserialize_check,
 )
 from shared.domain.value_objects.query_result import QueryResult
@@ -169,7 +173,15 @@ class TestDeserializeExecutionMatch:
                 spec, FakeStructuredChatModel(passed=True, reasoning=""), FakeSqlEngine()
             )
         err = str(exc_info.value)
-        for name in ("response_includes", "sql_valid", "result_set", "execution_match", "rubric"):
+        for name in (
+            "response_includes",
+            "sql_valid",
+            "result_set",
+            "execution_match",
+            "rubric",
+            "view_integrity",
+            "view_contains",
+        ):
             assert name in err, f"Expected {name!r} in error: {err}"
         # kills mutmut_10-18: "XXresponse_includesXX" is NOT the same as "response_includes"
         assert "XX" not in err
@@ -307,6 +319,27 @@ class TestDeserializeAllCheckTypes:
         assert isinstance(check, RubricCheck)
         assert check.rubric == "Must cite an exact number."
 
+    def test_builds_view_integrity_check(self) -> None:
+        # arrange
+        spec: dict[str, str] = {"type": "view_integrity"}
+        # act
+        check = deserialize_check(
+            spec, FakeStructuredChatModel(passed=True, reasoning=""), FakeSqlEngine()
+        )
+        # assert
+        assert isinstance(check, ViewIntegrityCheck)
+
+    def test_builds_view_contains_check(self) -> None:
+        # arrange
+        spec = {"type": "view_contains", "element_type": "ChartJs"}
+        # act
+        check = deserialize_check(
+            spec, FakeStructuredChatModel(passed=True, reasoning=""), FakeSqlEngine()
+        )
+        # assert
+        assert isinstance(check, ViewContainsCheck)
+        assert check.element_type == "ChartJs"
+
     def test_unknown_type_raises_value_error(self) -> None:
         # arrange
         spec = {"type": "nonexistent_type"}
@@ -324,3 +357,111 @@ class TestDeserializeAllCheckTypes:
             deserialize_check(
                 spec, FakeStructuredChatModel(passed=True, reasoning=""), FakeSqlEngine()
             )
+
+
+def _state_with_view(view_spec: ViewSpec, query_result: QueryResult) -> ChatState:
+    return cast(
+        ChatState,
+        {"question": "Revenue by month", "query_result": query_result, "view_spec": view_spec},
+    )
+
+
+class TestViewIntegrityCheck:
+    """ViewIntegrityCheck guards against the LLM recommending columns the result lacks."""
+
+    def test_passes_when_all_referenced_columns_exist(self) -> None:
+        # arrange — chart and KPI reference only real columns
+        query_result = QueryResult(columns=["month", "revenue"], rows=[("Jan", 10)], row_count=1)
+        spec = ViewSpec(
+            kpis=[KpiSpec(label="Revenue", value_column="revenue")],
+            charts=[
+                ChartSpec(
+                    kind="bar", title="Revenue", label_column="month", value_columns=["revenue"]
+                )
+            ],
+            show_table=False,
+        )
+        # act
+        result = ViewIntegrityCheck().evaluate(_state_with_view(spec, query_result))
+        # assert
+        assert result["passed"] is True
+        assert result["type"] == "view_integrity"
+
+    def test_fails_and_names_missing_chart_column(self) -> None:
+        # arrange — chart references a column absent from the result
+        query_result = QueryResult(columns=["month", "revenue"], rows=[("Jan", 10)], row_count=1)
+        spec = ViewSpec(
+            kpis=[],
+            charts=[
+                ChartSpec(kind="bar", title="x", label_column="month", value_columns=["profit"])
+            ],
+            show_table=False,
+        )
+        # act
+        result = ViewIntegrityCheck().evaluate(_state_with_view(spec, query_result))
+        # assert
+        assert result["passed"] is False
+        assert "profit" in result["reasoning"]
+
+    def test_fails_when_kpi_column_missing(self) -> None:
+        # arrange — KPI references a hallucinated column
+        query_result = QueryResult(columns=["month", "revenue"], rows=[("Jan", 10)], row_count=1)
+        spec = ViewSpec(
+            kpis=[KpiSpec(label="Total", value_column="grand_total")],
+            charts=[],
+            show_table=False,
+        )
+        # act
+        result = ViewIntegrityCheck().evaluate(_state_with_view(spec, query_result))
+        # assert
+        assert result["passed"] is False
+        assert "grand_total" in result["reasoning"]
+
+    def test_passes_vacuously_when_no_view_spec(self) -> None:
+        # arrange — SQL-failure / narrative-only path: nothing to validate
+        state = cast(ChatState, {"question": "q"})
+        # act
+        result = ViewIntegrityCheck().evaluate(state)
+        # assert
+        assert result["passed"] is True
+
+
+class TestViewContainsCheck:
+    """ViewContainsCheck asserts the assembled tree carries the expected element type."""
+
+    def test_passes_when_element_type_present(self) -> None:
+        # arrange — tree holds a ChartJs element
+        view = RenderTree(
+            root="root",
+            elements={
+                "root": RenderElement(type="Stack", props={}, children=["c"]),
+                "c": RenderElement(type="ChartJs", props={}, children=[]),
+            },
+        )
+        state = cast(ChatState, {"view": view})
+        # act
+        result = ViewContainsCheck(element_type="ChartJs").evaluate(state)
+        # assert
+        assert result["passed"] is True
+        assert result["value"] == "ChartJs"
+
+    def test_fails_when_element_type_absent(self) -> None:
+        # arrange — narrative-only tree has no ChartJs
+        view = RenderTree(
+            root="root",
+            elements={"root": RenderElement(type="Markdown", props={"text": "hi"}, children=[])},
+        )
+        state = cast(ChatState, {"view": view})
+        # act
+        result = ViewContainsCheck(element_type="ChartJs").evaluate(state)
+        # assert
+        assert result["passed"] is False
+        assert "ChartJs" in result["reasoning"]
+
+    def test_fails_when_no_view_present(self) -> None:
+        # arrange — no view in state at all
+        state = cast(ChatState, {"question": "q"})
+        # act
+        result = ViewContainsCheck(element_type="KpiStat").evaluate(state)
+        # assert
+        assert result["passed"] is False
