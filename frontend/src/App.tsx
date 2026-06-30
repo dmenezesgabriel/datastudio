@@ -1,39 +1,30 @@
-import { useState } from "react";
-import { JSONUIProvider, Renderer } from "@json-render/react";
+import { useMemo, useState } from "react";
+import { JSONUIProvider, Renderer, useUIStream } from "@json-render/react";
 import type { Spec } from "@json-render/react";
 
 import { registry } from "./registry";
+import { CONVERSATION_ID } from "./session";
 
-interface ChatResponse {
-  conversation_id: string;
-  response: string;
-  sql_query: string;
-  view: Spec;
-}
-
-// One conversation per page load; follow-up questions accumulate server-side.
-const CONVERSATION_ID = crypto.randomUUID();
+// The stream carries both /elements patches (the LLM-authored widgets) and /state
+// patches (each widget's rows, authored by the backend). useUIStream applies both,
+// so spec.state holds the data the widgets' $state bindings resolve against.
+type SpecWithState = Spec & { state?: Record<string, unknown> };
 
 export function App() {
   const [question, setQuestion] = useState("");
-  const [view, setView] = useState<Spec | null>(null);
-  const [sqlQuery, setSqlQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { spec, isStreaming, error, send } = useUIStream({ api: "/api/chat" });
 
-  async function ask() {
-    if (!question.trim() || loading) return;
-    setLoading(true);
-    setError("");
-    try {
-      const data = await postQuestion(question);
-      setView(data.view);
-      setSqlQuery(data.sql_query);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
+  // A fresh object per spec ref (one per patch) so JSONUIProvider re-flattens the
+  // streamed state into its store, resolving $state as each widget's data arrives.
+  const stateModel = useMemo(() => {
+    const state = (spec as SpecWithState | null)?.state;
+    return state ? { ...state } : {};
+  }, [spec]);
+
+  function ask() {
+    const trimmed = question.trim();
+    if (!trimmed || isStreaming) return;
+    void send(trimmed, { conversation_id: CONVERSATION_ID });
   }
 
   return (
@@ -42,7 +33,7 @@ export function App() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          void ask();
+          ask();
         }}
         style={{ display: "flex", gap: 8 }}
       >
@@ -52,34 +43,19 @@ export function App() {
           placeholder="Ask a question about your data…"
           style={{ flex: 1, padding: 8, fontSize: 14 }}
         />
-        <button type="submit" disabled={loading} style={{ padding: "8px 16px" }}>
-          {loading ? "…" : "Ask"}
+        <button type="submit" disabled={isStreaming} style={{ padding: "8px 16px" }}>
+          {isStreaming ? "…" : "Ask"}
         </button>
       </form>
-      {error && <p style={{ color: "#c00" }}>{error}</p>}
+      {error && <p style={{ color: "#c00" }}>{error.message}</p>}
       <div style={{ marginTop: 24 }}>
-        <JSONUIProvider registry={registry}>
-          <Renderer spec={view} registry={registry} />
+        <JSONUIProvider registry={registry} initialState={stateModel}>
+          {/* loading lets the renderer show partial trees gracefully while patches arrive */}
+          <Renderer spec={spec} registry={registry} loading={isStreaming} />
         </JSONUIProvider>
       </div>
-      {sqlQuery && (
-        <details style={{ marginTop: 24 }}>
-          <summary>SQL</summary>
-          <pre style={preStyle}>{sqlQuery}</pre>
-        </details>
-      )}
     </main>
   );
-}
-
-async function postQuestion(question: string): Promise<ChatResponse> {
-  const response = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ conversation_id: CONVERSATION_ID, question }),
-  });
-  if (!response.ok) throw new Error(`Request failed (${response.status})`);
-  return (await response.json()) as ChatResponse;
 }
 
 const mainStyle = {
@@ -88,5 +64,3 @@ const mainStyle = {
   padding: "0 16px",
   fontFamily: "system-ui, sans-serif",
 } as const;
-
-const preStyle = { overflowX: "auto", background: "#f6f6f6", padding: 12 } as const;
