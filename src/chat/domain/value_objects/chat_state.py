@@ -1,33 +1,35 @@
 """Chat state TypedDict shared across all LangGraph nodes."""
 
-from typing import NotRequired, TypedDict
+from operator import add
+from typing import Annotated, NotRequired, TypedDict
 
-from chat.domain.value_objects.render_tree import RenderTree
-from chat.domain.value_objects.view_spec import ViewSpec
+from chat.domain.value_objects.widget import WidgetResult, WidgetSpec
 from shared.domain.value_objects.query_result import QueryResult
 
 
 class ChatState(TypedDict):
     """Graph state shared across all nodes in the chat LangGraph.
 
-    Fields are populated progressively as the graph executes. The flow is a
-    single path: list_tables → select_tables → get_schema → generate_sql →
-    execute_sql → (repair_sql loop on failure) → format_response.
+    The flow discovers the schema once, plans 1..N widgets, then fans out one
+    parallel ``build_widget`` worker per widget (via ``Send``). The two
+    ``Annotated[..., add]`` channels let those concurrent workers append their
+    outputs without clobbering each other; ``widget``/``sql_query``/``query_result``/
+    ``sql_error``/``repair_attempts`` are the per-worker working fields (carried on
+    the local state a worker drives, not across the main graph).
 
-    ``repair_attempts`` and ``query_result`` are ``NotRequired`` because they
-    are absent in the initial state and only populated once their respective
-    nodes have run.  All other fields are set exactly once by an early node
-    before any later node reads them.
+    ``NotRequired`` fields are absent until the node that sets them has run.
     """
 
     request_id: NotRequired[str]  # UUID set by the engine adapter; absent in eval/test runs
     question: str
     tables: list[str]
     schema: str
-    sql_query: str
-    sql_error: str
-    repair_attempts: NotRequired[int]  # absent before the first repair
-    query_result: NotRequired[QueryResult]  # absent until SQL executes cleanly
-    response: str
-    view_spec: NotRequired[ViewSpec]  # absent until recommend_view runs
-    view: NotRequired[RenderTree]  # absent until assemble_view runs
+    widget_specs: NotRequired[list[WidgetSpec]]  # set by plan_widgets; read by the fan-out edge
+    widget: NotRequired[WidgetSpec]  # the single widget a build_widget worker is building
+    sql_query: NotRequired[str]  # per-widget working fields (local to a build_widget worker)
+    sql_error: NotRequired[str]
+    repair_attempts: NotRequired[int]
+    query_result: NotRequired[QueryResult]
+    widget_views: Annotated[list[str], add]  # each worker appends its SpecStream patch lines
+    widget_results: Annotated[list[WidgetResult], add]  # each worker appends its executed result
+    response: str  # the overall narrative, set by compose_narrative
