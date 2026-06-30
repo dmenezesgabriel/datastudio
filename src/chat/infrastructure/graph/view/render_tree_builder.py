@@ -1,83 +1,22 @@
-"""Pure assembly of a json-render tree from a ViewSpec + QueryResult.
+"""json-render tree helpers for the narrative and the sync (CLI/eval) view path.
 
-No LLM and no I/O: the recommend_view node decides *intent* (a ``ViewSpec``) and
-this module injects the real data deterministically. Charts/KPIs that reference a
-column absent from the result are dropped rather than raising, so a slightly wrong
-recommendation degrades gracefully instead of failing the request.
-
-The emitted component ``type`` names and prop shapes must stay in sync with the
-frontend Zod catalogue (``frontend/src/catalog.ts``).
+The visualization itself is authored by the LLM as a SpecStream (see the
+``generate_view`` node); this module only builds the deterministic narrative
+element and compiles a stream of LLM patches into a ``RenderTree`` for the batch
+path. The emitted component ``type`` names and prop shapes must stay in sync with
+the frontend Zod catalogue (``frontend/src/catalog.ts``).
 """
 
-from collections.abc import Callable, Sequence
-from decimal import Decimal
+from typing import cast
 
 from chat.domain.value_objects.render_tree import RenderElement, RenderTree
-from chat.domain.value_objects.view_spec import ChartSpec, KpiSpec, ViewSpec
-from shared.domain.value_objects.query_result import QueryResult
-
-
-def column_index(query_result: QueryResult, name: str) -> int | None:
-    """Return the position of ``name`` in the result columns, or None if absent."""
-    try:
-        return query_result.columns.index(name)
-    except ValueError:
-        return None
+from chat.infrastructure.graph.spec_patch import parse_patch
 
 
 def build_markdown_element(text: str) -> RenderElement:
-    """Build the narrative Markdown element."""
+    """Build a narrative/answer Markdown element."""
     props: dict[str, object] = {"text": text}
     return RenderElement(type="Markdown", props=props, children=[])
-
-
-def build_kpi_element(kpi: KpiSpec, query_result: QueryResult) -> RenderElement | None:
-    """Build a KPI element from a single-row result, or None when not applicable.
-
-    A KPI is a single, unambiguous headline figure, so it is only emitted for a
-    one-row result. On multi-row results "the value" would just be an arbitrary
-    first row — e.g. a dashboard UNION-ALL query that would otherwise label the
-    first month's revenue as the grand total.
-    """
-    index = column_index(query_result, kpi.value_column)
-    if index is None or query_result.row_count != 1:
-        return None
-    value = _format_value(query_result.rows[0][index])
-    props: dict[str, object] = {"label": kpi.label, "value": value}
-    return RenderElement(type="KpiStat", props=props, children=[])
-
-
-def build_chart_element(chart: ChartSpec, query_result: QueryResult) -> RenderElement | None:
-    """Build a Chart.js element, or None if a column is missing or nothing is plottable."""
-    label_index = column_index(query_result, chart.label_column)
-    value_indexes = _resolve_indexes(query_result, chart.value_columns)
-    if label_index is None or value_indexes is None:
-        return None
-    # Drop rows without a label: they can't be plotted and otherwise surface as
-    # "None" categories (e.g. heterogeneous UNION-ALL dashboard result sets).
-    rows = [row for row in query_result.rows if row[label_index] is not None]
-    if not rows:
-        return None
-    datasets = [
-        _build_dataset(column, index, rows)
-        for column, index in zip(chart.value_columns, value_indexes, strict=True)
-    ]
-    props: dict[str, object] = {
-        "kind": chart.kind,
-        "title": chart.title,
-        "labels": [str(row[label_index]) for row in rows],
-        "datasets": datasets,
-    }
-    return RenderElement(type="ChartJs", props=props, children=[])
-
-
-def build_table_element(query_result: QueryResult) -> RenderElement:
-    """Build the full data table element from the result set."""
-    props: dict[str, object] = {
-        "columns": query_result.columns,
-        "rows": [list(row) for row in query_result.rows],
-    }
-    return RenderElement(type="DataTable", props=props, children=[])
 
 
 def narrative_tree(narrative: str) -> RenderTree:
@@ -89,66 +28,79 @@ def narrative_tree(narrative: str) -> RenderTree:
     return RenderTree(root="root", elements=elements)
 
 
-def assemble_render_tree(
-    view_spec: ViewSpec, query_result: QueryResult, narrative: str
-) -> RenderTree:
-    """Assemble the full render tree: narrative, valid KPIs/charts, optional table.
+def compile_view_tree(narrative: str, view_lines: list[str], sql_query: str) -> RenderTree:
+    """Compile LLM-authored SpecStream lines into a RenderTree (sync CLI/eval path).
+
+    Builds the deterministic base (root Stack + narrative), applies each JSON-Patch
+    line, then appends the SQL disclosure — mirroring what the streaming serializer
+    emits, so the batch and streaming views stay equivalent.
 
     Example:
-        tree = assemble_render_tree(spec, result, "There are 42 orders.")
+        tree = compile_view_tree("42 orders.", ['{"op":"add",...}'], "SELECT 1")
     """
-    elements: dict[str, RenderElement] = {"narrative": build_markdown_element(narrative)}
-    child_ids = ["narrative"]
-    _append_elements(elements, child_ids, view_spec.kpis, "kpi", build_kpi_element, query_result)
-    _append_elements(
-        elements, child_ids, view_spec.charts, "chart", build_chart_element, query_result
-    )
-    if view_spec.show_table:
-        elements["table"] = build_table_element(query_result)
-        child_ids.append("table")
-    elements["root"] = RenderElement(type="Stack", props={}, children=child_ids)
-    return RenderTree(root="root", elements=elements)
+    elements: dict[str, dict[str, object]] = {
+        "root": {"type": "Stack", "props": {}, "children": ["narrative"]},
+        "narrative": {"type": "Markdown", "props": {"text": narrative}, "children": []},
+    }
+    for line in view_lines:
+        _apply_view_patch(elements, line)
+    if sql_query:
+        sql_element = build_markdown_element(f"```sql\n{sql_query}\n```").model_dump()
+        elements["sql"] = cast(dict[str, object], sql_element)
+        _children(elements).append("sql")
+    return RenderTree(root="root", elements={k: _to_element(v) for k, v in elements.items()})
 
 
-def _resolve_indexes(query_result: QueryResult, columns: list[str]) -> list[int] | None:
-    """Resolve every column name to an index, or None if any is missing."""
-    indexes: list[int] = []
-    for name in columns:
-        index = column_index(query_result, name)
-        if index is None:
-            return None
-        indexes.append(index)
-    return indexes
+def _children(elements: dict[str, dict[str, object]]) -> list[object]:
+    """Return the root Stack's mutable children list."""
+    children = elements["root"]["children"]
+    return cast(list[object], children) if isinstance(children, list) else []
 
 
-def _build_dataset(column: str, index: int, rows: list[tuple[object, ...]]) -> dict[str, object]:
-    """Build one Chart.js dataset (label + column values) from the plottable rows."""
-    return {"label": column, "data": [row[index] for row in rows]}
+def _apply_view_patch(elements: dict[str, dict[str, object]], line: str) -> None:
+    """Apply one RFC-6902 patch line to the flat ``elements`` map, ignoring bad lines."""
+    patch = parse_patch(line)
+    if patch is None:
+        return
+    op, path = patch.get("op"), patch.get("path")
+    if not isinstance(op, str) or not isinstance(path, str) or not path.startswith("/elements/"):
+        return
+    try:
+        _write_path(elements, path.split("/")[2:], op, patch.get("value"))
+    except (KeyError, TypeError, IndexError):
+        return  # patch referenced a missing element/field — skip it
 
 
-def _format_value(value: object) -> str:
-    """Format a KPI value: thousands separators for numbers, str() otherwise."""
-    if isinstance(value, bool):
-        return str(value)
-    if isinstance(value, int):
-        return f"{value:,}"
-    if isinstance(value, Decimal | float):
-        return f"{value:,.2f}"
-    return str(value)
-
-
-def _append_elements[Spec](
-    elements: dict[str, RenderElement],
-    child_ids: list[str],
-    specs: Sequence[Spec],
-    prefix: str,
-    build: Callable[[Spec, QueryResult], RenderElement | None],
-    query_result: QueryResult,
+def _write_path(
+    elements: dict[str, dict[str, object]], parts: list[str], op: str, value: object
 ) -> None:
-    """Append each non-None built element under ``prefix-<index>`` ids (drops invalid)."""
-    for index, spec in enumerate(specs):
-        element = build(spec, query_result)
-        if element is not None:
-            key = f"{prefix}-{index}"
-            elements[key] = element
-            child_ids.append(key)
+    """Add/replace/remove ``value`` at ``parts`` within the elements map."""
+    if len(parts) == 1:
+        if op == "remove":
+            elements.pop(parts[0], None)
+        elif isinstance(value, dict):
+            elements[parts[0]] = cast(dict[str, object], value)
+        return
+    target: object = elements
+    for part in parts[:-1]:
+        if not isinstance(target, dict):
+            return
+        target = cast(dict[str, object], target)[part]
+    leaf = parts[-1]
+    if leaf == "-" and isinstance(target, list):
+        cast(list[object], target).append(value)
+    elif isinstance(target, dict):
+        cast(dict[str, object], target)[leaf] = value
+
+
+def _to_element(raw: dict[str, object]) -> RenderElement:
+    """Coerce a (possibly LLM-authored) element dict into a RenderElement, with defaults."""
+    props = raw.get("props")
+    children = raw.get("children")
+    return RenderElement(
+        type=str(raw.get("type", "Markdown")),
+        props=cast(dict[str, object], props) if isinstance(props, dict) else {},
+        children=[c for c in cast(list[object], children) if isinstance(c, str)]
+        if isinstance(children, list)
+        else [],
+    )

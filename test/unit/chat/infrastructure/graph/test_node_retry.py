@@ -5,6 +5,8 @@ call does not fail the whole run; deterministic bugs (ValueError) must surface
 immediately rather than being retried.
 """
 
+from types import SimpleNamespace
+
 import pytest
 
 from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
@@ -17,7 +19,12 @@ from test.unit.shared.infrastructure.sql_engine.flaky_sql_engine import FlakySql
 
 def _make_model() -> FakeStructuredChatModel:
     """Model that drives the pipeline to a successful response."""
-    return FakeStructuredChatModel(sql="SELECT 1", answer="One row.", tables=["orders"])
+    return FakeStructuredChatModel(
+        sql="SELECT 1",
+        answer="One row.",
+        tables=["orders"],
+        widgets=[SimpleNamespace(title="Count", sub_question="how many")],
+    )
 
 
 def _make_engine(error: Exception, fail_times: int) -> FlakySqlEngine:

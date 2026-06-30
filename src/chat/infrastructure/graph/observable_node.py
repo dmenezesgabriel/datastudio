@@ -6,13 +6,12 @@ from time import perf_counter
 from typing import Protocol, cast
 
 from chat.domain.value_objects.chat_state import ChatState
-from chat.domain.value_objects.view_spec import ViewSpec
 from shared.domain.value_objects.query_result import QueryResult
 from shared.infrastructure.logging.logger_factory import get_logger
 
 _logger = get_logger(__name__)
 
-_SKIP_FIELDS: frozenset[str] = frozenset({"schema", "view"})
+_SKIP_FIELDS: frozenset[str] = frozenset({"schema"})
 _RESPONSE_TRUNCATE_LEN = 500
 
 
@@ -23,9 +22,8 @@ class _ChatNode(Protocol):
 def _extract_log_safe_fields(result: Mapping[str, object]) -> dict[str, object]:
     """Return a log-safe summary of a node result dict.
 
-    Skips large fields (schema, view), extracts scalar summaries from complex
-    value objects (QueryResult → row_count, ViewSpec → kpi/chart counts), and
-    truncates long strings.
+    Skips large fields (schema), extracts scalar summaries from complex values
+    (QueryResult → row_count, view_lines → patch count), and truncates long strings.
 
     Example:
         _extract_log_safe_fields({"query_result": QueryResult(...), "sql_error": ""})
@@ -37,10 +35,8 @@ def _extract_log_safe_fields(result: Mapping[str, object]) -> dict[str, object]:
             continue
         if isinstance(value, QueryResult):
             out["row_count"] = value.row_count
-        elif isinstance(value, ViewSpec):
-            out["kpi_count"] = len(value.kpis)
-            out["chart_count"] = len(value.charts)
-            out["show_table"] = value.show_table
+        elif key == "view_lines" and isinstance(value, list):
+            out["view_patch_count"] = len(cast(list[object], value))
         elif isinstance(value, str) and len(value) > _RESPONSE_TRUNCATE_LEN:
             out[key] = value[:_RESPONSE_TRUNCATE_LEN]
         else:

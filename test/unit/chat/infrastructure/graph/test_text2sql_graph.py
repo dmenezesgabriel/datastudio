@@ -1,14 +1,16 @@
-"""Unit tests for build_text2sql_graph and wire_text2sql_graph."""
+"""Unit tests for build_text2sql_graph and wire_text2sql_graph (orchestrator–workers)."""
 
 import inspect
+from types import SimpleNamespace
 from typing import cast
 
 from langgraph.graph.state import CompiledStateGraph  # pyright: ignore[reportMissingTypeStubs]
+from langgraph.types import Send
 
 from chat.domain.value_objects.chat_state import ChatState
+from chat.domain.value_objects.widget import WidgetSpec
 from chat.infrastructure.graph import text2sql_graph as graph_module
-from chat.infrastructure.graph.nodes.repair_sql import MAX_REPAIR_ATTEMPTS
-from chat.infrastructure.graph.text2sql_graph import _route_after_execution, build_text2sql_graph
+from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph, fan_out_widgets
 from chat.infrastructure.graph.types import TypedChatGraph
 from shared.domain.value_objects.query_result import QueryResult
 from test.unit.chat.infrastructure.graph.nodes.fake_structured_chat_model import (
@@ -21,12 +23,9 @@ _EXPECTED_NODES = frozenset(
         "list_tables",
         "select_tables",
         "get_schema",
-        "generate_sql",
-        "execute_sql",
-        "repair_sql",
-        "format_response",
-        "recommend_view",
-        "assemble_view",
+        "plan_widgets",
+        "build_widget",
+        "compose_narrative",
     }
 )
 _EXPECTED_EDGES = frozenset(
@@ -34,20 +33,25 @@ _EXPECTED_EDGES = frozenset(
         ("__start__", "list_tables"),
         ("list_tables", "select_tables"),
         ("select_tables", "get_schema"),
-        ("get_schema", "generate_sql"),
-        ("generate_sql", "execute_sql"),
-        # execute_sql → repair_sql / format_response is conditional — not here
-        ("repair_sql", "execute_sql"),
-        # presentation stage runs after formatting on the success path
-        ("format_response", "recommend_view"),
-        ("recommend_view", "assemble_view"),
-        ("assemble_view", "__end__"),
+        ("get_schema", "plan_widgets"),
+        # plan_widgets → build_widget is a Send fan-out (conditional), not a static edge
+        ("build_widget", "compose_narrative"),
+        ("compose_narrative", "__end__"),
     }
 )
 
 
-def _make_graph() -> TypedChatGraph:
-    chat_model = FakeStructuredChatModel(sql="SELECT 1", answer="One row.", tables=["orders"])
+def _widget(title: str, sub_question: str) -> SimpleNamespace:
+    return SimpleNamespace(title=title, sub_question=sub_question)
+
+
+def _make_graph(widgets: list[SimpleNamespace] | None = None) -> TypedChatGraph:
+    chat_model = FakeStructuredChatModel(
+        tables=["orders"],
+        widgets=widgets or [_widget("Count", "how many orders")],
+        sql="SELECT 1",
+        answer="One row.",
+    )
     sql_engine = FakeSqlEngine(
         tables=["orders"],
         schemas={"orders": "-- orders\nid INT"},
@@ -57,137 +61,65 @@ def _make_graph() -> TypedChatGraph:
 
 
 class TestBuildText2SqlGraph:
-    """build_text2sql_graph returns a runnable compiled graph."""
-
     def test_returns_compiled_state_graph(self) -> None:
-        """Return type is a CompiledStateGraph, ready for invoke()."""
-        # arrange / act
-        graph = _make_graph()
-        # assert
-        assert isinstance(graph, CompiledStateGraph)
+        assert isinstance(_make_graph(), CompiledStateGraph)
 
-    def test_invoke_returns_response_key(self) -> None:
-        """Invoking the graph produces a natural-language response."""
-        # arrange
-        graph = _make_graph()
-        # act
-        result = graph.invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
-        # assert
+    def test_invoke_returns_overall_narrative(self) -> None:
+        result = _make_graph().invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
         assert result["response"] == "One row."
 
-    def test_invoke_propagates_tables_through_state(self) -> None:
-        """Tables listed by the engine flow through state to downstream nodes."""
-        # arrange
-        graph = _make_graph()
-        # act
-        result = graph.invoke({"question": "q"})  # pyright: ignore[reportUnknownMemberType]
-        # assert
-        assert result["tables"] == ["orders"]
+    def test_invoke_aggregates_results_from_parallel_widgets(self) -> None:
+        # two planned widgets → two build_widget workers → two aggregated results
+        graph = _make_graph([_widget("A", "qa"), _widget("B", "qb")])
+        result = graph.invoke({"question": "overview"})  # pyright: ignore[reportUnknownMemberType]
+        assert len(result["widget_results"]) == 2
+        assert {w.widget_id for w in result["widget_results"]} == {"widget-0", "widget-1"}
+        # each widget contributed view patch lines to the shared reducer channel
+        assert result["widget_views"]
 
 
-class TestFormatModelInjection:
-    """format_chat_model is used for table selection and response formatting."""
+class TestFanOut:
+    def test_emits_one_send_per_widget_with_shared_context(self) -> None:
+        specs = [
+            WidgetSpec(id="widget-0", title="A", sub_question="qa"),
+            WidgetSpec(id="widget-1", title="B", sub_question="qb"),
+        ]
+        state = cast(ChatState, {"widget_specs": specs, "schema": "-- s", "tables": ["orders"]})
+        sends = fan_out_widgets(state)
+        assert all(isinstance(s, Send) and s.node == "build_widget" for s in sends)
+        assert [s.arg["widget"].id for s in sends] == ["widget-0", "widget-1"]
+        assert sends[0].arg["schema"] == "-- s" and sends[0].arg["tables"] == ["orders"]
 
-    def test_format_response_uses_separate_model_when_provided(self) -> None:
-        """When format_chat_model is given, the format node uses it, not chat_model."""
-        # arrange — two distinct models; only the format model has the answer
-        sql_model = FakeStructuredChatModel(sql="SELECT 1", tables=["orders"])
-        format_model = FakeStructuredChatModel(answer="One row.", sql="SELECT 1", tables=["orders"])
-        sql_engine = FakeSqlEngine(
-            tables=["orders"],
-            schemas={"orders": "-- orders\nid INT"},
-            query_result=QueryResult(columns=["id"], rows=[(1,)], row_count=1),
-        )
-        graph = build_text2sql_graph(sql_model, sql_engine, format_chat_model=format_model)
-        # act
-        result = graph.invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
-        # assert — format model was invoked (its answer field is in the response)
-        assert result["response"] == "One row."
-        assert format_model.last_runnable.last_messages  # format model was called
+    def test_no_widgets_emits_no_sends(self) -> None:
+        assert fan_out_widgets(cast(ChatState, {"widget_specs": []})) == []
 
 
 class TestGraphTopology:
-    """Verifies that all expected nodes are wired and reachable in the compiled graph."""
-
     def test_all_nodes_are_registered(self) -> None:
-        """All pipeline nodes appear in the compiled graph."""
-        # arrange / act
-        graph = _make_graph()
-        # assert — builder.nodes holds the spec dict keyed by node name
-        registered = frozenset(graph.builder.nodes.keys())
-        assert registered == _EXPECTED_NODES
+        assert frozenset(_make_graph().builder.nodes.keys()) == _EXPECTED_NODES
 
-    def test_non_conditional_edges_are_correct(self) -> None:
-        """Deterministic edges match the expected linear pipeline structure."""
-        # arrange / act
-        graph = _make_graph()
-        # assert — the execute_sql routing is a branch, not a deterministic edge
-        edges = frozenset((src, dst) for src, dst in graph.builder.edges)
+    def test_static_edges_are_correct(self) -> None:
+        edges = frozenset((src, dst) for src, dst in _make_graph().builder.edges)
         assert edges == _EXPECTED_EDGES
 
-    def test_execute_sql_has_conditional_branches(self) -> None:
-        """execute_sql routes conditionally to repair_sql or format_response."""
-        # arrange / act
-        graph = _make_graph()
-        # assert — routing targets are registered as branches from execute_sql
-        branches = graph.builder.branches.get("execute_sql", {})
-        assert branches  # at least one branch defined from execute_sql
+    def test_plan_widgets_has_conditional_fan_out(self) -> None:
+        assert _make_graph().builder.branches.get("plan_widgets")
 
 
-class TestRepairLoop:
-    """The repair loop retries SQL generation up to MAX_REPAIR_ATTEMPTS times."""
-
-    def test_persistently_failing_sql_terminates_with_failure_message(self) -> None:
-        """When all repair attempts fail the graph still returns a response."""
-        # arrange — every execution errors, so repairs cannot recover
+class TestFailurePath:
+    def test_persistent_sql_failure_still_returns_a_response(self) -> None:
+        # every execution errors → no widget_results → compose_narrative degrades gracefully
         chat_model = FakeStructuredChatModel(
-            sql="SELECT bad FROM movies", answer="unused", tables=["movies"]
+            tables=["movies"], widgets=[_widget("X", "q")], sql="SELECT bad", answer="unused"
         )
         sql_engine = FakeSqlEngine(
-            tables=["movies"],
-            schemas={"movies": "-- movies\nDistributor VARCHAR"},
-            error=ValueError("Binder Error: no such column bad"),
+            tables=["movies"], schemas={"movies": "-- movies"}, error=ValueError("Binder Error")
         )
-        graph = build_text2sql_graph(chat_model, sql_engine)
-        # act
-        result = graph.invoke({"question": "How many films?"})  # pyright: ignore[reportUnknownMemberType]
-        # assert — the loop is bounded (it returns) and degrades gracefully
+        result = build_text2sql_graph(chat_model, sql_engine).invoke({"question": "q"})  # pyright: ignore[reportUnknownMemberType]
         assert "couldn't" in str(result["response"]).lower()
-        # initial execution + at least one repair re-execution occurred
-        assert len(sql_engine.executed_sql) >= 3
-
-
-class TestRouteAfterExecution:
-    """Direct tests for _route_after_execution routing logic."""
-
-    def test_routes_to_format_response_when_query_result_present(self) -> None:
-        # kills mutmut_6/7/8 (wrong key: None / "XXquery_resultXX" / "QUERY_RESULT")
-        state = cast(
-            ChatState, {"query_result": QueryResult(columns=["id"], rows=[(1,)], row_count=1)}
-        )
-        assert _route_after_execution(state) == "format_response"
-
-    def test_routes_to_repair_sql_when_no_result_and_attempts_below_max(self) -> None:
-        state = cast(ChatState, {"repair_attempts": 0})
-        assert _route_after_execution(state) == "repair_sql"
-
-    def test_routes_to_format_response_when_attempts_equal_max(self) -> None:
-        # kills mutmut_18 (count <= MAX_REPAIR_ATTEMPTS instead of count < MAX_REPAIR_ATTEMPTS)
-        state = cast(ChatState, {"repair_attempts": MAX_REPAIR_ATTEMPTS})
-        assert _route_after_execution(state) == "format_response"
-
-    def test_routes_to_repair_sql_when_repair_attempts_missing(self) -> None:
-        # missing key defaults to 0, which is < MAX_REPAIR_ATTEMPTS
-        state = cast(ChatState, {})
-        assert _route_after_execution(state) == "repair_sql"
 
 
 class TestLayeringBoundary:
-    """The production graph module must not depend on the eval harness."""
-
     def test_graph_module_does_not_import_eval(self) -> None:
-        """text2sql_graph stays free of chat.infrastructure.eval imports (SoC)."""
-        # arrange / act — inspect the module source for any eval coupling
         source = inspect.getsource(graph_module)
-        # assert — eval instrumentation belongs in eval/, not the production builder
         assert "infrastructure.eval" not in source
