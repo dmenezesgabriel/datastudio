@@ -64,3 +64,10 @@ repos:
         entry: uv run xenon src --max-absolute B --max-modules B --max-average A
         types: [python]
         pass_filenames: false
+
+      - id: gen-catalog-prompt
+        name: catalog prompt is generated from the catalog (no drift)
+        language: system
+        entry: bash -c 'npm --prefix frontend run gen:prompt >/dev/null && git diff --exit-code -- src/chat/infrastructure/graph/prompts/catalog_prompt.generated.txt'
+        pass_filenames: false
+        always_run: true
