@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from langchain_core.language_models import BaseChatModel
 
-from chat.application.use_cases.send_message import SendMessage
+from chat.application.use_cases.stream_message import StreamMessage
 from chat.infrastructure.api.chat_router import ChatRouter
 from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
 from chat.infrastructure.graph.text2sql_engine_adapter import Text2SqlEngineAdapter
@@ -24,19 +24,22 @@ from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlE
 _logger = get_logger(__name__)
 
 
-def build_send_message(settings: AppSettings) -> SendMessage:
+def build_stream_message(settings: AppSettings) -> StreamMessage:
     """Wire the graph, engine adapter, in-memory memory, and use case from settings.
 
     Example:
-        use_case = build_send_message(AppSettings())
+        use_case = build_stream_message(AppSettings())
     """
     chat_model = _build_chat_model(settings, settings.language_model_name)
     format_chat_model = _build_chat_model(settings, settings.format_model_name)
     graph = build_text2sql_graph(
-        chat_model, DuckDbSqlEngine(settings.duckdb_path), format_chat_model=format_chat_model
+        chat_model,
+        DuckDbSqlEngine(settings.duckdb_path),
+        format_chat_model=format_chat_model,
+        api_base=settings.openai_base_url,
     )
     engine = Text2SqlEngineAdapter(graph, timeout_s=settings.query_timeout_s)
-    return SendMessage(InMemoryConversationRepository(), engine)
+    return StreamMessage(InMemoryConversationRepository(), engine)
 
 
 def create_app() -> FastAPI:
@@ -50,7 +53,7 @@ def create_app() -> FastAPI:
     # LiteLLM emits INFO for every LLM call — reduces noise in our structured stream.
     logging.getLogger("LiteLLM").setLevel(logging.WARNING)
     app = FastAPI(title="datastudio chat")
-    app.include_router(ChatRouter(build_send_message(settings)).router)
+    app.include_router(ChatRouter(build_stream_message(settings)).router)
     _mount_frontend(app, settings.frontend_dist_path)
     return app
 

@@ -1,62 +1,91 @@
+import json
+from collections.abc import AsyncIterator
 from typing import cast
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from chat.application.use_cases.send_message import SendMessage
-from chat.domain.value_objects.render_tree import RenderElement, RenderTree
-from chat.domain.value_objects.text2sql_result import Text2SqlResult
+from chat.application.use_cases.stream_message import StreamMessage
+from chat.domain.value_objects.stream_event import (
+    ChatStreamEvent,
+    NarrativeReady,
+    SqlReady,
+    ViewPatchLine,
+    WidgetDataReady,
+)
 from chat.infrastructure.api.chat_router import ChatRouter
+from shared.domain.value_objects.query_result import QueryResult
 
 
-class FakeSendMessage:
-    """Records calls and returns a fixed result instead of running the graph."""
+class FakeStreamMessage:
+    """Records calls and yields fixed events instead of running the graph."""
 
-    def __init__(self, result: Text2SqlResult) -> None:
-        self._result = result
+    def __init__(self, events: list[ChatStreamEvent]) -> None:
+        self._events = events
         self.calls: list[tuple[str, str]] = []
 
-    def execute(self, conversation_id: str, question: str) -> Text2SqlResult:
+    async def execute(self, conversation_id: str, question: str) -> AsyncIterator[ChatStreamEvent]:
         self.calls.append((conversation_id, question))
-        return self._result
+        for event in self._events:
+            yield event
 
 
-def _client(fake: FakeSendMessage) -> TestClient:
+def _client(fake: FakeStreamMessage) -> TestClient:
     app = FastAPI()
-    app.include_router(ChatRouter(cast(SendMessage, fake)).router)
+    app.include_router(ChatRouter(cast(StreamMessage, fake)).router)
     return TestClient(app)
 
 
-def _result() -> Text2SqlResult:
-    view = RenderTree(
-        root="root",
-        elements={"root": RenderElement(type="Stack", props={}, children=[])},
-    )
-    return Text2SqlResult(response="There are 42 orders.", sql_query="SELECT 1", view=view)
+def _events() -> list[ChatStreamEvent]:
+    result = QueryResult(columns=["n"], rows=[(42,)], row_count=1)
+    chart = '{"op":"add","path":"/elements/widget-0-chart","value":{"type":"ChartJs"}}'
+    return [
+        WidgetDataReady(widget_id="widget-0", result=result),
+        ViewPatchLine(line=chart),
+        SqlReady(widget_id="widget-0", sql_query="SELECT count(*) FROM orders"),
+        NarrativeReady(text="There are 42 orders."),
+    ]
 
 
-class TestChatRouter:
-    def test_post_chat_returns_response_payload(self) -> None:
-        # arrange
-        fake = FakeSendMessage(_result())
-        client = _client(fake)
-        # act
-        response = client.post(
-            "/api/chat", json={"conversation_id": "c-1", "question": "How many orders?"}
-        )
-        # assert
+def _stream_lines(client: TestClient, body: dict[str, object]) -> list[dict[str, object]]:
+    with client.stream("POST", "/api/chat", json=body) as response:
         assert response.status_code == 200
-        body = response.json()
-        assert body["conversation_id"] == "c-1"
-        assert body["response"] == "There are 42 orders."
-        assert body["sql_query"] == "SELECT 1"
-        assert body["view"]["root"] == "root"
+        return [json.loads(line) for line in response.iter_lines() if line.strip()]
 
-    def test_post_chat_delegates_to_use_case(self) -> None:
+
+class TestChatRouterStreaming:
+    def test_streams_state_and_element_patches(self) -> None:
         # arrange
-        fake = FakeSendMessage(_result())
-        client = _client(fake)
+        client = _client(FakeStreamMessage(_events()))
         # act
-        client.post("/api/chat", json={"conversation_id": "c-9", "question": "q"})
-        # assert
+        patches = _stream_lines(
+            client, {"prompt": "How many orders?", "context": {"conversation_id": "c-1"}}
+        )
+        # assert — every line is an RFC-6902 patch
+        assert all("op" in p and "path" in p for p in patches)
+        # the data is delivered as a /state patch (out of the model), the chart as /elements
+        state = next(p for p in patches if p["path"] == "/state/widget-0")
+        assert state["value"]["rows"] == [{"n": 42}]  # type: ignore[index]
+        chart = next(p for p in patches if p["path"] == "/elements/widget-0-chart")
+        assert chart["value"]["type"] == "ChartJs"  # type: ignore[index]
+        narrative = next(p for p in patches if p["path"] == "/elements/narrative")
+        assert narrative["value"]["props"]["text"] == "There are 42 orders."  # type: ignore[index]
+
+    def test_no_element_patch_carries_row_data(self) -> None:
+        # the rows must reach the client ONLY via /state, never inside an /elements patch
+        # (the narrative may legitimately say "42 orders"; the row object must not appear)
+        client = _client(FakeStreamMessage(_events()))
+        patches = _stream_lines(client, {"prompt": "q", "context": {"conversation_id": "c-1"}})
+        element_blobs = json.dumps([p for p in patches if str(p["path"]).startswith("/elements")])
+        assert '"n"' not in element_blobs  # the result column key only appears under /state
+
+    def test_passes_conversation_id_from_context_to_use_case(self) -> None:
+        fake = FakeStreamMessage(_events())
+        _stream_lines(_client(fake), {"prompt": "q", "context": {"conversation_id": "c-9"}})
         assert fake.calls == [("c-9", "q")]
+
+    def test_missing_conversation_id_still_streams(self) -> None:
+        fake = FakeStreamMessage(_events())
+        patches = _stream_lines(_client(fake), {"prompt": "q"})
+        assert patches
+        assert fake.calls[0][1] == "q"

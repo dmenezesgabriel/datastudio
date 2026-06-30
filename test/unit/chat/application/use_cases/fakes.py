@@ -1,6 +1,14 @@
+from collections.abc import AsyncIterator
+
 from chat.domain.entities.conversation import Conversation
-from chat.domain.value_objects.render_tree import RenderElement, RenderTree
-from chat.domain.value_objects.text2sql_result import Text2SqlResult
+from chat.domain.value_objects.stream_event import (
+    ChatStreamEvent,
+    NarrativeReady,
+    SqlReady,
+    ViewPatchLine,
+    WidgetDataReady,
+)
+from shared.domain.value_objects.query_result import QueryResult
 
 
 class FakeConversationRepository:
@@ -16,22 +24,27 @@ class FakeConversationRepository:
         self.saved[conversation.conversation_id] = conversation
 
 
-class FakeText2SqlEngine:
-    """Engine returning a fixed result and recording questions asked."""
+class FakeStreamingText2SqlEngine:
+    """Engine yielding fixed stream events and recording questions asked."""
 
-    def __init__(self, result: Text2SqlResult) -> None:
-        self._result = result
+    def __init__(self, events: list[ChatStreamEvent]) -> None:
+        self._events = events
         self.questions: list[str] = []
 
-    def answer(self, question: str) -> Text2SqlResult:
+    async def stream(self, question: str) -> AsyncIterator[ChatStreamEvent]:
         self.questions.append(question)
-        return self._result
+        for event in self._events:
+            yield event
 
 
-def make_result(response: str = "ans") -> Text2SqlResult:
-    """Build a minimal Text2SqlResult for use-case tests."""
-    view = RenderTree(
-        root="root",
-        elements={"root": RenderElement(type="Stack", props={}, children=[])},
-    )
-    return Text2SqlResult(response=response, sql_query="SELECT 1", view=view)
+def make_events(response: str = "Summary.") -> list[ChatStreamEvent]:
+    """Build a representative one-widget event stream: data, view, sql, then narrative."""
+    result = QueryResult(columns=["n"], rows=[(42,)], row_count=1)
+    return [
+        WidgetDataReady(widget_id="widget-0", result=result),
+        ViewPatchLine(
+            line='{"op":"add","path":"/elements/widget-0-table","value":{"type":"DataTable"}}'
+        ),
+        SqlReady(widget_id="widget-0", sql_query="SELECT 1"),
+        NarrativeReady(text=response),
+    ]

@@ -1,17 +1,22 @@
-"""Request payload for the chat endpoint."""
+"""Request payload for the streaming chat endpoint.
 
-from pydantic import BaseModel
+Matches the body json-render's ``useUIStream`` hook POSTs: ``{prompt, context,
+currentSpec}``. ``currentSpec`` is the client's in-progress spec; the server builds
+a fresh one each turn, so it is intentionally not declared (pydantic ignores it).
+"""
+
+from pydantic import BaseModel, Field
 
 
-class ChatRequest(BaseModel):
-    """A question sent within a conversation.
+class StreamChatRequest(BaseModel):
+    """A question (``prompt``) plus an open ``context`` carrying ``conversation_id``.
 
-    The client supplies a stable ``conversation_id`` so follow-up turns accumulate
-    in the same conversation (short-term memory).
+    The client supplies a stable ``conversation_id`` in ``context`` so follow-up
+    turns accumulate in the same conversation (short-term memory).
 
     Example:
-        ChatRequest(conversation_id="c-1", question="How many orders were delivered?")
+        StreamChatRequest(prompt="How many orders?", context={"conversation_id": "c-1"})
     """
 
-    conversation_id: str
-    question: str
+    prompt: str
+    context: dict[str, object] = Field(default_factory=dict)

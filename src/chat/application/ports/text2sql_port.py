@@ -2,21 +2,24 @@
 
 from typing import Protocol, runtime_checkable
 
-from chat.domain.value_objects.text2sql_result import Text2SqlResult
+from chat.domain.value_objects.stream_event import TypedChatStream
 
 
 @runtime_checkable
 class Text2SqlPort(Protocol):
-    """Contract for turning a natural-language question into an answer + view.
+    """Contract for turning a natural-language question into a streamed answer + view.
 
-    Hides the LangGraph pipeline from the application layer so use cases depend
-    on this abstraction rather than on graph internals or LangChain.
+    Hides the LangGraph pipeline from the application layer so use cases depend on
+    this abstraction rather than on graph internals or LangChain. The answer is
+    delivered as a stream of events (progress, then narrative, then view) so the
+    transport can render it incrementally.
 
     Example:
         engine: Text2SqlPort = Text2SqlEngineAdapter(graph, timeout_s=120.0)
-        result = engine.answer("How many orders were delivered?")
+        async for event in engine.stream("How many orders were delivered?"):
+            ...
     """
 
-    def answer(self, question: str) -> Text2SqlResult:
-        """Answer a single question, returning the response, SQL, and render tree."""
+    def stream(self, question: str) -> TypedChatStream:
+        """Stream the answer to a single question as it is produced."""
         ...
