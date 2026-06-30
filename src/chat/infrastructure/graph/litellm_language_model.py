@@ -30,7 +30,15 @@ class LiteLLMLanguageModel:
         self._api_base = api_base
 
     def get_chat_model(self) -> BaseChatModel:
-        """Build and return a configured ChatLiteLLM instance."""
+        """Build and return a configured ChatLiteLLM instance.
+
+        Token-level ``streaming`` is intentionally left off: the API streams at the
+        LangGraph node-update granularity (``astream(stream_mode="updates")``),
+        which does not need the model to stream, and every graph node uses
+        structured output. Forcing ``streaming=True`` adds nothing here and, on
+        reasoning models, makes raw ``.invoke()`` return only thinking blocks with
+        empty text — so we keep model calls non-streaming for reliable extraction.
+        """
         return ChatLiteLLM(
             model=self._model_name,
             temperature=self._temperature,
