@@ -18,6 +18,7 @@ def build_eval_graph(
     sql_engine: SqlEnginePort,
     recorder: MetricsRecorder,
     format_chat_model: BaseChatModel | None = None,
+    api_base: str | None = None,
 ) -> TypedChatGraph:
     """Builds an instrumented text2sql graph with per-node latency timing.
 
@@ -32,7 +33,7 @@ def build_eval_graph(
         graph = build_eval_graph(model, engine, collector)
         graph.invoke({"question": "How many trips?"}, config={"callbacks": [cb]})
     """
-    nodes = build_text2sql_nodes(chat_model, sql_engine, format_chat_model)
+    nodes = build_text2sql_nodes(chat_model, sql_engine, format_chat_model, api_base)
     timed: dict[str, ChatNode] = {
         name: TimedNode(name, node, recorder) for name, node in nodes.items()
     }

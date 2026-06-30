@@ -25,8 +25,7 @@
           "type": "view_integrity"
         },
         {
-          "type": "view_contains",
-          "element_type": "KpiStat"
+          "type": "view_present"
         }
       ]
     },
@@ -98,8 +97,7 @@
           "type": "view_integrity"
         },
         {
-          "type": "view_contains",
-          "element_type": "KpiStat"
+          "type": "view_present"
         }
       ]
     },
@@ -127,8 +125,7 @@
           "type": "view_integrity"
         },
         {
-          "type": "view_contains",
-          "element_type": "KpiStat"
+          "type": "view_present"
         }
       ]
     },
@@ -280,8 +277,7 @@
           "type": "view_integrity"
         },
         {
-          "type": "view_contains",
-          "element_type": "KpiStat"
+          "type": "view_present"
         }
       ]
     },
@@ -389,8 +385,7 @@
           "type": "view_integrity"
         },
         {
-          "type": "view_contains",
-          "element_type": "KpiStat"
+          "type": "view_present"
         }
       ]
     },
@@ -546,8 +541,7 @@
           "type": "view_integrity"
         },
         {
-          "type": "view_contains",
-          "element_type": "ChartJs"
+          "type": "view_present"
         }
       ]
     },
@@ -574,8 +568,7 @@
           "type": "view_integrity"
         },
         {
-          "type": "view_contains",
-          "element_type": "ChartJs"
+          "type": "view_present"
         }
       ]
     },
@@ -601,8 +594,7 @@
           "type": "view_integrity"
         },
         {
-          "type": "view_contains",
-          "element_type": "ChartJs"
+          "type": "view_present"
         }
       ]
     }
