@@ -10,3 +10,4 @@
 - https://docs.langchain.com/oss/python/langchain/frontend/join-rejoin.md
 - https://docs.langchain.com/oss/python/langchain/frontend/time-travel.md
 - https://github.com/vercel-labs/json-render
+- https://github.com/vercel-labs/json-render/tree/main/examples/dashboard

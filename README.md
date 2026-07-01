@@ -4,7 +4,7 @@
 
 **Backend**
 ```sh
-uv run uvicorn chat.infrastructure.api.app:create_app --factory --host 127.0.0.1 --port 8000 --reload
+PYTHONPATH=src uv run uvicorn chat.infrastructure.api.app:create_app --factory --host 127.0.0.1 --port 8000 --reload
 ```
 
 **Frontend dev server**
