@@ -37,6 +37,14 @@ def _view_lines(state: ChatState) -> list[str]:
     return [line for line in items if isinstance(line, str)]
 
 
+def _collect_cells(results: list[QueryResult], column: str | None) -> list[object]:
+    """Flatten result rows into a list of cells, optionally restricted to one column."""
+    rows = [row for qr in results for row in qr.to_dict_list()]
+    if column is not None:
+        return [row.get(column) for row in rows]
+    return [v for row in rows for v in row.values()]
+
+
 class CheckResult(TypedDict):
     """Outcome of a single correctness check; serialises directly to JSON."""
 
@@ -123,11 +131,7 @@ class ResultSetCheck:
                 passed=False,
                 reasoning="no query result",
             )
-        rows = [row for qr in results for row in qr.to_dict_list()]
-        if self.column is not None:
-            cells: list[object] = [row.get(self.column) for row in rows]
-        else:
-            cells = [v for row in rows for v in row.values()]
+        cells = _collect_cells(results, self.column)
         passed = any(value_matches(cell, self.expected_value) for cell in cells)
         label = f"{self.column}={self.expected_value}" if self.column else self.expected_value
         return CheckResult(type="result_set", value=label, passed=passed, reasoning="")
