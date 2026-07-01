@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Literal, cast
 
 from chat.domain.value_objects.chat_state import ChatState
+from chat.domain.value_objects.widget import WidgetResult
 from chat.infrastructure.eval.checks import Check, CheckResult
 from chat.infrastructure.eval.metrics import EvalCollector, MetricsRecorder, NodeMetrics
 from chat.infrastructure.eval.token_callback import TokenCountingCallback
@@ -48,6 +49,18 @@ class EvalReport:
     model: str
     summary: dict[str, object]
     cases: list[CaseResult]
+
+
+def _widget_results(state_dict: dict[str, object]) -> list[WidgetResult]:
+    """Every widget's executed result off the aggregated ``widget_results`` channel.
+
+    The orchestrator–workers graph keeps ``sql_query``/``query_result`` local to each
+    ``build_widget`` worker, so they never surface on the top-level state — the SQL and
+    validity a report shows must be read back from the aggregated widget results.
+    """
+    raw = state_dict.get("widget_results")
+    items = cast(list[object], raw) if isinstance(raw, list) else []
+    return [item for item in items if isinstance(item, WidgetResult)]
 
 
 def _percentile(values: list[float], pct: float) -> float:
@@ -190,12 +203,13 @@ class EvalRunner:
             state = cast(ChatState, raw)
             state_dict = cast(dict[str, object], state)
             check_results = [c.evaluate(state) for c in case.checks]
+            widget_results = _widget_results(state_dict)
             return CaseResult(
                 case_id=case.id,
                 question=case.question,
                 nodes=collector.node_metrics,
-                sql_query=str(state_dict.get("sql_query", "")),
-                sql_valid=bool(state_dict.get("query_result")),
+                sql_query="; ".join(r.sql for r in widget_results),
+                sql_valid=bool(widget_results),
                 response=str(state_dict.get("response", "")),
                 check_results=check_results,
                 passed=all(r["passed"] for r in check_results),

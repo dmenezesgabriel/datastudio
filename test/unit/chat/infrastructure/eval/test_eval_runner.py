@@ -8,22 +8,30 @@ from typing import Any, cast
 import pytest
 
 from chat.domain.value_objects.chat_state import ChatState
+from chat.domain.value_objects.widget import WidgetResult
 from chat.infrastructure.eval.metrics import MetricsRecorder
 from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner
 from shared.domain.value_objects.query_result import QueryResult
 
 
 def _state_for(question: str, response: str) -> Mapping[str, object]:
-    """Minimal successful ChatState used by the concurrency fakes."""
+    """Minimal successful ChatState mirroring the orchestrator–workers output.
+
+    The real graph keeps ``sql_query``/``query_result`` local to each build_widget
+    worker; only the aggregated ``widget_results`` channel reaches the top-level
+    state, so faithful fakes must expose the SQL and rows there.
+    """
+    result = QueryResult(columns=["n"], rows=[(1,)], row_count=1)
     return cast(
         ChatState,
         {
             "question": question,
             "tables": [],
             "schema": "",
-            "sql_query": "SELECT 1",
-            "sql_error": "",
-            "query_result": QueryResult(columns=["n"], rows=[(1,)], row_count=1),
+            "widget_results": [
+                WidgetResult(widget_id="widget-0", title="A", result=result, sql="SELECT 1")
+            ],
+            "widget_views": [],
             "response": response,
         },
     )
@@ -71,18 +79,7 @@ class _FakeGraph:
         self.invoke_calls.append((state, config))
         if self._raise is not None:
             raise self._raise
-        return cast(
-            ChatState,
-            {
-                "question": state.get("question", ""),
-                "tables": [],
-                "schema": "",
-                "sql_query": "SELECT 1",
-                "sql_error": "",
-                "query_result": QueryResult(columns=["n"], rows=[(1,)], row_count=1),
-                "response": self._response,
-            },
-        )
+        return _state_for(str(state.get("question", "")), self._response)
 
 
 class TestEvalRunnerGraphFactory:
