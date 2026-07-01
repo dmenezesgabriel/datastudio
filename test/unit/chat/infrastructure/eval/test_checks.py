@@ -321,6 +321,14 @@ class TestDeserializeAllCheckTypes:
         assert isinstance(check, RubricCheck)
         assert check.rubric == "Must cite an exact number."
 
+    def test_builds_view_present_check(self) -> None:
+        # kills deserialize_check mutmut_32/71/72: case "view_present" is missing/mangled
+        spec: dict[str, str] = {"type": "view_present"}
+        check = deserialize_check(
+            spec, FakeStructuredChatModel(passed=True, reasoning=""), FakeSqlEngine()
+        )
+        assert isinstance(check, ViewPresentCheck)
+
     def test_builds_view_integrity_check(self) -> None:
         # arrange
         spec: dict[str, str] = {"type": "view_integrity"}
@@ -398,6 +406,8 @@ class TestViewIntegrityCheck:
         # assert
         assert result["passed"] is True
         assert result["type"] == "view_integrity"
+        assert result["value"] == ""
+        assert result["reasoning"] == ""
 
     def test_fails_and_names_missing_chart_column(self) -> None:
         # arrange — chart binds to a column absent from the result
@@ -408,6 +418,7 @@ class TestViewIntegrityCheck:
         # assert
         assert result["passed"] is False
         assert "profit" in result["reasoning"]
+        assert result["value"] == ""
 
     def test_fails_when_kpi_column_missing(self) -> None:
         # arrange — KPI binds to a hallucinated column
@@ -429,8 +440,40 @@ class TestViewIntegrityCheck:
         state = cast(ChatState, {"question": "q"})
         # act
         result = ViewIntegrityCheck().evaluate(state)
-        # assert
+        # assert — kills mutmut_8-20 (type/value/reasoning mutations in early return)
         assert result["passed"] is True
+        assert result["type"] == "view_integrity"
+        assert result["value"] == ""
+        assert result["reasoning"] == ""
+
+    def test_passes_vacuously_when_view_lines_but_no_results(self) -> None:
+        # kills mutmut_5 (and → or): when view_lines exist but results absent, must still pass
+        lines = [_view_line("c", _chart("month", ["revenue"]))]
+        state = cast(ChatState, {"widget_views": lines})  # no widget_results
+        result = ViewIntegrityCheck().evaluate(state)
+        assert result["passed"] is True
+
+    def test_continues_past_element_with_non_dict_props(self) -> None:
+        # kills _referenced_columns mutmut_8 (break → continue): later elements still checked
+        bad_elem: dict[str, object] = {"type": "KpiStat", "props": "not_a_dict", "children": []}
+        good_chart = _chart("hallucinated_col", ["revenue"])
+        query_result = QueryResult(
+            columns=["revenue"], rows=[(10,)], row_count=1
+        )  # no hallucinated_col
+        lines = [_view_line("bad", bad_elem), _view_line("good", good_chart)]
+        result = ViewIntegrityCheck().evaluate(_state_with_view(lines, query_result))
+        # good_chart binds to "hallucinated_col" which isn't in result → should fail
+        assert result["passed"] is False
+        assert "hallucinated_col" in result["reasoning"]
+
+    def test_recognizes_label_column_prop_by_exact_name(self) -> None:
+        # kills _referenced_columns mutmut_14-16 (wrong labelColumn case):
+        # a chart whose labelColumn is absent from the result must fail
+        query_result = QueryResult(columns=["revenue"], rows=[(10,)], row_count=1)
+        lines = [_view_line("c", _chart("month", ["revenue"]))]  # labelColumn="month" not in result
+        result = ViewIntegrityCheck().evaluate(_state_with_view(lines, query_result))
+        assert result["passed"] is False
+        assert "month" in result["reasoning"]
 
 
 class TestViewPresentCheck:
@@ -438,7 +481,12 @@ class TestViewPresentCheck:
 
     def test_passes_when_a_viz_element_is_present(self) -> None:
         state = cast(ChatState, {"widget_views": [_view_line("c", _chart("month", ["revenue"]))]})
-        assert ViewPresentCheck().evaluate(state)["passed"] is True
+        result = ViewPresentCheck().evaluate(state)
+        # kills mutmut_33-54: type/value/reasoning mutations in the success return
+        assert result["passed"] is True
+        assert result["type"] == "view_present"
+        assert result["value"] == ""
+        assert result["reasoning"] == ""
 
     def test_passes_for_the_fallback_data_table(self) -> None:
         table = {"type": "DataTable", "props": {"data": {"$state": "/result"}}, "children": []}
@@ -451,14 +499,35 @@ class TestViewPresentCheck:
         result = ViewPresentCheck().evaluate(state)
         assert result["passed"] is False
         assert "Spreadsheet" in result["reasoning"]
+        # kills mutmut_25-30: type/value mutations in the unknown-component return
+        assert result["type"] == "view_present"
+        assert result["value"] == ""
 
     def test_fails_when_only_non_viz_elements(self) -> None:
         markdown = {"type": "Markdown", "props": {"text": "hi"}, "children": []}
         state = cast(ChatState, {"widget_views": [_view_line("m", markdown)]})
-        assert ViewPresentCheck().evaluate(state)["passed"] is False
+        result = ViewPresentCheck().evaluate(state)
+        assert result["passed"] is False
+        # kills mutmut_40-54: reasoning mutations in the no-viz-element return
+        assert result["type"] == "view_present"
+        assert result["value"] == ""
+        assert result["reasoning"] == "no visualization element"
 
     def test_fails_when_no_view_lines(self) -> None:
-        assert ViewPresentCheck().evaluate(cast(ChatState, {"question": "q"}))["passed"] is False
+        result = ViewPresentCheck().evaluate(cast(ChatState, {"question": "q"}))
+        # kills mutmut_4-8: type/value/reasoning/passed mutations in early return
+        assert result["passed"] is False
+        assert result["type"] == "view_present"
+        assert result["value"] == ""
+        assert result["reasoning"] == "no view"
+
+    def test_view_line_with_string_value_is_ignored(self) -> None:
+        # kills _added_elements mutmut_9 (and → or): "typed_text" has "type" as substring;
+        # with and→or that string would be appended and crash on .get("type")
+        non_elem_line = json.dumps({"op": "add", "path": "/x", "value": "typed_text"})
+        state = cast(ChatState, {"widget_views": [non_elem_line]})
+        result = ViewPresentCheck().evaluate(state)
+        assert result["passed"] is False
 
 
 class TestViewContainsCheck:
