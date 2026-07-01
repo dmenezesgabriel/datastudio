@@ -5,7 +5,8 @@ from chat.application.ports.conversation_repository import ConversationRepositor
 from chat.application.ports.text2sql_port import Text2SqlPort
 from chat.application.use_cases.stream_message import StreamMessage
 from chat.domain.entities.conversation import Conversation
-from chat.domain.value_objects.stream_event import ChatStreamEvent
+from chat.domain.value_objects.stream_event import ChatStreamEvent, SqlReady, WidgetDataReady
+from shared.domain.value_objects.query_result import QueryResult
 from test.unit.chat.application.use_cases.fakes import (
     FakeConversationRepository,
     FakeStreamingText2SqlEngine,
@@ -58,3 +59,31 @@ class TestStreamMessage:
             "follow-up",
             "ans",
         ]
+
+    def test_does_not_persist_assistant_turn_when_no_narrative_ready(self) -> None:
+        # Engine emits data and SQL but no NarrativeReady — nothing to remember.
+        result = QueryResult(columns=["n"], rows=[(1,)], row_count=1)
+        events: list[ChatStreamEvent] = [
+            WidgetDataReady(widget_id="w0", result=result),
+            SqlReady(widget_id="w0", sql_query="SELECT 1"),
+        ]
+        repository = FakeConversationRepository()
+        _drain(_use_case(repository, FakeStreamingText2SqlEngine(events)), "c-1", "q")
+        saved = repository.saved["c-1"]
+        assert [m.role for m in saved.messages] == ["user"]
+
+    def test_persists_narrative_render_tree_with_response_text(self) -> None:
+        # Narrative view must be a Markdown tree whose text matches the response.
+        repository = FakeConversationRepository()
+        _drain(
+            _use_case(repository, FakeStreamingText2SqlEngine(make_events("42 orders."))),
+            "c-1",
+            "q",
+        )
+        view = repository.saved["c-1"].messages[1].view
+        assert view is not None
+        assert view.root == "root"
+        assert "narrative" in view.elements
+        narrative = view.elements["narrative"]
+        assert narrative.type == "Markdown"
+        assert narrative.props.get("text") == "42 orders."
