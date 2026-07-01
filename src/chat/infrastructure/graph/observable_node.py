@@ -14,33 +14,53 @@ _logger = get_logger(__name__)
 _SKIP_FIELDS: frozenset[str] = frozenset({"schema"})
 _RESPONSE_TRUNCATE_LEN = 500
 
+# Orchestrator–workers aggregation channels: each holds non-JSON-native value
+# objects (WidgetResult/WidgetSpec) or verbose patch lists, so they are reduced to
+# a scalar count under a summary key rather than logged verbatim.
+_CHANNEL_COUNT_KEYS: dict[str, str] = {
+    "widget_results": "widget_count",
+    "widget_views": "view_patch_count",
+    "widget_specs": "planned_widget_count",
+}
+
 
 class _ChatNode(Protocol):
     def __call__(self, state: ChatState) -> Mapping[str, object]: ...
 
 
+def _summarize_field(key: str, value: object) -> tuple[str, object]:
+    """Reduce one node-result field to a log-safe ``(key, value)`` pair.
+
+    QueryResult collapses to its row_count, an aggregation channel to its length,
+    and a long string is truncated; anything else passes through unchanged.
+    """
+    if isinstance(value, QueryResult):
+        return "row_count", value.row_count
+    count_key = _CHANNEL_COUNT_KEYS.get(key)
+    if count_key is not None and isinstance(value, list):
+        return count_key, len(cast(list[object], value))
+    if isinstance(value, str) and len(value) > _RESPONSE_TRUNCATE_LEN:
+        return key, value[:_RESPONSE_TRUNCATE_LEN]
+    return key, value
+
+
 def _extract_log_safe_fields(result: Mapping[str, object]) -> dict[str, object]:
     """Return a log-safe summary of a node result dict.
 
-    Skips large fields (schema), extracts scalar summaries from complex values
-    (QueryResult → row_count, view_lines → patch count), and truncates long strings.
+    Keeps non-JSON-native value objects (QueryResult, and the WidgetResult/WidgetSpec
+    aggregation channels) out of the JSON log formatter by summarizing each field via
+    ``_summarize_field``, and skips large fields (schema).
 
     Example:
-        _extract_log_safe_fields({"query_result": QueryResult(...), "sql_error": ""})
-        # → {"row_count": 5, "sql_error": ""}
+        _extract_log_safe_fields({"widget_results": [WidgetResult(...)], "response": "hi"})
+        # → {"widget_count": 1, "response": "hi"}
     """
     out: dict[str, object] = {}
     for key, value in result.items():
         if key in _SKIP_FIELDS:
             continue
-        if isinstance(value, QueryResult):
-            out["row_count"] = value.row_count
-        elif key == "view_lines" and isinstance(value, list):
-            out["view_patch_count"] = len(cast(list[object], value))
-        elif isinstance(value, str) and len(value) > _RESPONSE_TRUNCATE_LEN:
-            out[key] = value[:_RESPONSE_TRUNCATE_LEN]
-        else:
-            out[key] = value
+        out_key, out_value = _summarize_field(key, value)
+        out[out_key] = out_value
     return out
 
 

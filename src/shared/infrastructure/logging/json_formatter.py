@@ -50,9 +50,14 @@ class JsonFormatter(logging.Formatter):
     )
 
     def format(self, record: logging.LogRecord) -> str:
-        """Serialize the log record to a single-line JSON string."""
+        """Serialize the log record to a single-line JSON string.
+
+        ``default=str`` guarantees a stray non-JSON value in ``extra`` (a value
+        object, datetime, Decimal, …) degrades to its string form instead of
+        raising and dropping the log line entirely.
+        """
         record.message = record.getMessage()
-        return json.dumps(self._build_payload(record))
+        return json.dumps(self._build_payload(record), default=str)
 
     def _build_payload(self, record: logging.LogRecord) -> dict[str, object]:
         payload: dict[str, object] = {
