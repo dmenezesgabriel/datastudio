@@ -11,6 +11,8 @@ See https://json-render.dev/docs/streaming for the format.
 """
 
 import json
+from datetime import date, datetime, time
+from decimal import Decimal
 
 from chat.domain.value_objects.render_tree import RenderElement
 from chat.domain.value_objects.stream_event import (
@@ -44,9 +46,27 @@ def _stage_label(stage: str) -> str:
     return _STAGE_LABELS.get(stage, _DEFAULT_LABEL)
 
 
+def _json_default(value: object) -> object:
+    """Coerce DB cell types ``json.dumps`` can't encode to JSON-native ones.
+
+    DuckDB returns ``date``/``datetime``/``Decimal`` objects for temporal and exact-
+    numeric columns; the ``$state`` wire is JSON, so temporals become ISO-8601 strings
+    and decimals become floats (the chart/table bindings read them as-is). Without this
+    a single date/timestamp/Decimal cell in a widget's rows would raise TypeError and
+    sink the whole dashboard stream.
+    """
+    if isinstance(value, datetime | date | time):
+        return value.isoformat()
+    if isinstance(value, Decimal):
+        return float(value)
+    return str(value)
+
+
 def _patch_line(op: str, path: str, value: object) -> str:
     """Serialize a single RFC-6902 patch op to a compact JSON line."""
-    return json.dumps({"op": op, "path": path, "value": value}, ensure_ascii=False)
+    return json.dumps(
+        {"op": op, "path": path, "value": value}, ensure_ascii=False, default=_json_default
+    )
 
 
 def _state_rows(result: QueryResult) -> list[dict[str, object]]:

@@ -1,6 +1,8 @@
 """Tests for translating engine stream events into json-render SpecStream lines."""
 
 import json
+from datetime import date, datetime
+from decimal import Decimal
 
 from chat.domain.value_objects.stream_event import (
     NarrativeReady,
@@ -69,6 +71,25 @@ class TestWidgetData:
         result = QueryResult(columns=["n"], rows=rows, row_count=600)
         patches = _patches(serializer, WidgetDataReady(widget_id="w", result=result))
         assert len(patches[0]["value"]["rows"]) == 500  # type: ignore[index]
+
+    def test_serializes_temporal_and_decimal_cells_to_json_native(self) -> None:
+        # Regression: a date/datetime/Decimal cell (DuckDB returns these for date and
+        # exact-numeric columns) once raised TypeError and sank the whole stream.
+        # Arrange
+        serializer = SpecStreamSerializer()
+        result = QueryResult(
+            columns=["day", "ts", "amount"],
+            rows=[(date(2012, 1, 1), datetime(2012, 1, 1, 9, 30), Decimal("12.50"))],
+            row_count=1,
+        )
+        # Act
+        patches = _patches(serializer, WidgetDataReady(widget_id="w0", result=result))
+        # Assert — temporals become ISO strings, Decimal becomes a float
+        assert patches[0]["value"]["rows"][0] == {  # type: ignore[index]
+            "day": "2012-01-01",
+            "ts": "2012-01-01T09:30:00",
+            "amount": 12.5,
+        }
 
 
 class TestViewAndSql:
