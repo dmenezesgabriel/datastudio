@@ -27,18 +27,23 @@ class MetricsRecorder(Protocol):
         """Record wall-clock execution time for a node in seconds."""
         ...
 
-    def record_tokens(self, node: str, input_t: int, output_t: int) -> None:
-        """Record LLM token usage attributed to a node."""
+    def record_tokens(self, node: str, input_t: int, output_t: int, cached_t: int = 0) -> None:
+        """Record LLM token usage attributed to a node (cached_t: prompt-cache reads)."""
         ...
 
 
 @dataclass
 class NodeMetrics:
-    """Accumulated metrics for a single node execution."""
+    """Accumulated metrics for a single node execution.
+
+    ``cached_input_tokens`` is the prompt-prefix portion the provider served from cache —
+    a subset of ``input_tokens``, tracked so effective/fresh input cost stays visible.
+    """
 
     latency_s: float = 0.0
     input_tokens: int | None = None
     output_tokens: int | None = None
+    cached_input_tokens: int | None = None
 
 
 class NullMetricsRecorder:
@@ -59,7 +64,7 @@ class NullMetricsRecorder:
     def record_latency(self, node: str, elapsed: float) -> None:
         """No-op implementation."""
 
-    def record_tokens(self, node: str, input_t: int, output_t: int) -> None:
+    def record_tokens(self, node: str, input_t: int, output_t: int, cached_t: int = 0) -> None:
         """No-op implementation."""
 
 
@@ -90,10 +95,11 @@ class EvalCollector:
             self.node_metrics[node] = NodeMetrics()
         self.node_metrics[node].latency_s = elapsed
 
-    def record_tokens(self, node: str, input_t: int, output_t: int) -> None:
-        """Accumulate token counts for the given node."""
+    def record_tokens(self, node: str, input_t: int, output_t: int, cached_t: int = 0) -> None:
+        """Accumulate token counts for the given node (cached_t: prompt-cache reads)."""
         if node not in self.node_metrics:
             self.node_metrics[node] = NodeMetrics()
         metrics = self.node_metrics[node]
         metrics.input_tokens = (metrics.input_tokens or 0) + input_t
         metrics.output_tokens = (metrics.output_tokens or 0) + output_t
+        metrics.cached_input_tokens = (metrics.cached_input_tokens or 0) + cached_t

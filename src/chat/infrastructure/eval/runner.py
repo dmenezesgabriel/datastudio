@@ -84,7 +84,7 @@ def _case_latencies(cases: list[CaseResult]) -> list[float]:
 
 def _sum_node_token_attr(
     cases: list[CaseResult],
-    attr: Literal["input_tokens", "output_tokens"],
+    attr: Literal["input_tokens", "output_tokens", "cached_input_tokens"],
 ) -> int:
     """Sum a token count attribute across all nodes in all cases."""
     return sum((getattr(m, attr) or 0) for c in cases for m in c.nodes.values())
@@ -116,6 +116,7 @@ def compute_summary(
     latencies = _case_latencies(cases)
     input_tokens = _sum_node_token_attr(cases, "input_tokens")
     output_tokens = _sum_node_token_attr(cases, "output_tokens")
+    cached_input_tokens = _sum_node_token_attr(cases, "cached_input_tokens")
     cost = (input_tokens * input_price_per_m + output_tokens * output_price_per_m) / 1e6
     return {
         "total": total,
@@ -126,6 +127,9 @@ def compute_summary(
         "p95_latency_s": round(_percentile(latencies, 0.95), 3),
         "total_input_tokens": input_tokens,
         "total_output_tokens": output_tokens,
+        # cached_input is a subset of input, not subtracted — effective-fresh is input − cached.
+        "total_cached_input_tokens": cached_input_tokens,
+        "cache_read_rate": round(cached_input_tokens / input_tokens, 3) if input_tokens else 0.0,
         "avg_output_tokens": round(output_tokens / total, 1) if total else 0.0,
         "cost_usd": round(cost, 6),
         "by_tag": _by_tag(cases),

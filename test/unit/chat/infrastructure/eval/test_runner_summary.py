@@ -14,10 +14,14 @@ def _case(
     latency_s: float,
     output_tokens: int,
     tags: list[str],
+    cached_input_tokens: int | None = None,
 ) -> CaseResult:
     nodes = {
         "generate_sql": NodeMetrics(
-            latency_s=latency_s, input_tokens=10, output_tokens=output_tokens
+            latency_s=latency_s,
+            input_tokens=10,
+            output_tokens=output_tokens,
+            cached_input_tokens=cached_input_tokens,
         )
     }
     return CaseResult(
@@ -134,6 +138,45 @@ class TestComputeSummaryCounts:
         summary = compute_summary(cases)
         # assert — distinguishes default=0.0 from default=1.0 mutations
         assert summary["cost_usd"] == 0.0
+
+
+class TestComputeSummaryCache:
+    """Prompt-cache reads surface as total_cached_input_tokens and cache_read_rate."""
+
+    def test_reports_total_cached_input_tokens(self) -> None:
+        # arrange — two cases, 6 and 2 cached input tokens (input is 10 each)
+        cases = [
+            _case("a", True, 0, 0, [], cached_input_tokens=6),
+            _case("b", True, 0, 0, [], cached_input_tokens=2),
+        ]
+        # act
+        summary = compute_summary(cases)
+        # assert — cached is summed across cases; input stays raw (not subtracted)
+        assert summary["total_cached_input_tokens"] == 8
+        assert summary["total_input_tokens"] == 20
+
+    def test_cache_read_rate_is_cached_over_input(self) -> None:
+        # arrange — 5 cached of 10 input on a single node
+        cases = [_case("a", True, 0, 0, [], cached_input_tokens=5)]
+        # act
+        summary = compute_summary(cases)
+        # assert — 5 / 10 = 0.5, rounded to 3 places
+        assert summary["cache_read_rate"] == 0.5
+
+    def test_cache_read_rate_is_zero_when_no_input(self) -> None:
+        # arrange — no cases means zero input; must not divide by zero
+        summary = compute_summary([])
+        # assert
+        assert summary["cache_read_rate"] == 0.0
+        assert summary["total_cached_input_tokens"] == 0
+
+    def test_cached_defaults_to_zero_when_unset(self) -> None:
+        # arrange — NodeMetrics.cached_input_tokens is None (no cache data recorded)
+        cases = [_case("a", True, 0, 0, [])]
+        # act
+        summary = compute_summary(cases)
+        # assert — None cached counts as 0, not a crash
+        assert summary["total_cached_input_tokens"] == 0
 
 
 class TestComputeSummaryLatency:

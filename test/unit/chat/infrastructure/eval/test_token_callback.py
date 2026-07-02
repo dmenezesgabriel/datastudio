@@ -11,24 +11,32 @@ from chat.infrastructure.eval.token_callback import TokenCountingCallback, _extr
 from chat.infrastructure.graph.observability import step_tag
 
 
-def _result_with_usage(prompt: int, completion: int) -> LLMResult:
-    """Build an LLMResult with token_usage in llm_output (Strategy 1)."""
-    return LLMResult(
-        generations=[],
-        llm_output={"token_usage": {"prompt_tokens": prompt, "completion_tokens": completion}},
-    )
+def _result_with_usage(prompt: int, completion: int, cached: int | None = None) -> LLMResult:
+    """Build an LLMResult with token_usage in llm_output (Strategy 1).
+
+    When ``cached`` is given, it is nested under ``prompt_tokens_details.cached_tokens`` —
+    the OpenAI/LiteLLM shape other providers use to report prompt-cache reads.
+    """
+    usage: dict[str, object] = {"prompt_tokens": prompt, "completion_tokens": completion}
+    if cached is not None:
+        usage["prompt_tokens_details"] = {"cached_tokens": cached}
+    return LLMResult(generations=[], llm_output={"token_usage": usage})
 
 
-def _result_with_metadata(input_t: int, output_t: int) -> LLMResult:
-    """Build an LLMResult with usage_metadata on the AIMessage (Strategy 2)."""
-    msg = AIMessage(
-        content="ok",
-        usage_metadata={
-            "input_tokens": input_t,
-            "output_tokens": output_t,
-            "total_tokens": input_t + output_t,
-        },
-    )  # type: ignore[call-arg]
+def _result_with_metadata(input_t: int, output_t: int, cache_read: int | None = None) -> LLMResult:
+    """Build an LLMResult with usage_metadata on the AIMessage (Strategy 2).
+
+    When ``cache_read`` is given, it is nested under ``input_token_details`` — the
+    field the GLM provider populates for prompt-prefix cache hits.
+    """
+    usage: dict[str, object] = {
+        "input_tokens": input_t,
+        "output_tokens": output_t,
+        "total_tokens": input_t + output_t,
+    }
+    if cache_read is not None:
+        usage["input_token_details"] = {"cache_read": cache_read}
+    msg = AIMessage(content="ok", usage_metadata=usage)  # type: ignore[call-arg]
     return LLMResult(generations=[[ChatGeneration(message=msg)]])
 
 
@@ -50,33 +58,51 @@ class TestExtractTokensStrategy1:
         # kills _extract_tokens mutmut_1 (None), mutmut_3 ("token_usage" → None key)
         # and mutmut_4/5 (key name corruption)
         result = _result_with_usage(prompt=450, completion=32)
-        inp, out = _extract_tokens(result)
+        inp, out, cached = _extract_tokens(result)
         assert inp == 450
         assert out == 32
+        assert cached is None
 
     def test_or_empty_dict_handles_none_usage(self) -> None:
         # kills mutmut_2 (`.get("token_usage") and {}` vs `or {}`)
         # When token_usage is None, the `or {}` gives empty dict → returns (None, None)
         result = LLMResult(generations=[], llm_output={"token_usage": None})
-        inp, out = _extract_tokens(result)
-        # fallback to Strategy 2 or (None, None) — not stuck with None dict
-        assert (inp, out) == (None, None)
+        inp, out, cached = _extract_tokens(result)
+        # fallback to Strategy 2 or (None, None, None) — not stuck with None dict
+        assert (inp, out, cached) == (None, None, None)
+
+    def test_reads_cached_tokens_from_prompt_tokens_details(self) -> None:
+        # OpenAI/LiteLLM providers report cache hits under prompt_tokens_details.cached_tokens
+        result = _result_with_usage(prompt=450, completion=32, cached=400)
+        inp, out, cached = _extract_tokens(result)
+        assert inp == 450
+        assert out == 32
+        assert cached == 400
 
     def test_no_llm_output_falls_through_to_strategy_2(self) -> None:
         # kills mutmut_1 — if _extract_tokens(None) is called, it crashes;
         # normal case with no llm_output returns (None, None) gracefully
         result = LLMResult(generations=[[]])
-        inp, out = _extract_tokens(result)
-        assert (inp, out) == (None, None)
+        inp, out, cached = _extract_tokens(result)
+        assert (inp, out, cached) == (None, None, None)
 
 
 class TestExtractTokensStrategy2:
     def test_reads_input_and_output_from_usage_metadata(self) -> None:
         # kills mutmut for the Strategy 2 branch (input_tokens, output_tokens keys)
         result = _result_with_metadata(input_t=100, output_t=50)
-        inp, out = _extract_tokens(result)
+        inp, out, cached = _extract_tokens(result)
         assert inp == 100
         assert out == 50
+        assert cached is None
+
+    def test_reads_cache_read_from_input_token_details(self) -> None:
+        # the GLM provider reports prompt-cache hits under input_token_details.cache_read
+        result = _result_with_metadata(input_t=604, output_t=20, cache_read=581)
+        inp, out, cached = _extract_tokens(result)
+        assert inp == 604
+        assert out == 20
+        assert cached == 581
 
 
 class TestOnLlmEnd:
@@ -90,6 +116,16 @@ class TestOnLlmEnd:
         metrics = recorder.node_metrics["generate_sql"]
         assert metrics.input_tokens == 200
         assert metrics.output_tokens == 40
+
+    def test_records_cached_input_tokens_against_the_node(self) -> None:
+        # cache-read count from usage_metadata must land on the node's cached_input_tokens
+        recorder = EvalCollector()
+        recorder.set_node("generate_widget_view")
+        cb = TokenCountingCallback(recorder)
+        cb.on_llm_end(_result_with_metadata(input_t=604, output_t=20, cache_read=581))
+        metrics = recorder.node_metrics["generate_widget_view"]
+        assert metrics.input_tokens == 604
+        assert metrics.cached_input_tokens == 581
 
     def test_skips_recording_when_current_node_is_empty(self) -> None:
         # kills on_llm_end mutmut_3 (and → or) which would record even without node
