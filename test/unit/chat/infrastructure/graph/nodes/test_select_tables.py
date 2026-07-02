@@ -1,7 +1,12 @@
+import pytest
+from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import SystemMessage
 
 from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.graph.nodes.select_tables import SelectTables
+from test.unit.chat.infrastructure.graph.nodes.fake_failing_chat_model import (
+    FailingStructuredChatModel,
+)
 from test.unit.chat.infrastructure.graph.nodes.fake_structured_chat_model import (
     FakeStructuredChatModel,
 )
@@ -59,3 +64,20 @@ class TestSelectTables:
         result = SelectTables(model)(state)
         # assert — fallback to full original table list
         assert result == {"tables": ["movies", "cars"]}
+
+
+class TestSelectTablesResilience:
+    def test_malformed_output_keeps_all_tables(self) -> None:
+        # arrange — structured output can't be parsed (deterministic failure)
+        model = FailingStructuredChatModel(OutputParserException("no tool call"))
+        # act
+        result = SelectTables(model)(_state(tables=["movies", "cars"]))
+        # assert — safe superset so get_schema still runs, no crash
+        assert result == {"tables": ["movies", "cars"]}
+
+    def test_transient_error_propagates_to_retry_policy(self) -> None:
+        # arrange — a transient error must NOT be swallowed (RetryPolicy handles it)
+        model = FailingStructuredChatModel(ConnectionError("blip"))
+        # act / assert
+        with pytest.raises(ConnectionError):
+            SelectTables(model)(_state())

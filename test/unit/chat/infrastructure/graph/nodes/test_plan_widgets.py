@@ -3,8 +3,14 @@
 from types import SimpleNamespace
 from typing import Any, cast
 
+import pytest
+from langchain_core.exceptions import OutputParserException
+
 from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.graph.nodes.plan_widgets import PlanWidgets
+from test.unit.chat.infrastructure.graph.nodes.fake_failing_chat_model import (
+    FailingStructuredChatModel,
+)
 
 
 class FakePlanModel:
@@ -64,3 +70,20 @@ class TestPlanWidgets:
         PlanWidgets(cast(Any, model))(_state(question="Revenue?", schema="-- sales\namount INT"))
         human = str(model.received[-1].content)
         assert "Revenue?" in human and "-- sales" in human
+
+
+class TestPlanWidgetsResilience:
+    def test_malformed_output_falls_back_to_one_widget(self) -> None:
+        # arrange — structured plan can't be parsed
+        node = PlanWidgets(FailingStructuredChatModel(OutputParserException("bad")))
+        # act
+        specs = node(_state(question="How many orders?"))["widget_specs"]
+        # assert — a single widget mirroring the question, not a crash
+        assert len(specs) == 1
+        assert specs[0].id == "widget-0"
+        assert specs[0].sub_question == "How many orders?"
+
+    def test_transient_error_propagates_to_retry_policy(self) -> None:
+        node = PlanWidgets(FailingStructuredChatModel(ConnectionError("blip")))
+        with pytest.raises(ConnectionError):
+            node(_state())

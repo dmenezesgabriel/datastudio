@@ -9,6 +9,7 @@ from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
 from chat.domain.value_objects.chat_state import ChatState
+from chat.infrastructure.graph.nodes._structured_output import invoke_structured
 
 _SYSTEM_PROMPT = (
     "You are a SQL expert. Given a list of available table names and a question, "
@@ -50,7 +51,10 @@ class SelectTables:
             SystemMessage(content=_SYSTEM_PROMPT),
             HumanMessage(content=human_content),
         ]
-        result: _TableSelectionOutput = self._model.invoke(messages)
+        result = invoke_structured(self._model, messages, "select_tables")
+        if result is None:
+            # Malformed output: keep every table (safe superset) so get_schema still runs.
+            return {"tables": state["tables"]}
         valid = [t for t in result.tables if t in state["tables"]]
         # fallback: if model hallucinated all names, use the full list
         return {"tables": valid or state["tables"]}

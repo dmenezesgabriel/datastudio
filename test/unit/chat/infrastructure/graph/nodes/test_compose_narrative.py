@@ -2,10 +2,16 @@
 
 from typing import cast
 
+import pytest
+from langchain_core.exceptions import OutputParserException
+
 from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetResult
 from chat.infrastructure.graph.nodes.compose_narrative import ComposeNarrative
 from shared.domain.value_objects.query_result import QueryResult
+from test.unit.chat.infrastructure.graph.nodes.fake_failing_chat_model import (
+    FailingStructuredChatModel,
+)
 from test.unit.chat.infrastructure.graph.nodes.fake_structured_chat_model import (
     FakeStructuredChatModel,
 )
@@ -53,3 +59,32 @@ class TestComposeNarrative:
         state = cast(ChatState, {"question": "q", "widget_results": []})
         response = ComposeNarrative(model)(state)["response"]
         assert "couldn't" in response.lower()
+
+
+class TestComposeNarrativeResilience:
+    def test_malformed_output_falls_back_to_titled_summary(self) -> None:
+        # arrange — the summary model returns malformed output, but widgets DID run
+        model = FailingStructuredChatModel(OutputParserException("bad"))
+        state = cast(
+            ChatState,
+            {
+                "question": "overview",
+                "widget_results": [
+                    _widget("widget-0", "Total revenue", 1000),
+                    _widget("widget-1", "Orders", 50),
+                ],
+            },
+        )
+        # act
+        response = ComposeNarrative(model)(state)["response"]
+        # assert — a deterministic sentence naming the widgets, not a crash
+        assert "Total revenue" in response and "Orders" in response
+
+    def test_transient_error_propagates_to_retry_policy(self) -> None:
+        model = FailingStructuredChatModel(ConnectionError("blip"))
+        state = cast(
+            ChatState,
+            {"question": "q", "widget_results": [_widget("widget-0", "Revenue", 42)]},
+        )
+        with pytest.raises(ConnectionError):
+            ComposeNarrative(model)(state)

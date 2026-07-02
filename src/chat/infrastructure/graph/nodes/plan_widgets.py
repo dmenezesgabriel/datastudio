@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetSpec
+from chat.infrastructure.graph.nodes._structured_output import invoke_structured
 
 _MAX_WIDGETS = 5
 
@@ -71,8 +72,8 @@ class PlanWidgets:
             SystemMessage(content=_SYSTEM_PROMPT),
             HumanMessage(content=human_content),
         ]
-        plan = self._model.invoke(messages)
-        intents = list(plan.widgets)[: self._max_widgets]
+        plan = invoke_structured(self._model, messages, "plan_widgets")
+        intents = list(plan.widgets)[: self._max_widgets] if plan is not None else []
         if not intents:
             return {"widget_specs": [_fallback_widget(state["question"])]}
         specs = [

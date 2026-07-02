@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetResult
+from chat.infrastructure.graph.nodes._structured_output import invoke_structured
 
 _SYSTEM_PROMPT = (
     "You are a data analyst writing a brief dashboard summary. Given a question and the results "
@@ -35,6 +36,15 @@ _NO_RESULT_RESPONSE = (
     "I couldn't build a dashboard for that question — the queries failed to run. "
     "Please try rephrasing the question."
 )
+
+
+def _fallback_summary(widget_results: list[WidgetResult]) -> str:
+    """A deterministic summary naming the built widgets, when the model can't write prose.
+
+    The figures still reach the UI via ``$state``; this only replaces the sentence.
+    """
+    titles = ", ".join(widget.title for widget in widget_results)
+    return f"Here is your dashboard covering: {titles}."
 
 
 class _AnswerOutput(BaseModel):
@@ -77,4 +87,7 @@ class ComposeNarrative:
             SystemMessage(content=_SYSTEM_PROMPT),
             HumanMessage(content=_build_human_content(state["question"], results)),
         ]
-        return {"response": self._model.invoke(messages).answer}
+        answer = invoke_structured(self._model, messages, "compose_narrative")
+        if answer is None:
+            return {"response": _fallback_summary(results)}
+        return {"response": answer.answer}
