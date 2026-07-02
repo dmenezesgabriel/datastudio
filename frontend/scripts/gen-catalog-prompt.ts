@@ -25,7 +25,17 @@ SpecStream: RFC-6902 JSON-Patch lines, one JSON object per line, and NOTHING els
 DATA: you never see or emit data values. Bind every data prop to the result with
 {"$state":"/result/rows"} (an array of row objects) — or {"$state":"/result"} for a
 table — and reference columns by their exact names. NEVER emit /state patches and
-NEVER invent rows; the data is supplied separately.`;
+NEVER invent rows; the data is supplied separately.
+
+SELECTION GUIDANCE: choose the element that best fits the result shape, following
+data-visualization best practices.
+- A single-row result (one headline number) -> KpiStat.
+- A category or time column plus a numeric series -> ChartJs. Pick the kind by the x-axis:
+  line for a time/ordered axis, bar for unordered categories or rankings, pie ONLY for a
+  parts-of-a-whole breakdown with at most 5 slices.
+- A wide result (many columns) or a long detail/lookup list -> DataTable.
+ANTI-PATTERNS (never do these): a pie with more than 5 slices (use bar or a table); a line
+chart for unordered categories; a KpiStat for a multi-row result.`;
 
 const componentNames = catalog.componentNames as readonly string[];
 const components = catalog.data.components as Record<

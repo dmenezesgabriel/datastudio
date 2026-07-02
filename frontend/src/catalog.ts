@@ -44,7 +44,8 @@ export const catalog = defineCatalog(schema, {
       }),
       description:
         "A Chart.js chart. labelColumn = category/time column; valueColumns = numeric series " +
-        "columns. Use line for a time series, bar for categories, pie for parts of a whole.",
+        "columns. Use line for a time series, bar for categories or rankings, pie only for a " +
+        "parts-of-a-whole breakdown of at most 5 slices.",
       example: {
         kind: "bar",
         title: "Revenue by month",

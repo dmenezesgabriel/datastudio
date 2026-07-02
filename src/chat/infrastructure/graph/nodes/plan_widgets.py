@@ -29,6 +29,10 @@ _SYSTEM_PROMPT = (
     "user's question as directly as possible.\n"
     "- Return MULTIPLE widgets (2-5) ONLY when the question explicitly asks for an 'overview', "
     "'dashboard', 'summary', or several distinct metrics at once. When unsure, return one.\n"
+    "- When you DO return multiple widgets, compose a coherent dashboard ordered "
+    "most-important first: lead with the headline metric (a single-value KPI), then the "
+    "primary trend or breakdown, then supporting breakdowns or a detail list — each a "
+    "distinct, non-overlapping sub_question.\n"
     "- Give each widget a short title and a precise, self-contained sub_question.\n"
     "- Never propose data the schema does not support."
 )

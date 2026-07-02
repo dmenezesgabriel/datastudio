@@ -150,7 +150,11 @@ def _build_human_content(title: str, query_result: QueryResult) -> str:
         f"Result schema (column: type), {query_result.row_count} rows — values withheld:\n"
         f"{_describe_schema(query_result)}\n\n"
         "Author ONE visualization element (KpiStat, ChartJs, or DataTable) that best presents "
-        'this widget, and append it to "/elements/root/children/-". Bind its data prop to '
+        "this widget, choosing by the data shape above: a single row -> KpiStat; a category "
+        "or time column with a numeric series -> ChartJs (line for a time/ordered axis, bar "
+        "for categories, pie only for a parts-of-a-whole breakdown of at most 5 rows); "
+        "many columns or a long detail list -> DataTable. "
+        'Append it to "/elements/root/children/-". Bind its data prop to '
         f'{{"$state":"{_DATA_ROOT}/rows"}} (or {{"$state":"{_DATA_ROOT}"}} for a table) and '
         "reference columns by name. Emit one JSON patch per line and nothing else."
     )
