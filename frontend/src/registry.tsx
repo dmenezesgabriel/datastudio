@@ -3,6 +3,7 @@ import { defineRegistry } from "@json-render/react";
 import { catalog } from "./catalog";
 import { ChartJsView, type ChartDataset } from "./components/ChartJsView";
 import { DataTable, KpiStat, Markdown, Stack } from "./components/Panels";
+import { formatLabel, formatValue } from "./format";
 
 // Bind each catalogue component to its React implementation. Data props arrive
 // already resolved from provider state (the $state binding), as an array of row
@@ -27,7 +28,7 @@ export const { registry } = defineRegistry(catalog, {
     Markdown: ({ props }) => <Markdown text={props.text} />,
     KpiStat: ({ props }) => {
       const rows = asRows(props.data);
-      const value = rows.length ? String(rows[0][props.valueColumn] ?? "") : "";
+      const value = rows.length ? formatValue(rows[0][props.valueColumn]) : "";
       return <KpiStat label={props.label} value={value} />;
     },
     ChartJs: ({ props }) => {
@@ -36,7 +37,7 @@ export const { registry } = defineRegistry(catalog, {
         <ChartJsView
           kind={props.kind}
           title={props.title}
-          labels={rows.map((row) => String(row[props.labelColumn]))}
+          labels={rows.map((row) => formatLabel(row[props.labelColumn]))}
           datasets={chartDatasets(rows, props.valueColumns)}
         />
       );

@@ -1,0 +1,35 @@
+import { expect, test } from "vitest";
+
+import { formatLabel, formatValue } from "./format";
+
+test("formatValue adds thousands separators to integers", () => {
+  expect(formatValue(99441)).toBe("99,441");
+});
+
+test("formatValue rounds a raw float to two decimals with separators", () => {
+  // The KPI card used to render "16008872.119998764"; it should read like money.
+  expect(formatValue(16008872.119998764)).toBe("16,008,872.12");
+});
+
+test("formatValue rounds a numeric string", () => {
+  expect(formatValue("160.99026669347109")).toBe("160.99");
+});
+
+test("formatValue leaves non-numeric text unchanged", () => {
+  expect(formatValue("credit_card")).toBe("credit_card");
+});
+
+test("formatValue renders null/undefined as empty string", () => {
+  expect(formatValue(null)).toBe("");
+  expect(formatValue(undefined)).toBe("");
+});
+
+test("formatLabel collapses a midnight ISO timestamp to its date", () => {
+  // A monthly axis used to show "0:00:00"; it should show the date.
+  expect(formatLabel("2017-01-01T00:00:00")).toBe("2017-01-01");
+});
+
+test("formatLabel leaves category labels unchanged", () => {
+  expect(formatLabel("on_time")).toBe("on_time");
+  expect(formatLabel(3)).toBe("3");
+});
