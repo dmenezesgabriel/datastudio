@@ -26,6 +26,13 @@
         },
         {
           "type": "view_present"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
         }
       ]
     },
@@ -98,6 +105,13 @@
         },
         {
           "type": "view_present"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
         }
       ]
     },
@@ -386,6 +400,13 @@
         },
         {
           "type": "view_present"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
         }
       ]
     },
@@ -542,6 +563,13 @@
         },
         {
           "type": "view_present"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "Trip counts per payment type should be a bar chart or a table; a pie chart is acceptable only if it has at most 5 slices. Never use a single KPI for this multi-row breakdown."
         }
       ]
     },
@@ -561,14 +589,21 @@
           "type": "sql_valid"
         },
         {
-          "type": "execution_match",
-          "gold_sql": "SELECT t.product_category_name_english AS category, ROUND(SUM(oi.price),2) AS revenue FROM olist_order_items oi JOIN olist_products p ON oi.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1 ORDER BY revenue DESC LIMIT 5"
+          "type": "result_set",
+          "expected_value": "health_beauty"
         },
         {
           "type": "view_integrity"
         },
         {
           "type": "view_present"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "A top-5 revenue ranking should be a bar chart or a table; a pie chart is acceptable only with at most 5 slices, and never a single KPI."
         }
       ]
     },
@@ -595,6 +630,359 @@
         },
         {
           "type": "view_present"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "ChartJs",
+          "chart_kind": "line"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "Average maximum temperature by month is an ordered time series across the year; it should be a line chart, not a bar chart, pie chart, or KPI."
+        }
+      ]
+    },
+    {
+      "id": "olist_monthly_gmv_trend",
+      "question": "How has monthly gross merchandise value (total item price) evolved over time across the marketplace?",
+      "tags": [
+        "join",
+        "date",
+        "time_series",
+        "chart",
+        "medium"
+      ],
+      "gold_sql": "SELECT date_trunc('month', o.order_purchase_timestamp) AS month, ROUND(SUM(oi.price),2) AS gmv FROM olist_orders o JOIN olist_order_items oi ON o.order_id=oi.order_id GROUP BY 1 ORDER BY 1",
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "ChartJs",
+          "chart_kind": "line"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "Monthly gross merchandise value over time is an ordered time series; it must be a line chart, not a bar chart, pie chart, or KPI."
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should describe how monthly gross merchandise value changed over time (e.g. an overall upward trend)."
+        }
+      ]
+    },
+    {
+      "id": "olist_revenue_by_state",
+      "question": "Which Brazilian states drive the most revenue, and how much revenue does each contribute?",
+      "tags": [
+        "join",
+        "group_by",
+        "ranking",
+        "chart",
+        "hard"
+      ],
+      "gold_sql": "SELECT c.customer_state AS state, ROUND(SUM(oi.price),2) AS revenue FROM olist_order_items oi JOIN olist_orders o ON oi.order_id=o.order_id JOIN olist_customers c ON o.customer_id=c.customer_id GROUP BY 1 ORDER BY revenue DESC",
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "result_set",
+          "expected_value": "SP"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "Revenue across 27 states should be a bar chart or a table (a horizontal ranking), never a pie chart or a single KPI."
+        }
+      ]
+    },
+    {
+      "id": "olist_orders_by_installments",
+      "question": "How many orders were paid across each number of payment installments?",
+      "tags": [
+        "group_by",
+        "chart",
+        "medium"
+      ],
+      "gold_sql": "SELECT payment_installments AS installments, COUNT(DISTINCT order_id) AS orders FROM olist_order_payments GROUP BY 1 ORDER BY 1",
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT payment_installments AS installments, COUNT(DISTINCT order_id) AS orders FROM olist_order_payments GROUP BY 1 ORDER BY 1"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "Order counts by installment number are a distribution over an ordered discrete axis; present them as a bar chart (a line chart is acceptable), never a pie chart or a single KPI."
+        }
+      ]
+    },
+    {
+      "id": "olist_median_delivery_days",
+      "question": "What is the median order-to-customer delivery time, in days, for delivered orders?",
+      "tags": [
+        "aggregation",
+        "date",
+        "kpi",
+        "medium"
+      ],
+      "gold_sql": "SELECT ROUND(MEDIAN(date_diff('day', order_purchase_timestamp, order_delivered_customer_date)),1) AS median_days FROM olist_orders WHERE order_delivered_customer_date IS NOT NULL",
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(MEDIAN(date_diff('day', order_purchase_timestamp, order_delivered_customer_date)),1) AS median_days FROM olist_orders WHERE order_delivered_customer_date IS NOT NULL"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state the median delivery time as a number of days."
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        }
+      ]
+    },
+    {
+      "id": "movies_roi_by_genre",
+      "question": "Which major film genres delivered the highest average return on investment, measured as worldwide gross divided by production budget?",
+      "tags": [
+        "group_by",
+        "ranking",
+        "chart",
+        "hard"
+      ],
+      "gold_sql": "SELECT \"Major Genre\" AS genre, ROUND(AVG(\"Worldwide Gross\"*1.0/\"Production Budget\"),2) AS roi FROM movies WHERE \"Production Budget\">0 AND \"Worldwide Gross\" IS NOT NULL AND \"Major Genre\" IS NOT NULL GROUP BY 1 ORDER BY roi DESC",
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT \"Major Genre\" AS genre, ROUND(AVG(\"Worldwide Gross\"*1.0/\"Production Budget\"),2) AS roi FROM movies WHERE \"Production Budget\">0 AND \"Worldwide Gross\" IS NOT NULL AND \"Major Genre\" IS NOT NULL GROUP BY 1 ORDER BY roi DESC"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "Average ROI across a dozen genres is a ranking; present it as a bar chart or a table, never a pie chart or a single KPI."
+        }
+      ]
+    },
+    {
+      "id": "taxi_tip_by_hour",
+      "question": "For credit-card taxi trips, how does the average tip amount vary by hour of the day?",
+      "tags": [
+        "group_by",
+        "date",
+        "time_series",
+        "chart",
+        "hard"
+      ],
+      "gold_sql": "SELECT date_part('hour', tpep_pickup_datetime) AS hour, ROUND(AVG(tip_amount),2) AS avg_tip FROM nyc_taxi WHERE payment_type=1 GROUP BY 1 ORDER BY 1",
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT date_part('hour', tpep_pickup_datetime) AS hour, ROUND(AVG(tip_amount),2) AS avg_tip FROM nyc_taxi WHERE payment_type=1 GROUP BY 1 ORDER BY 1"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "Average tip by hour of day is an ordered series across 24 hours; a line chart is best and a bar chart is acceptable, but never a pie chart or a single KPI."
+        }
+      ]
+    },
+    {
+      "id": "olist_delivery_delay_vs_satisfaction",
+      "question": "Do late deliveries hurt customer satisfaction? Show the average review score for on-time deliveries and for late deliveries as two separate rows.",
+      "tags": [
+        "join",
+        "conditional_aggregation",
+        "date",
+        "comparison",
+        "chart",
+        "hard"
+      ],
+      "gold_sql": "SELECT CASE WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date THEN 'on_time' ELSE 'late' END AS delivery, ROUND(AVG(r.review_score),2) AS avg_score FROM olist_orders o JOIN olist_order_reviews r ON o.order_id=r.order_id WHERE o.order_delivered_customer_date IS NOT NULL GROUP BY 1 ORDER BY 1",
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT CASE WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date THEN 'on_time' ELSE 'late' END AS delivery, ROUND(AVG(r.review_score),2) AS avg_score FROM olist_orders o JOIN olist_order_reviews r ON o.order_id=r.order_id WHERE o.order_delivered_customer_date IS NOT NULL GROUP BY 1 ORDER BY 1"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should compare on-time versus late deliveries and make clear that late deliveries receive substantially lower review scores."
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "A two-group comparison (on-time vs late average review score) should be a bar chart or a table, not a single KPI."
+        }
+      ]
+    },
+    {
+      "id": "olist_marketplace_exec_dashboard",
+      "question": "Build an executive overview dashboard for the marketplace: total gross merchandise value, the total number of orders, the average order value, and the monthly GMV trend.",
+      "tags": [
+        "dashboard",
+        "overview",
+        "chart",
+        "hard"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "widget_count",
+          "min_widgets": 3
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "This is an executive overview dashboard. The headline metrics (total GMV, total orders, average order value) should each be a single-value KPI, and the monthly GMV trend should be a line chart. No pie chart with more than 5 slices and no KPI bound to a multi-row result."
+        }
+      ]
+    },
+    {
+      "id": "taxi_overview_dashboard",
+      "question": "Give me an overview dashboard of the taxi trips: the total number of trips, the total revenue, and the number of trips per payment type.",
+      "tags": [
+        "dashboard",
+        "overview",
+        "chart",
+        "medium"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "widget_count",
+          "min_widgets": 2
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "This is an overview dashboard. Headline totals (total trips, total revenue) should each be a single-value KPI, and the trips-per-payment-type breakdown should be a bar chart, a table, or a pie chart of at most 5 slices. No pie chart with more than 5 slices, and no KPI bound to a multi-row result."
+        }
+      ]
+    },
+    {
+      "id": "olist_overview_dashboard",
+      "question": "Show a dashboard summarizing the platform: total gross merchandise value, the average review score, and the top five product categories by revenue.",
+      "tags": [
+        "dashboard",
+        "overview",
+        "chart",
+        "hard"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "widget_count",
+          "min_widgets": 2
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "This is an overview dashboard. Headline metrics (total GMV, average review score) should each be a single-value KPI, and the top-five product categories by revenue should be a bar chart or table, never a pie chart."
         }
       ]
     }
