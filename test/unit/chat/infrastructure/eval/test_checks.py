@@ -140,6 +140,45 @@ class TestSqlValidCheck:
         assert result["reasoning"] == ""
 
 
+class TestResultSetCheckEvaluate:
+    """ResultSetCheck scans widget result cells for an expected value."""
+
+    def test_matches_any_cell_when_no_column_given(self) -> None:
+        # arrange — the value appears in some column of some row
+        result = QueryResult(columns=["state", "revenue"], rows=[("SP", 5202955.05)], row_count=1)
+        # act / assert
+        assert ResultSetCheck(expected_value="SP").evaluate(_state_with_result(result))["passed"]
+
+    def test_matches_within_the_named_column(self) -> None:
+        # arrange — restrict the search to one column
+        result = QueryResult(columns=["state", "n"], rows=[("SP", 100)], row_count=1)
+        # act
+        result_check = ResultSetCheck(expected_value="100", column="n").evaluate(
+            _state_with_result(result)
+        )
+        # assert
+        assert result_check["passed"] is True
+        assert result_check["value"] == "n=100"
+
+    def test_fails_when_value_absent(self) -> None:
+        # arrange
+        result = QueryResult(columns=["state"], rows=[("RJ",)], row_count=1)
+        # act / assert
+        assert (
+            ResultSetCheck(expected_value="SP").evaluate(_state_with_result(result))["passed"]
+            is False
+        )
+
+    def test_fails_without_any_result(self) -> None:
+        # arrange — no widget produced a result
+        check = ResultSetCheck(expected_value="SP")
+        # act
+        outcome = check.evaluate(cast(ChatState, {"question": "q"}))
+        # assert
+        assert outcome["passed"] is False
+        assert "no query result" in outcome["reasoning"]
+
+
 class TestExecutionMatchCheckMissingResult:
     def test_fails_without_query_result(self) -> None:
         # arrange
