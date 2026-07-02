@@ -1,0 +1,3340 @@
+{
+  "run_at": "2026-07-02T18:44:51.546407+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 33,
+    "passed": 31,
+    "failed": 2,
+    "pass_rate": 0.939,
+    "avg_latency_s": 20.564,
+    "p95_latency_s": 39.729,
+    "total_input_tokens": 68419,
+    "total_output_tokens": 35057,
+    "total_cached_input_tokens": 43838,
+    "cache_read_rate": 0.641,
+    "avg_output_tokens": 1062.3,
+    "cost_usd": 0.0,
+    "by_tag": {
+      "aggregation": {
+        "total": 12,
+        "passed": 12
+      },
+      "filter": {
+        "total": 11,
+        "passed": 11
+      },
+      "easy": {
+        "total": 9,
+        "passed": 9
+      },
+      "group_by": {
+        "total": 10,
+        "passed": 9
+      },
+      "ranking": {
+        "total": 6,
+        "passed": 5
+      },
+      "medium": {
+        "total": 15,
+        "passed": 14
+      },
+      "conditional_aggregation": {
+        "total": 2,
+        "passed": 1
+      },
+      "date": {
+        "total": 9,
+        "passed": 8
+      },
+      "comparison": {
+        "total": 2,
+        "passed": 1
+      },
+      "hard": {
+        "total": 9,
+        "passed": 8
+      },
+      "percentage": {
+        "total": 5,
+        "passed": 5
+      },
+      "join": {
+        "total": 5,
+        "passed": 5
+      },
+      "subquery": {
+        "total": 1,
+        "passed": 1
+      },
+      "chart": {
+        "total": 12,
+        "passed": 12
+      },
+      "time_series": {
+        "total": 2,
+        "passed": 2
+      },
+      "kpi": {
+        "total": 1,
+        "passed": 1
+      },
+      "dashboard": {
+        "total": 3,
+        "passed": 3
+      },
+      "overview": {
+        "total": 3,
+        "passed": 3
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "movies_warner_bros_volume",
+      "question": "How many films has Warner Bros. released in the dataset?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.015982108016032726,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.4708373229950666,
+          "input_tokens": 124,
+          "output_tokens": 98,
+          "cached_input_tokens": 8
+        },
+        "get_schema": {
+          "latency_s": 0.02591721701901406,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 5.291812917974312,
+          "input_tokens": 375,
+          "output_tokens": 128,
+          "cached_input_tokens": 13
+        },
+        "build_widget": {
+          "latency_s": 9.22256990004098,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 343,
+          "output_tokens": 400,
+          "cached_input_tokens": 13
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 748,
+          "output_tokens": 95,
+          "cached_input_tokens": 10
+        },
+        "compose_narrative": {
+          "latency_s": 3.88889433600707,
+          "input_tokens": 221,
+          "output_tokens": 272,
+          "cached_input_tokens": 187
+        }
+      },
+      "sql_query": "SELECT COUNT(*) AS film_count FROM movies WHERE Distributor = 'Warner Bros.'",
+      "sql_valid": true,
+      "response": "Warner Bros. has released a total of 318 films in the dataset.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM movies WHERE Distributor = 'Warner Bros.'",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should clearly state the number of films and attribute it to Warner Bros.",
+          "passed": true,
+          "reasoning": "The response clearly states the number of films (318) and attributes it to Warner Bros., satisfying the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "filter",
+        "easy"
+      ]
+    },
+    {
+      "case_id": "movies_critically_acclaimed",
+      "question": "How many films received a Rotten Tomatoes score above 90?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.019076691009104252,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.468779980961699,
+          "input_tokens": 126,
+          "output_tokens": 114,
+          "cached_input_tokens": 8
+        },
+        "get_schema": {
+          "latency_s": 0.019797159999143332,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 5.357026452955324,
+          "input_tokens": 375,
+          "output_tokens": 146,
+          "cached_input_tokens": 13
+        },
+        "build_widget": {
+          "latency_s": 5.131045478046872,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 344,
+          "output_tokens": 55,
+          "cached_input_tokens": 240
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 753,
+          "output_tokens": 235,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 4.038265187991783,
+          "input_tokens": 228,
+          "output_tokens": 271,
+          "cached_input_tokens": 184
+        }
+      },
+      "sql_query": "SELECT COUNT(*) AS film_count FROM movies WHERE \"Rotten Tomatoes Rating\" IS NOT NULL AND \"Rotten Tomatoes Rating\" > 90",
+      "sql_valid": true,
+      "response": "A total of 259 films received a Rotten Tomatoes score above 90.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM movies WHERE \"Rotten Tomatoes Rating\" > 90",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "filter",
+        "easy"
+      ]
+    },
+    {
+      "case_id": "movies_drama_imdb_rating",
+      "question": "What is the average IMDB rating for Drama films?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.01280444097938016,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.470469937019516,
+          "input_tokens": 123,
+          "output_tokens": 100,
+          "cached_input_tokens": 8
+        },
+        "get_schema": {
+          "latency_s": 0.021149669017177075,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.6146242499817163,
+          "input_tokens": 379,
+          "output_tokens": 101,
+          "cached_input_tokens": 8
+        },
+        "build_widget": {
+          "latency_s": 5.344074652995914,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 354,
+          "output_tokens": 71,
+          "cached_input_tokens": 196
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 752,
+          "output_tokens": 129,
+          "cached_input_tokens": 10
+        },
+        "compose_narrative": {
+          "latency_s": 4.396797018009238,
+          "input_tokens": 234,
+          "output_tokens": 325,
+          "cached_input_tokens": 8
+        }
+      },
+      "sql_query": "SELECT AVG(\"IMDB Rating\") AS avg_imdb_rating FROM movies WHERE \"Major Genre\" = 'Drama' AND \"IMDB Rating\" IS NOT NULL;",
+      "sql_valid": true,
+      "response": "The average IMDB rating for Drama films is 6.773441734417339.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(AVG(\"IMDB Rating\"),2) FROM movies WHERE \"Major Genre\" = 'Drama'",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a numeric rating value and mention Drama as the genre.",
+          "passed": true,
+          "reasoning": "The response provides a numeric rating value (6.773441734417339) and explicitly mentions Drama as the genre ('Drama films'), satisfying both conditions of the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "filter",
+        "easy"
+      ]
+    },
+    {
+      "case_id": "taxi_total_trips",
+      "question": "What is the total number of taxi trips recorded in the dataset?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.012501285993494093,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.542182295001112,
+          "input_tokens": 125,
+          "output_tokens": 105,
+          "cached_input_tokens": 8
+        },
+        "get_schema": {
+          "latency_s": 0.03432542202062905,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.339663426973857,
+          "input_tokens": 361,
+          "output_tokens": 42,
+          "cached_input_tokens": 231
+        },
+        "build_widget": {
+          "latency_s": 6.189307841996197,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 329,
+          "output_tokens": 24,
+          "cached_input_tokens": 18
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 748,
+          "output_tokens": 198,
+          "cached_input_tokens": 10
+        },
+        "compose_narrative": {
+          "latency_s": 3.059423180005979,
+          "input_tokens": 225,
+          "output_tokens": 141,
+          "cached_input_tokens": 13
+        }
+      },
+      "sql_query": "SELECT COUNT(*) AS total_trips FROM nyc_taxi",
+      "sql_valid": true,
+      "response": "The total number of taxi trips recorded in the dataset is 7,475,949.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM nyc_taxi",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "easy"
+      ]
+    },
+    {
+      "case_id": "taxi_total_revenue",
+      "question": "What is the total revenue generated across all taxi trips?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.013962784025352448,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.5001680069835857,
+          "input_tokens": 123,
+          "output_tokens": 71,
+          "cached_input_tokens": 110
+        },
+        "get_schema": {
+          "latency_s": 0.026190643024165183,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.4442798809614033,
+          "input_tokens": 359,
+          "output_tokens": 110,
+          "cached_input_tokens": 13
+        },
+        "build_widget": {
+          "latency_s": 3.8696848850231618,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 328,
+          "output_tokens": 36,
+          "cached_input_tokens": 196
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 746,
+          "output_tokens": 104,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 2.878044266020879,
+          "input_tokens": 225,
+          "output_tokens": 187,
+          "cached_input_tokens": 188
+        }
+      },
+      "sql_query": "SELECT SUM(total_amount) AS sum_total_amount FROM nyc_taxi",
+      "sql_valid": true,
+      "response": "The total revenue generated across all taxi trips is 145,047,454.13.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT SUM(total_amount) FROM nyc_taxi",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a dollar amount representing total revenue.",
+          "passed": true,
+          "reasoning": "The response provides the total revenue amount (145,047,454.13), which represents the total revenue generated across all taxi trips, satisfying the rubric's requirement to state a dollar amount."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "easy"
+      ]
+    },
+    {
+      "case_id": "taxi_dominant_payment_type",
+      "question": "What is the most commonly used payment type code for taxi trips?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.018160242005251348,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.7426972330431454,
+          "input_tokens": 125,
+          "output_tokens": 108,
+          "cached_input_tokens": 110
+        },
+        "get_schema": {
+          "latency_s": 0.03609364602016285,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 6.352403961995151,
+          "input_tokens": 361,
+          "output_tokens": 222,
+          "cached_input_tokens": 228
+        },
+        "build_widget": {
+          "latency_s": 7.533381749002729,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 337,
+          "output_tokens": 39,
+          "cached_input_tokens": 18
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 753,
+          "output_tokens": 290,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 3.8340301060234196,
+          "input_tokens": 268,
+          "output_tokens": 289,
+          "cached_input_tokens": 13
+        }
+      },
+      "sql_query": "SELECT payment_type, COUNT(*) AS trip_count FROM nyc_taxi GROUP BY payment_type ORDER BY trip_count DESC;",
+      "sql_valid": true,
+      "response": "The most commonly used payment type code for taxi trips is payment type 1, accounting for 5,353,975 trips. This is followed by payment type 2 with 2,027,441 trips, while the remaining payment types (0, 3, and 4) each account for fewer than 50,000 trips.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT payment_type FROM nyc_taxi GROUP BY payment_type ORDER BY COUNT(*) DESC LIMIT 1",
+          "passed": false,
+          "reasoning": "no widget matched 1 gold row(s); got [5]"
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "cars_japan_fuel_efficiency",
+      "question": "What is the average fuel efficiency in miles per gallon for Japanese cars?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.015196584048680961,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.00066975003574,
+          "input_tokens": 126,
+          "output_tokens": 297,
+          "cached_input_tokens": 18
+        },
+        "get_schema": {
+          "latency_s": 0.020041383046191186,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.8544505839818157,
+          "input_tokens": 300,
+          "output_tokens": 59,
+          "cached_input_tokens": 231
+        },
+        "build_widget": {
+          "latency_s": 8.819111321005039,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 269,
+          "output_tokens": 38,
+          "cached_input_tokens": 196
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 749,
+          "output_tokens": 254,
+          "cached_input_tokens": 582
+        },
+        "compose_narrative": {
+          "latency_s": 4.860495983040892,
+          "input_tokens": 233,
+          "output_tokens": 314,
+          "cached_input_tokens": 188
+        }
+      },
+      "sql_query": "SELECT AVG(Miles_per_Gallon) AS avg_mpg FROM cars WHERE Origin = 'Japan' AND Miles_per_Gallon IS NOT NULL;",
+      "sql_valid": true,
+      "response": "The average fuel efficiency for Japanese cars is 30.450632911392397 miles per gallon.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(AVG(Miles_per_Gallon),1) FROM cars WHERE Origin = 'Japan'",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a numeric MPG value and reference Japanese cars.",
+          "passed": true,
+          "reasoning": "The response provides a numeric MPG value (30.450632911392397) and explicitly references Japanese cars, satisfying all criteria in the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "filter",
+        "easy"
+      ]
+    },
+    {
+      "case_id": "cars_us_efficiency_improvement",
+      "question": "By how many miles per gallon did average fuel efficiency improve for US-manufactured cars between 1970 and 1980?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.025758294039405882,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.1647948140162043,
+          "input_tokens": 139,
+          "output_tokens": 117,
+          "cached_input_tokens": 110
+        },
+        "get_schema": {
+          "latency_s": 0.021188783983234316,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.937370123981964,
+          "input_tokens": 313,
+          "output_tokens": 253,
+          "cached_input_tokens": 13
+        },
+        "build_widget": {
+          "latency_s": 9.360145365993958,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 279,
+          "output_tokens": 120,
+          "cached_input_tokens": 196
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 753,
+          "output_tokens": 134,
+          "cached_input_tokens": 10
+        },
+        "compose_narrative": {
+          "latency_s": 5.7136004870408215,
+          "input_tokens": 252,
+          "output_tokens": 361,
+          "cached_input_tokens": 184
+        }
+      },
+      "sql_query": "SELECT (SELECT AVG(Miles_per_Gallon) FROM cars WHERE Origin = 'USA' AND date_part('year', Year) = 1970 AND Miles_per_Gallon IS NOT NULL) - (SELECT AVG(Miles_per_Gallon) FROM cars WHERE Origin = 'USA' AND date_part('year', Year) = 1980 AND Miles_per_Gallon IS NOT NULL) AS mpg_difference;",
+      "sql_valid": true,
+      "response": "Average fuel efficiency for US-manufactured cars did not improve between 1970 and 1980; instead, it decreased by 10.641558441558441 miles per gallon.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(AVG(Miles_per_Gallon) FILTER(WHERE date_part('year',Year)=1980) - AVG(Miles_per_Gallon) FILTER(WHERE date_part('year',Year)=1970),1) FROM cars WHERE Origin='USA'",
+          "passed": false,
+          "reasoning": "no widget matched 1 gold row(s); got [1]"
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state the improvement as a number and mention the time period 1970 to 1980.",
+          "passed": true,
+          "reasoning": "The response mentions the time period 'between 1970 and 1980' and provides the numerical value of the change in fuel efficiency (10.641558441558441 miles per gallon). Although it clarifies that the change was a decrease rather than an improvement, it still satisfies the rubric's requirement to state the change as a number and mention the specified time period."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "conditional_aggregation",
+        "date",
+        "comparison",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "weather_extreme_heat_days",
+      "question": "How many days in Seattle had maximum temperatures exceeding 30 degrees Celsius?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.01759767299517989,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.17173623398412,
+          "input_tokens": 126,
+          "output_tokens": 103,
+          "cached_input_tokens": 112
+        },
+        "get_schema": {
+          "latency_s": 0.018822523998096585,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.008388575981371,
+          "input_tokens": 283,
+          "output_tokens": 115,
+          "cached_input_tokens": 230
+        },
+        "build_widget": {
+          "latency_s": 3.433997154003009,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 257,
+          "output_tokens": 36,
+          "cached_input_tokens": 196
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 753,
+          "output_tokens": 114,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 4.6631353219854645,
+          "input_tokens": 227,
+          "output_tokens": 126,
+          "cached_input_tokens": 184
+        }
+      },
+      "sql_query": "SELECT COUNT(*) AS days_above_30\nFROM seattle_weather\nWHERE temp_max > 30;",
+      "sql_valid": true,
+      "response": "In Seattle, there were 53 days with maximum temperatures exceeding 30 degrees Celsius.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM seattle_weather WHERE temp_max > 30",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "filter",
+        "easy"
+      ]
+    },
+    {
+      "case_id": "weather_summer_sunshine",
+      "question": "What percentage of days during summer months (June, July, and August) in Seattle were sunny?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.013492283993400633,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.2982451780117117,
+          "input_tokens": 132,
+          "output_tokens": 35,
+          "cached_input_tokens": 111
+        },
+        "get_schema": {
+          "latency_s": 0.016880523005966097,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.371171014034189,
+          "input_tokens": 288,
+          "output_tokens": 216,
+          "cached_input_tokens": 229
+        },
+        "build_widget": {
+          "latency_s": 6.660101194982417,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 258,
+          "output_tokens": 184,
+          "cached_input_tokens": 196
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 747,
+          "output_tokens": 217,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 4.8338530079927295,
+          "input_tokens": 235,
+          "output_tokens": 451,
+          "cached_input_tokens": 185
+        }
+      },
+      "sql_query": "SELECT 100.0 * SUM(CASE WHEN weather = 'sun' THEN 1 ELSE 0 END) / COUNT(*) AS sunny_percentage FROM seattle_weather WHERE date_part('month', date) IN (6, 7, 8) AND weather IS NOT NULL;",
+      "sql_valid": true,
+      "response": "During the summer months of June, July, and August in Seattle, 68.20652173913044% of days were sunny.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE weather='sun')/COUNT(*),1) FROM seattle_weather WHERE date_part('month',date) IN (6,7,8)",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage and reference the summer period or the months June through August.",
+          "passed": true,
+          "reasoning": "The response explicitly states a percentage (68.20652173913044%) and references the summer period by mentioning the months June, July, and August, fully satisfying the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "percentage",
+        "date",
+        "filter",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_total_gmv",
+      "question": "What is the total gross merchandise value generated across all orders on the platform?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.016997855971567333,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.9550115119782276,
+          "input_tokens": 127,
+          "output_tokens": 87,
+          "cached_input_tokens": 114
+        },
+        "get_schema": {
+          "latency_s": 0.0545296460040845,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.3961978220031597,
+          "input_tokens": 283,
+          "output_tokens": 137,
+          "cached_input_tokens": 232
+        },
+        "build_widget": {
+          "latency_s": 5.911211034981534,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 256,
+          "output_tokens": 24,
+          "cached_input_tokens": 196
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 751,
+          "output_tokens": 223,
+          "cached_input_tokens": 582
+        },
+        "compose_narrative": {
+          "latency_s": 3.247517575044185,
+          "input_tokens": 235,
+          "output_tokens": 192,
+          "cached_input_tokens": 187
+        }
+      },
+      "sql_query": "SELECT SUM(price) AS total_price FROM olist_order_items",
+      "sql_valid": true,
+      "response": "The total gross merchandise value generated across all orders on the platform is 13,591,643.70.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(SUM(price),1) FROM olist_order_items",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a total monetary amount representing gross merchandise value across all platform orders.",
+          "passed": true,
+          "reasoning": "The response provides a specific monetary amount (13,591,643.70) that represents the total gross merchandise value across all platform orders, which directly satisfies the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "easy"
+      ]
+    },
+    {
+      "case_id": "olist_top_revenue_category",
+      "question": "Which product category, by its English name, generated the highest revenue on the platform?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.01725665997946635,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 5.176258139021229,
+          "input_tokens": 129,
+          "output_tokens": 350,
+          "cached_input_tokens": 110
+        },
+        "get_schema": {
+          "latency_s": 0.07671727199340239,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 5.279797594004776,
+          "input_tokens": 361,
+          "output_tokens": 224,
+          "cached_input_tokens": 228
+        },
+        "build_widget": {
+          "latency_s": 5.868217392009683,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 343,
+          "output_tokens": 137,
+          "cached_input_tokens": 196
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 755,
+          "output_tokens": 274,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 3.65066351700807,
+          "input_tokens": 244,
+          "output_tokens": 212,
+          "cached_input_tokens": 184
+        }
+      },
+      "sql_query": "SELECT t.product_category_name_english AS category_name, SUM(oi.price + oi.freight_value) AS total_revenue FROM olist_order_items oi JOIN olist_products p ON oi.product_id = p.product_id JOIN olist_category_translation t ON p.product_category_name = t.product_category_name GROUP BY t.product_category_name_english ORDER BY total_revenue DESC LIMIT 1",
+      "sql_valid": true,
+      "response": "The health_beauty product category generated the highest revenue on the platform, with a total of 1,441,248.07.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT t.product_category_name_english FROM olist_order_items oi JOIN olist_products p ON oi.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1 ORDER BY SUM(oi.price) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should name a specific product category and attribute it to the highest revenue position.",
+          "passed": true,
+          "reasoning": "The response explicitly names the 'health_beauty' product category and attributes it to the highest revenue position on the platform, satisfying the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "join",
+        "group_by",
+        "ranking",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "olist_on_time_delivery_rate",
+      "question": "What percentage of delivered orders arrived on or before the estimated delivery date?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.015396133996546268,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.7426381109980866,
+          "input_tokens": 126,
+          "output_tokens": 87,
+          "cached_input_tokens": 111
+        },
+        "get_schema": {
+          "latency_s": 0.04530433495528996,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.4321541049866937,
+          "input_tokens": 305,
+          "output_tokens": 146,
+          "cached_input_tokens": 228
+        },
+        "build_widget": {
+          "latency_s": 6.342167628987227,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 281,
+          "output_tokens": 165,
+          "cached_input_tokens": 196
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 751,
+          "output_tokens": 114,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 3.9269925230182707,
+          "input_tokens": 234,
+          "output_tokens": 337,
+          "cached_input_tokens": 13
+        }
+      },
+      "sql_query": "SELECT\n  100.0 * SUM(CASE WHEN order_delivered_customer_date <= order_estimated_delivery_date THEN 1 ELSE 0 END) / COUNT(*) AS pct_on_or_before_estimated\nFROM olist_orders\nWHERE order_status = 'delivered'\n  AND order_delivered_customer_date IS NOT NULL\n  AND order_estimated_delivery_date IS NOT NULL;",
+      "sql_valid": true,
+      "response": "91.88763346117965% of delivered orders arrived on or before the estimated delivery date.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_delivered_customer_date <= order_estimated_delivery_date)/COUNT(*),2) FROM olist_orders WHERE order_status='delivered' AND order_delivered_customer_date IS NOT NULL",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage and reference on-time delivery or the estimated delivery date.",
+          "passed": true,
+          "reasoning": "The response states a percentage (91.88763346117965%) and explicitly references arriving on or before the estimated delivery date, which satisfies the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "percentage",
+        "date",
+        "filter",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_average_order_value",
+      "question": "What is the average order value across all purchases on the platform?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.010123877960722893,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.172387481026817,
+          "input_tokens": 125,
+          "output_tokens": 247,
+          "cached_input_tokens": 114
+        },
+        "get_schema": {
+          "latency_s": 0.035808315966278315,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 1.8697496820241213,
+          "input_tokens": 287,
+          "output_tokens": 95,
+          "cached_input_tokens": 231
+        },
+        "build_widget": {
+          "latency_s": 5.8086437819874845,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 258,
+          "output_tokens": 84,
+          "cached_input_tokens": 199
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 750,
+          "output_tokens": 293,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 3.8717166839633137,
+          "input_tokens": 233,
+          "output_tokens": 361,
+          "cached_input_tokens": 187
+        }
+      },
+      "sql_query": "SELECT AVG(order_total) AS avg_total_payment_value_per_order\nFROM (\n  SELECT order_id, SUM(payment_value) AS order_total\n  FROM olist_order_payments\n  GROUP BY order_id\n) t",
+      "sql_valid": true,
+      "response": "The average order value across all purchases on the platform is 160.99.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(AVG(order_total),2) FROM (SELECT order_id, SUM(payment_value) order_total FROM olist_order_payments GROUP BY order_id)",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a monetary amount representing the average value per order.",
+          "passed": true,
+          "reasoning": "The response states the average order value is 160.99, which is a monetary amount representing the average value per order, thus satisfying the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "subquery",
+        "aggregation",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_avg_review_score",
+      "question": "What is the platform's average customer satisfaction score based on order reviews?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.019968383945524693,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.5671603009686805,
+          "input_tokens": 126,
+          "output_tokens": 34,
+          "cached_input_tokens": 113
+        },
+        "get_schema": {
+          "latency_s": 0.05353050597477704,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.105178499012254,
+          "input_tokens": 284,
+          "output_tokens": 123,
+          "cached_input_tokens": 231
+        },
+        "build_widget": {
+          "latency_s": 4.375801815011073,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 249,
+          "output_tokens": 29,
+          "cached_input_tokens": 198
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 748,
+          "output_tokens": 138,
+          "cached_input_tokens": 582
+        },
+        "compose_narrative": {
+          "latency_s": 3.5780553150107153,
+          "input_tokens": 231,
+          "output_tokens": 192,
+          "cached_input_tokens": 185
+        }
+      },
+      "sql_query": "SELECT AVG(review_score) AS avg_review_score FROM olist_order_reviews;",
+      "sql_valid": true,
+      "response": "The platform's average customer satisfaction score based on order reviews is 4.08642062404257.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(AVG(review_score),2) FROM olist_order_reviews",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a numeric score out of 5 representing average customer satisfaction across all reviews.",
+          "passed": true,
+          "reasoning": "The response provides a numeric score (4.08642062404257) which represents the average customer satisfaction out of 5, satisfying the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "easy"
+      ]
+    },
+    {
+      "case_id": "olist_five_star_review_share",
+      "question": "What percentage of customer reviews received the highest possible rating of 5 stars?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.015969744010362774,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.193901272956282,
+          "input_tokens": 127,
+          "output_tokens": 64,
+          "cached_input_tokens": 113
+        },
+        "get_schema": {
+          "latency_s": 0.06890274595934898,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.5620013939915225,
+          "input_tokens": 285,
+          "output_tokens": 145,
+          "cached_input_tokens": 231
+        },
+        "build_widget": {
+          "latency_s": 4.261383156990632,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 259,
+          "output_tokens": 72,
+          "cached_input_tokens": 237
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 750,
+          "output_tokens": 119,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 6.4151702169911005,
+          "input_tokens": 235,
+          "output_tokens": 405,
+          "cached_input_tokens": 187
+        }
+      },
+      "sql_query": "SELECT 100.0 * SUM(CASE WHEN review_score = 5 THEN 1 ELSE 0 END) / COUNT(review_score) AS pct_score_5 FROM olist_order_reviews WHERE review_score IS NOT NULL",
+      "sql_valid": true,
+      "response": "57.77634443279852% of customer reviews received the highest possible rating of 5 stars.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE review_score=5)/COUNT(*),2) FROM olist_order_reviews",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage and attribute it to 5-star or top-rated reviews.",
+          "passed": true,
+          "reasoning": "The response states a percentage (57.77634443279852%) and explicitly attributes it to 5-star reviews, satisfying the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "percentage",
+        "filter",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_credit_card_payment_share",
+      "question": "What percentage of payment transactions on the platform were made using credit card?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.015448968973942101,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.937131231999956,
+          "input_tokens": 126,
+          "output_tokens": 52,
+          "cached_input_tokens": 113
+        },
+        "get_schema": {
+          "latency_s": 0.030897338001523167,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.8272121690097265,
+          "input_tokens": 288,
+          "output_tokens": 133,
+          "cached_input_tokens": 229
+        },
+        "build_widget": {
+          "latency_s": 5.123740512004588,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 261,
+          "output_tokens": 68,
+          "cached_input_tokens": 199
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 748,
+          "output_tokens": 171,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 7.55888521601446,
+          "input_tokens": 231,
+          "output_tokens": 337,
+          "cached_input_tokens": 187
+        }
+      },
+      "sql_query": "SELECT\n  COUNT(*) FILTER (WHERE payment_type = 'credit_card') * 100.0 / COUNT(*) AS credit_card_percentage\nFROM olist_order_payments\nWHERE payment_type IS NOT NULL;",
+      "sql_valid": true,
+      "response": "73.92237645110987% of payment transactions on the platform were made using a credit card.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE payment_type='credit_card')/COUNT(*),2) FROM olist_order_payments",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage and reference credit card as the payment method.",
+          "passed": true,
+          "reasoning": "The response explicitly states a percentage (73.92237645110987%) and references the credit card as the payment method, satisfying all conditions of the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "percentage",
+        "filter",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_cancellation_rate",
+      "question": "What percentage of all orders placed on the platform were cancelled?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.017191254009958357,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.4761556250159629,
+          "input_tokens": 124,
+          "output_tokens": 70,
+          "cached_input_tokens": 113
+        },
+        "get_schema": {
+          "latency_s": 0.048179146950133145,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.083730270038359,
+          "input_tokens": 303,
+          "output_tokens": 136,
+          "cached_input_tokens": 229
+        },
+        "build_widget": {
+          "latency_s": 10.893167814007029,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 279,
+          "output_tokens": 51,
+          "cached_input_tokens": 13
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 748,
+          "output_tokens": 200,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 4.56074724701466,
+          "input_tokens": 232,
+          "output_tokens": 320,
+          "cached_input_tokens": 185
+        }
+      },
+      "sql_query": "SELECT 100.0 * SUM(CASE WHEN order_status = 'canceled' THEN 1 ELSE 0 END) / COUNT(*) AS pct_canceled FROM olist_orders;",
+      "sql_valid": true,
+      "response": "The order cancellation rate for the platform is 0.6285133898492573%.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_status='canceled')/COUNT(*),2) FROM olist_orders",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage representing the share of orders that were cancelled, around 0.63%.",
+          "passed": true,
+          "reasoning": "The response provides the exact percentage of cancelled orders (0.6285133898492573%), which is approximately 0.63% as required by the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "percentage",
+        "filter",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_top_customer_state",
+      "question": "Which Brazilian state has the highest number of registered customers?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.002648313995450735,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.4536794319865294,
+          "input_tokens": 123,
+          "output_tokens": 196,
+          "cached_input_tokens": 110
+        },
+        "get_schema": {
+          "latency_s": 0.04667836596490815,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.418469211028423,
+          "input_tokens": 271,
+          "output_tokens": 128,
+          "cached_input_tokens": 228
+        },
+        "build_widget": {
+          "latency_s": 9.203023182984907,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 253,
+          "output_tokens": 50,
+          "cached_input_tokens": 198
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 755,
+          "output_tokens": 375,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 3.019433977024164,
+          "input_tokens": 229,
+          "output_tokens": 131,
+          "cached_input_tokens": 184
+        }
+      },
+      "sql_query": "SELECT customer_state, COUNT(*) AS customer_count FROM olist_customers GROUP BY customer_state ORDER BY customer_count DESC LIMIT 1",
+      "sql_valid": true,
+      "response": "S\u00e3o Paulo (SP) is the Brazilian state with the highest number of registered customers, with a total of 41,746.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT customer_state FROM olist_customers GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should name a Brazilian state abbreviation or full name and associate it with the largest customer concentration.",
+          "passed": true,
+          "reasoning": "The response explicitly names the Brazilian state 'S\u00e3o Paulo (SP)' (both full name and abbreviation) and associates it with having the highest number of registered customers, which aligns perfectly with the rubric's requirement."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_avg_delivery_days",
+      "question": "On average, how many days does it take from order placement to delivery to the customer?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.015076611016411334,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.9834257300244644,
+          "input_tokens": 130,
+          "output_tokens": 62,
+          "cached_input_tokens": 110
+        },
+        "get_schema": {
+          "latency_s": 0.043300916033331305,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.2907334429910406,
+          "input_tokens": 308,
+          "output_tokens": 113,
+          "cached_input_tokens": 228
+        },
+        "build_widget": {
+          "latency_s": 4.404159489029553,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 274,
+          "output_tokens": 83,
+          "cached_input_tokens": 198
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 749,
+          "output_tokens": 119,
+          "cached_input_tokens": 583
+        },
+        "compose_narrative": {
+          "latency_s": 4.482843472971581,
+          "input_tokens": 237,
+          "output_tokens": 436,
+          "cached_input_tokens": 184
+        }
+      },
+      "sql_query": "SELECT AVG(date_diff('day', order_purchase_timestamp, order_delivered_customer_date)) AS avg_days_to_delivery FROM olist_orders WHERE order_purchase_timestamp IS NOT NULL AND order_delivered_customer_date IS NOT NULL;",
+      "sql_valid": true,
+      "response": "On average, it takes 12.497336125046644 days from order placement to delivery to the customer.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(AVG(date_diff('day', order_purchase_timestamp, order_delivered_customer_date)),1) FROM olist_orders WHERE order_delivered_customer_date IS NOT NULL",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a number of days representing the average end-to-end delivery time from purchase to delivery.",
+          "passed": true,
+          "reasoning": "The response provides a specific number of days (12.497336125046644) representing the average time from order placement to delivery, which directly satisfies the rubric's requirement."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "date",
+        "aggregation",
+        "filter",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "taxi_trips_by_payment_type",
+      "question": "How many taxi trips were taken with each payment type code?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.016003830009140074,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.2123938739532605,
+          "input_tokens": 124,
+          "output_tokens": 70,
+          "cached_input_tokens": 110
+        },
+        "get_schema": {
+          "latency_s": 0.0317495180061087,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.520000317017548,
+          "input_tokens": 360,
+          "output_tokens": 92,
+          "cached_input_tokens": 228
+        },
+        "build_widget": {
+          "latency_s": 9.969928082020488,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 335,
+          "output_tokens": 36,
+          "cached_input_tokens": 314
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 754,
+          "output_tokens": 581,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 7.389479920035228,
+          "input_tokens": 268,
+          "output_tokens": 298,
+          "cached_input_tokens": 186
+        }
+      },
+      "sql_query": "SELECT payment_type, COUNT(*) AS trip_count FROM nyc_taxi GROUP BY payment_type ORDER BY payment_type",
+      "sql_valid": true,
+      "response": "Payment type 1 accounted for the highest number of taxi trips with 5,353,975 trips, followed by payment type 2 with 2,027,441 trips. Payment types 0, 3, and 4 recorded significantly fewer trips, with 42,456, 38,284, and 13,793 trips respectively.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT payment_type, COUNT(*) AS trips FROM nyc_taxi GROUP BY payment_type ORDER BY trips DESC",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Trip counts per payment type should be a bar chart or a table; a pie chart is acceptable only if it has at most 5 slices. Never use a single KPI for this multi-row breakdown.",
+          "passed": true,
+          "reasoning": "The chosen visualization is a bar chart, which is explicitly recommended by the rubric for showing trip counts per payment type. The data has 5 rows, which is well-suited for a bar chart, and the choice avoids the prohibited single KPI view."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "group_by",
+        "chart",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_top5_categories_revenue",
+      "question": "Which five product categories, by their English name, generated the most revenue, and how much did each generate?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.015297137026209384,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 5.068554094992578,
+          "input_tokens": 134,
+          "output_tokens": 176,
+          "cached_input_tokens": 111
+        },
+        "get_schema": {
+          "latency_s": 0.07884690101491287,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.213414609024767,
+          "input_tokens": 366,
+          "output_tokens": 327,
+          "cached_input_tokens": 228
+        },
+        "build_widget": {
+          "latency_s": 4.796507317980286,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 337,
+          "output_tokens": 119,
+          "cached_input_tokens": 311
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 756,
+          "output_tokens": 191,
+          "cached_input_tokens": 582
+        },
+        "compose_narrative": {
+          "latency_s": 6.100861374987289,
+          "input_tokens": 320,
+          "output_tokens": 646,
+          "cached_input_tokens": 185
+        }
+      },
+      "sql_query": "SELECT t.product_category_name_english AS category, SUM(i.price) AS total_revenue FROM olist_order_items i JOIN olist_products p ON i.product_id = p.product_id JOIN olist_category_translation t ON p.product_category_name = t.product_category_name WHERE i.price IS NOT NULL GROUP BY t.product_category_name_english ORDER BY total_revenue DESC LIMIT 5;",
+      "sql_valid": true,
+      "response": "The top five product categories by revenue are health_beauty, watches_gifts, bed_bath_table, sports_leisure, and computers_accessories. Health_beauty led with 1,258,681.34 in revenue, followed by watches_gifts at 1,205,005.68 and bed_bath_table at 1,036,988.68. Rounding out the top five, sports_leisure generated 988,048.97 and computers_accessories generated 911,954.32.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "health_beauty",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A top-5 revenue ranking should be a bar chart or a table; a pie chart is acceptable only with at most 5 slices, and never a single KPI.",
+          "passed": true,
+          "reasoning": "The chosen view is a bar chart, which the rubric explicitly states is an appropriate choice for a top-5 revenue ranking. The data shape (one categorical and one quantitative column with 5 rows) is perfectly suited for a bar chart, allowing easy comparison of revenue across the categories."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "join",
+        "group_by",
+        "ranking",
+        "chart",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "seattle_monthly_avg_high",
+      "question": "What is the average maximum temperature in Seattle for each month of the year?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.015372324036434293,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.0923854630091228,
+          "input_tokens": 127,
+          "output_tokens": 102,
+          "cached_input_tokens": 113
+        },
+        "get_schema": {
+          "latency_s": 0.017553298035636544,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 1.9198316060355864,
+          "input_tokens": 284,
+          "output_tokens": 120,
+          "cached_input_tokens": 232
+        },
+        "build_widget": {
+          "latency_s": 7.784649781999178,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 252,
+          "output_tokens": 49,
+          "cached_input_tokens": 196
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 756,
+          "output_tokens": 161,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 8.40168490097858,
+          "input_tokens": 412,
+          "output_tokens": 700,
+          "cached_input_tokens": 188
+        }
+      },
+      "sql_query": "SELECT date_part('month', date) AS month, AVG(temp_max) AS avg_temp_max FROM seattle_weather GROUP BY month ORDER BY month;",
+      "sql_valid": true,
+      "response": "The average maximum temperature in Seattle peaks at 26.11209677419356 in August and reaches its lowest point of 8.194354838709678 in December. Throughout the year, temperatures rise steadily from 8.22903225806452 in January to the summer high, then decline to 11.023333333333337 in November.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT date_part('month', date) AS month, ROUND(AVG(temp_max),1) AS avg_high FROM seattle_weather GROUP BY 1 ORDER BY 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "ChartJs:line",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Average maximum temperature by month is an ordered time series across the year; it should be a line chart, not a bar chart, pie chart, or KPI.",
+          "passed": true,
+          "reasoning": "The data represents an ordered time series (months of the year) with a continuous measure (average maximum temperature). A line chart is the appropriate choice to visualize trends over time, matching the rubric's requirement perfectly."
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "group_by",
+        "date",
+        "chart",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_monthly_gmv_trend",
+      "question": "How has monthly gross merchandise value (total item price) evolved over time across the marketplace?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.015327394008636475,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 5.37375247903401,
+          "input_tokens": 130,
+          "output_tokens": 153,
+          "cached_input_tokens": 111
+        },
+        "get_schema": {
+          "latency_s": 0.08341579901752993,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.328425586980302,
+          "input_tokens": 345,
+          "output_tokens": 134,
+          "cached_input_tokens": 228
+        },
+        "build_widget": {
+          "latency_s": 5.572166410973296,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 319,
+          "output_tokens": 89,
+          "cached_input_tokens": 232
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 759,
+          "output_tokens": 173,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 5.990282911981922,
+          "input_tokens": 856,
+          "output_tokens": 196,
+          "cached_input_tokens": 185
+        }
+      },
+      "sql_query": "SELECT date_trunc('month', o.order_purchase_timestamp) AS purchase_month, SUM(i.price) AS gmv FROM olist_order_items i JOIN olist_orders o ON i.order_id = o.order_id GROUP BY 1 ORDER BY 1;",
+      "sql_valid": true,
+      "response": "Monthly GMV grew rapidly from just 267.36 in September 2016 to a peak of 1,010,271.37 in November 2017, driven by steady month-over-month gains through 2017. From early 2018 through August 2018, GMV remained elevated, fluctuating between roughly 844,178.71 and 996,647.75, before dropping sharply to 145.00 in September 2018.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "ChartJs:line",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Monthly gross merchandise value over time is an ordered time series; it must be a line chart, not a bar chart, pie chart, or KPI.",
+          "passed": true,
+          "reasoning": "The data is an ordered time series of monthly GMV over 24 months. The rubric explicitly requires a line chart for this kind of time-series evolution, and the chosen view is a ChartJs line chart, which matches the best practice."
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should describe how monthly gross merchandise value changed over time (e.g. an overall upward trend).",
+          "passed": true,
+          "reasoning": "The response clearly describes how the monthly gross merchandise value changed over time, noting the rapid growth from 2016 to a peak in late 2017, the elevated but fluctuating levels through August 2018, and the sharp drop in September 2018. This satisfies the rubric's requirement to describe the evolution of GMV over time."
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "join",
+        "date",
+        "time_series",
+        "chart",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_revenue_by_state",
+      "question": "Which Brazilian states drive the most revenue, and how much revenue does each contribute?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.015886514040175825,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 5.880426953022834,
+          "input_tokens": 128,
+          "output_tokens": 433,
+          "cached_input_tokens": 110
+        },
+        "get_schema": {
+          "latency_s": 0.1276029139989987,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.1145743430242874,
+          "input_tokens": 378,
+          "output_tokens": 140,
+          "cached_input_tokens": 229
+        },
+        "build_widget": {
+          "latency_s": 6.6916157939704135,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 347,
+          "output_tokens": 110,
+          "cached_input_tokens": 198
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 754,
+          "output_tokens": 200,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 9.987604746012948,
+          "input_tokens": 594,
+          "output_tokens": 487,
+          "cached_input_tokens": 185
+        }
+      },
+      "sql_query": "SELECT c.customer_state, SUM(p.payment_value) AS total_revenue FROM olist_customers c JOIN olist_orders o ON c.customer_id = o.customer_id JOIN olist_order_payments p ON o.order_id = p.order_id WHERE p.payment_value IS NOT NULL GROUP BY c.customer_state ORDER BY total_revenue DESC;",
+      "sql_valid": true,
+      "response": "S\u00e3o Paulo (SP) is the top revenue-generating state, contributing 5,998,226.96. It is followed by Rio de Janeiro (RJ) with 2,144,379.69 and Minas Gerais (MG) with 1,872,257.26. The remaining states, such as Rio Grande do Sul (RS) and Paran\u00e1 (PR), contribute significantly less, at 890,898.54 and 811,156.38 respectively.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "SP",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Revenue across 27 states should be a bar chart or a table (a horizontal ranking), never a pie chart or a single KPI.",
+          "passed": true,
+          "reasoning": "The chosen bar chart is appropriate for ranking 27 Brazilian states by total_revenue. The rubric explicitly allows a bar chart (or table) for this data shape and forbids pie charts or single KPIs, so the choice follows best practices."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "join",
+        "group_by",
+        "ranking",
+        "chart",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "olist_orders_by_installments",
+      "question": "How many orders were paid across each number of payment installments?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.018502810038626194,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.229087303974666,
+          "input_tokens": 125,
+          "output_tokens": 134,
+          "cached_input_tokens": 112
+        },
+        "get_schema": {
+          "latency_s": 0.032177946995943785,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 5.464779528032523,
+          "input_tokens": 287,
+          "output_tokens": 182,
+          "cached_input_tokens": 228
+        },
+        "build_widget": {
+          "latency_s": 7.2673004569951445,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 263,
+          "output_tokens": 49,
+          "cached_input_tokens": 243
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 755,
+          "output_tokens": 293,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 4.768611869018059,
+          "input_tokens": 407,
+          "output_tokens": 324,
+          "cached_input_tokens": 186
+        }
+      },
+      "sql_query": "SELECT payment_installments, COUNT(DISTINCT order_id) AS unique_orders FROM olist_order_payments GROUP BY payment_installments ORDER BY payment_installments",
+      "sql_valid": true,
+      "response": "The vast majority of orders were paid in a single installment, totaling 49,060 unique orders. Payments spread across 2, 3, and 4 installments accounted for 12,389, 10,443, and 7,088 orders, respectively. Additionally, there were 5,315 orders paid in 10 installments and 2 orders with 0 installments.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT payment_installments AS installments, COUNT(DISTINCT order_id) AS orders FROM olist_order_payments GROUP BY 1 ORDER BY 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Order counts by installment number are a distribution over an ordered discrete axis; present them as a bar chart (a line chart is acceptable), never a pie chart or a single KPI.",
+          "passed": true,
+          "reasoning": "The data represents a distribution of order counts over a discrete, ordered axis (payment installments). The rubric explicitly calls for a bar chart (or line chart) in this scenario, and the chosen view is a bar chart. This aligns perfectly with data-visualization best practices for this type of data."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "group_by",
+        "chart",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_median_delivery_days",
+      "question": "What is the median order-to-customer delivery time, in days, for delivered orders?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.01687306701205671,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.3617335690069012,
+          "input_tokens": 130,
+          "output_tokens": 80,
+          "cached_input_tokens": 113
+        },
+        "get_schema": {
+          "latency_s": 0.040364562009926885,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.060901021992322,
+          "input_tokens": 308,
+          "output_tokens": 233,
+          "cached_input_tokens": 231
+        },
+        "build_widget": {
+          "latency_s": 6.352465451986063,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 275,
+          "output_tokens": 106,
+          "cached_input_tokens": 218
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 747,
+          "output_tokens": 116,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 4.043716384971049,
+          "input_tokens": 227,
+          "output_tokens": 174,
+          "cached_input_tokens": 187
+        }
+      },
+      "sql_query": "SELECT median(date_diff('day', order_purchase_timestamp::DATE, order_delivered_customer_date::DATE)) AS median_delivery_days FROM olist_orders WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL;",
+      "sql_valid": true,
+      "response": "The median order-to-customer delivery time for delivered orders is 10.0 days.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(MEDIAN(date_diff('day', order_purchase_timestamp, order_delivered_customer_date)),1) AS median_days FROM olist_orders WHERE order_delivered_customer_date IS NOT NULL",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state the median delivery time as a number of days.",
+          "passed": true,
+          "reasoning": "The response explicitly states the median delivery time as 10.0 days, which satisfies the rubric requirement of stating the median delivery time as a number of days."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "date",
+        "kpi",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "movies_roi_by_genre",
+      "question": "Which major film genres delivered the highest average return on investment, measured as worldwide gross divided by production budget?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.016389857977628708,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.138076116971206,
+          "input_tokens": 133,
+          "output_tokens": 42,
+          "cached_input_tokens": 111
+        },
+        "get_schema": {
+          "latency_s": 0.023250594967976213,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.8879338760161772,
+          "input_tokens": 387,
+          "output_tokens": 156,
+          "cached_input_tokens": 229
+        },
+        "build_widget": {
+          "latency_s": 7.092996667022817,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 361,
+          "output_tokens": 105,
+          "cached_input_tokens": 236
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 755,
+          "output_tokens": 222,
+          "cached_input_tokens": 582
+        },
+        "compose_narrative": {
+          "latency_s": 7.526017743977718,
+          "input_tokens": 434,
+          "output_tokens": 649,
+          "cached_input_tokens": 184
+        }
+      },
+      "sql_query": "SELECT \"Major Genre\", AVG(\"Worldwide Gross\" * 1.0 / \"Production Budget\") AS avg_roi FROM movies WHERE \"Major Genre\" IS NOT NULL AND \"Worldwide Gross\" IS NOT NULL AND \"Production Budget\" IS NOT NULL AND \"Production Budget\" <> 0 GROUP BY \"Major Genre\" ORDER BY avg_roi DESC;",
+      "sql_valid": true,
+      "response": "Documentary films delivered the highest average return on investment at 144.03256780928052, followed by Horror at 69.56414784830694 and Musical at 10.048866643872307. These top three genres significantly outperformed the rest of the major film categories, which generally saw average ROIs below 6.5.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT \"Major Genre\" AS genre, ROUND(AVG(\"Worldwide Gross\"*1.0/\"Production Budget\"),2) AS roi FROM movies WHERE \"Production Budget\">0 AND \"Worldwide Gross\" IS NOT NULL AND \"Major Genre\" IS NOT NULL GROUP BY 1 ORDER BY roi DESC",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Average ROI across a dozen genres is a ranking; present it as a bar chart or a table, never a pie chart or a single KPI.",
+          "passed": true,
+          "reasoning": "The data is a ranking of average ROI across 12 categorical genres, which is best shown as a bar chart. The chosen ChartJs bar chart matches the rubric and the data shape, allowing easy comparison of ROI by genre."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "chart",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "taxi_tip_by_hour",
+      "question": "For credit-card taxi trips, how does the average tip amount vary by hour of the day?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.02314317796844989,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.8175210259505548,
+          "input_tokens": 131,
+          "output_tokens": 89,
+          "cached_input_tokens": 110
+        },
+        "get_schema": {
+          "latency_s": 0.033437833946663886,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.7344888459774666,
+          "input_tokens": 367,
+          "output_tokens": 183,
+          "cached_input_tokens": 228
+        },
+        "build_widget": {
+          "latency_s": 7.838756686949637,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 350,
+          "output_tokens": 364,
+          "cached_input_tokens": 246
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 759,
+          "output_tokens": 311,
+          "cached_input_tokens": 11
+        },
+        "compose_narrative": {
+          "latency_s": 6.036575826001354,
+          "input_tokens": 653,
+          "output_tokens": 554,
+          "cached_input_tokens": 184
+        }
+      },
+      "sql_query": "SELECT date_part('hour', tpep_pickup_datetime) AS pickup_hour, AVG(tip_amount) AS avg_tip_amount\nFROM nyc_taxi\nWHERE payment_type = 1 AND tip_amount IS NOT NULL\nGROUP BY pickup_hour\nORDER BY pickup_hour;",
+      "sql_valid": true,
+      "response": "For credit-card taxi trips, the average tip amount peaks at 3.81 during the 5:00 AM hour, with a secondary high of 3.57 at 4:00 AM. Tips are generally lowest during the morning rush, dipping to a low of 2.74 at 7:00 AM, before stabilizing between 2.79 and 3.35 throughout the rest of the day.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT date_part('hour', tpep_pickup_datetime) AS hour, ROUND(AVG(tip_amount),2) AS avg_tip FROM nyc_taxi WHERE payment_type=1 GROUP BY 1 ORDER BY 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Average tip by hour of day is an ordered series across 24 hours; a line chart is best and a bar chart is acceptable, but never a pie chart or a single KPI.",
+          "passed": true,
+          "reasoning": "The data is an ordered time series (24 hours) with one numeric measure (average tip amount). A line chart is the ideal choice to show the trend across the day, matching the rubric's recommendation perfectly."
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "group_by",
+        "date",
+        "time_series",
+        "chart",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "olist_delivery_delay_vs_satisfaction",
+      "question": "Do late deliveries hurt customer satisfaction? Show the average review score for on-time deliveries and for late deliveries as two separate rows.",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.014316959015559405,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.5912684010108933,
+          "input_tokens": 137,
+          "output_tokens": 110,
+          "cached_input_tokens": 110
+        },
+        "get_schema": {
+          "latency_s": 0.09188408899353817,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 5.865707126038615,
+          "input_tokens": 355,
+          "output_tokens": 199,
+          "cached_input_tokens": 228
+        },
+        "build_widget": {
+          "latency_s": 15.029345540038776,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 313,
+          "output_tokens": 229,
+          "cached_input_tokens": 216
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 766,
+          "output_tokens": 395,
+          "cached_input_tokens": 581
+        },
+        "compose_narrative": {
+          "latency_s": 16.136392267013434,
+          "input_tokens": 289,
+          "output_tokens": 958,
+          "cached_input_tokens": 184
+        }
+      },
+      "sql_query": "SELECT\n  CASE\n    WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date THEN 'on_time'\n    ELSE 'late'\n  END AS delivery_status,\n  AVG(r.review_score) AS avg_review_score,\n  COUNT(*) AS review_count\nFROM olist_orders o\nJOIN olist_order_reviews r ON o.order_id = r.order_id\nWHERE o.order_delivered_customer_date IS NOT NULL\n  AND o.order_estimated_delivery_date IS NOT NULL\n  AND r.review_score IS NOT NULL\nGROUP BY delivery_status\nORDER BY delivery_status;",
+      "sql_valid": true,
+      "response": "Late deliveries are associated with a significantly lower average review score of 2.566549798727438 across 7,701 reviews. In contrast, on-time deliveries achieve an average score of 4.293577567732184 across 88,658 reviews, indicating that late deliveries do hurt customer satisfaction.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT CASE WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date THEN 'on_time' ELSE 'late' END AS delivery, ROUND(AVG(r.review_score),2) AS avg_score FROM olist_orders o JOIN olist_order_reviews r ON o.order_id=r.order_id WHERE o.order_delivered_customer_date IS NOT NULL GROUP BY 1 ORDER BY 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should compare on-time versus late deliveries and make clear that late deliveries receive substantially lower review scores.",
+          "passed": true,
+          "reasoning": "The response compares on-time and late deliveries, explicitly stating that late deliveries have a significantly lower average review score (2.56) compared to on-time deliveries (4.29), and concludes that late deliveries hurt customer satisfaction. This fully satisfies the rubric's requirement to compare the two and make clear that late deliveries receive substantially lower review scores."
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A two-group comparison (on-time vs late average review score) should be a bar chart or a table, not a single KPI.",
+          "passed": true,
+          "reasoning": "The chosen view is a bar chart, which is explicitly allowed by the rubric for a two-group comparison of average review scores. The data shape (2 rows, categorical 'delivery_status' vs numerical 'avg_review_score') is perfectly suited for a bar chart."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "join",
+        "conditional_aggregation",
+        "date",
+        "comparison",
+        "chart",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "olist_marketplace_exec_dashboard",
+      "question": "Build an executive overview dashboard for the marketplace: total gross merchandise value, the total number of orders, the average order value, and the monthly GMV trend.",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.017796679981984198,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.484933284984436,
+          "input_tokens": 144,
+          "output_tokens": 198,
+          "cached_input_tokens": 110
+        },
+        "get_schema": {
+          "latency_s": 0.08925956499297172,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.138735135027673,
+          "input_tokens": 360,
+          "output_tokens": 329,
+          "cached_input_tokens": 228
+        },
+        "build_widget": {
+          "latency_s": 12.862339826009702,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 1261,
+          "output_tokens": 394,
+          "cached_input_tokens": 924
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 2996,
+          "output_tokens": 607,
+          "cached_input_tokens": 2327
+        },
+        "compose_narrative": {
+          "latency_s": 10.535469412978273,
+          "input_tokens": 950,
+          "output_tokens": 709,
+          "cached_input_tokens": 184
+        }
+      },
+      "sql_query": "SELECT SUM(price + freight_value) AS total_gmv FROM olist_order_items;; SELECT COUNT(DISTINCT order_id) AS total_unique_orders FROM olist_orders;; SELECT SUM(price + freight_value) / COUNT(DISTINCT order_id) AS average_order_value FROM olist_order_items;; SELECT date_trunc('month', o.order_purchase_timestamp) AS month, SUM(i.price + i.freight_value) AS gmv FROM olist_orders o JOIN olist_order_items i ON o.order_id = i.order_id GROUP BY 1 ORDER BY 1;",
+      "sql_valid": true,
+      "response": "The marketplace generated a total gross merchandise value of 15,843,553.24 across 99,441 orders, yielding an average order value of 160.58. Monthly GMV grew from 354.75 in September 2016 to a peak of 1,179,143.77 in November 2017, before declining to 166.46 in September 2018.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_count",
+          "value": "3",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "This is an executive overview dashboard. The headline metrics (total GMV, total orders, average order value) should each be a single-value KPI, and the monthly GMV trend should be a line chart. No pie chart with more than 5 slices and no KPI bound to a multi-row result.",
+          "passed": true,
+          "reasoning": "The chosen views perfectly align with the data shape and the rubric. The three single-row, single-column datasets (total GMV, total orders, average order value) are correctly mapped to KpiStat components, satisfying the requirement for single-value KPIs. The 24-row monthly GMV dataset is correctly mapped to a line chart, which is the ideal chart kind for displaying a time-series trend. No KPIs are bound to multi-row results, and no inappropriate pie charts are used."
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "dashboard",
+        "overview",
+        "chart",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "taxi_overview_dashboard",
+      "question": "Give me an overview dashboard of the taxi trips: the total number of trips, the total revenue, and the number of trips per payment type.",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.014814425026997924,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.099136129952967,
+          "input_tokens": 141,
+          "output_tokens": 78,
+          "cached_input_tokens": 110
+        },
+        "get_schema": {
+          "latency_s": 0.028038831951562315,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 6.161125583050307,
+          "input_tokens": 377,
+          "output_tokens": 135,
+          "cached_input_tokens": 228
+        },
+        "build_widget": {
+          "latency_s": 13.825521532038692,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 985,
+          "output_tokens": 93,
+          "cached_input_tokens": 880
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 2249,
+          "output_tokens": 751,
+          "cached_input_tokens": 1762
+        },
+        "compose_narrative": {
+          "latency_s": 8.58933495596284,
+          "input_tokens": 340,
+          "output_tokens": 680,
+          "cached_input_tokens": 184
+        }
+      },
+      "sql_query": "SELECT COUNT(*) AS total_trips FROM nyc_taxi; SELECT SUM(total_amount) AS total_revenue FROM nyc_taxi;; SELECT payment_type, COUNT(*) AS number_of_trips FROM nyc_taxi GROUP BY payment_type ORDER BY number_of_trips DESC;",
+      "sql_valid": true,
+      "response": "The taxi trip dashboard shows a total of 7,475,949 trips generating 145,047,454.13 in total revenue. Payment type 1 accounted for the majority of trips with 5,353,975, followed by payment type 2 with 2,027,441 trips. The remaining trips were distributed across payment types 0 (42,456), 3 (38,284), and 4 (13,793).",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_count",
+          "value": "2",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "This is an overview dashboard. Headline totals (total trips, total revenue) should each be a single-value KPI, and the trips-per-payment-type breakdown should be a bar chart, a table, or a pie chart of at most 5 slices. No pie chart with more than 5 slices, and no KPI bound to a multi-row result.",
+          "passed": true,
+          "reasoning": "The chosen views align perfectly with the rubric and data shape. The single-row results for total trips and total revenue are correctly presented as KPI stats. The 5-row breakdown of trips per payment type is appropriately visualized as a bar chart, which is an allowed chart kind for this breakdown and respects the slice limit."
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "dashboard",
+        "overview",
+        "chart",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_overview_dashboard",
+      "question": "Show a dashboard summarizing the platform: total gross merchandise value, the average review score, and the top five product categories by revenue.",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.017491643026005477,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 14.80652459099656,
+          "input_tokens": 139,
+          "output_tokens": 620,
+          "cached_input_tokens": 110
+        },
+        "get_schema": {
+          "latency_s": 0.18288985296385363,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 5.827641049982049,
+          "input_tokens": 410,
+          "output_tokens": 365,
+          "cached_input_tokens": 228
+        },
+        "build_widget": {
+          "latency_s": 10.174905907013454,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 1111,
+          "output_tokens": 225,
+          "cached_input_tokens": 669
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 2252,
+          "output_tokens": 442,
+          "cached_input_tokens": 1923
+        },
+        "compose_narrative": {
+          "latency_s": 11.772690744022839,
+          "input_tokens": 387,
+          "output_tokens": 1000,
+          "cached_input_tokens": 184
+        }
+      },
+      "sql_query": "SELECT SUM(price) AS total_gmv FROM olist_order_items; SELECT AVG(review_score) AS avg_review_score FROM olist_order_reviews WHERE review_score IS NOT NULL;; SELECT t.product_category_name_english AS category, SUM(i.price) AS total_revenue FROM olist_order_items i JOIN olist_products p ON i.product_id = p.product_id JOIN olist_category_translation t ON p.product_category_name = t.product_category_name GROUP BY t.product_category_name_english ORDER BY total_revenue DESC LIMIT 5;",
+      "sql_valid": true,
+      "response": "The platform has generated a total gross merchandise value of 13,591,643.70 with an average review score of 4.09. The top five product categories by revenue are health_beauty at 1,258,681.34, watches_gifts at 1,205,005.68, bed_bath_table at 1,036,988.68, sports_leisure at 988,048.97, and computers_accessories at 911,954.32.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_count",
+          "value": "2",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "This is an overview dashboard. Headline metrics (total GMV, average review score) should each be a single-value KPI, and the top-five product categories by revenue should be a bar chart or table, never a pie chart.",
+          "passed": true,
+          "reasoning": "The chosen views align perfectly with the data and the rubric. The two single-value metrics (total GMV and average review score) are presented as KpiStat components, which is appropriate for 1-row, 1-column datasets. The top five product categories by revenue (5 rows, 2 columns) are presented as a bar chart, which is explicitly allowed by the rubric and avoids the prohibited pie chart."
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "dashboard",
+        "overview",
+        "chart",
+        "hard"
+      ]
+    }
+  ]
+}
