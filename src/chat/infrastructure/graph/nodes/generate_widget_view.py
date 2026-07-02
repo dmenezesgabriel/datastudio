@@ -14,8 +14,11 @@ from pathlib import Path
 from typing import cast
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.language_models.base import LanguageModelInput
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from langchain_core.runnables import Runnable
 
+from chat.infrastructure.graph.observability import step_tag
 from chat.infrastructure.graph.response_content_extractor import (
     ResponseContentExtractor,
 )
@@ -175,7 +178,9 @@ class GenerateWidgetView:
         content_extractor: ResponseContentExtractor,
     ) -> None:
         """Wire the chat model, the catalog-derived system prompt, and a text extractor."""
-        self._model = chat_model
+        self._model: Runnable[LanguageModelInput, BaseMessage] = chat_model.with_config(
+            {"tags": [step_tag("generate_widget_view")]}
+        )
         self._system_prompt = system_prompt
         self._extractor = content_extractor
 

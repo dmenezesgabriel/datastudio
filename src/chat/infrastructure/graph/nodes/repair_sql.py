@@ -10,6 +10,7 @@ from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
 from chat.domain.value_objects.chat_state import ChatState
+from chat.infrastructure.graph.observability import step_tag
 from shared.application.ports.sql_engine_port import SqlEnginePort
 
 MAX_REPAIR_ATTEMPTS = 2
@@ -56,7 +57,9 @@ class RepairSql:
         """Wire the model, engine, and repair parameters."""
         self._model: Runnable[LanguageModelInput, _SqlOutput] = cast(
             Runnable[LanguageModelInput, _SqlOutput],
-            chat_model.with_structured_output(_SqlOutput),
+            chat_model.with_structured_output(_SqlOutput).with_config(
+                {"tags": [step_tag("repair_sql")]}
+            ),
         )
         self._engine = sql_engine
         self._max_attempts = max_attempts

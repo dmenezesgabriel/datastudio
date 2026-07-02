@@ -1,10 +1,14 @@
 """Unit tests for TokenCountingCallback."""
 
-from langchain_core.messages import AIMessage
+from uuid import UUID, uuid4
+
+from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.outputs import ChatGeneration, LLMResult
 
 from chat.infrastructure.eval.metrics import EvalCollector
 from chat.infrastructure.eval.token_callback import TokenCountingCallback, _extract_tokens
+from chat.infrastructure.graph.observability import step_tag
 
 
 def _result_with_usage(prompt: int, completion: int) -> LLMResult:
@@ -119,3 +123,87 @@ class TestOnLlmEnd:
         cb.on_llm_end(result)
         assert recorder.node_metrics["gen"].output_tokens == 0
         assert recorder.node_metrics["gen"].input_tokens == 100
+
+
+class TestStepTagAttribution:
+    def test_tagged_run_attributes_to_step_not_current_node(self) -> None:
+        # A build_widget sub-step call carries a step tag; its tokens must land on the
+        # step, not on whatever node TimedNode marked current.
+        recorder = EvalCollector()
+        recorder.set_node("build_widget")
+        cb = TokenCountingCallback(recorder)
+        run_id = uuid4()
+        cb.on_chat_model_start({}, [], run_id=run_id, tags=[step_tag("generate_sql")])
+        cb.on_llm_end(_result_with_usage(prompt=300, completion=20), run_id=run_id)
+        assert recorder.node_metrics["generate_sql"].input_tokens == 300
+        # the node entry exists (set_node created it) but carries no LLM tokens
+        assert recorder.node_metrics["build_widget"].input_tokens is None
+
+    def test_untagged_run_falls_back_to_current_node(self) -> None:
+        recorder = EvalCollector()
+        recorder.set_node("select_tables")
+        cb = TokenCountingCallback(recorder)
+        run_id = uuid4()
+        cb.on_chat_model_start({}, [], run_id=run_id, tags=[])
+        cb.on_llm_end(_result_with_usage(prompt=90, completion=8), run_id=run_id)
+        assert recorder.node_metrics["select_tables"].input_tokens == 90
+
+    def test_concurrent_runs_attribute_independently(self) -> None:
+        # Parallel build_widget workers: two runs in flight; each attributes to its own step.
+        recorder = EvalCollector()
+        recorder.set_node("build_widget")
+        cb = TokenCountingCallback(recorder)
+        sql_run, view_run = uuid4(), uuid4()
+        cb.on_chat_model_start({}, [], run_id=sql_run, tags=[step_tag("generate_sql")])
+        cb.on_chat_model_start({}, [], run_id=view_run, tags=[step_tag("generate_widget_view")])
+        cb.on_llm_end(_result_with_usage(prompt=300, completion=20), run_id=view_run)
+        cb.on_llm_end(_result_with_usage(prompt=500, completion=40), run_id=sql_run)
+        assert recorder.node_metrics["generate_sql"].input_tokens == 500
+        assert recorder.node_metrics["generate_widget_view"].input_tokens == 300
+
+    def test_on_llm_start_also_captures_step_tag(self) -> None:
+        # Non-chat completion models dispatch to on_llm_start, not on_chat_model_start.
+        recorder = EvalCollector()
+        cb = TokenCountingCallback(recorder)
+        run_id = uuid4()
+        cb.on_llm_start({}, [], run_id=run_id, tags=[step_tag("repair_sql")])
+        cb.on_llm_end(_result_with_usage(prompt=120, completion=10), run_id=run_id)
+        assert recorder.node_metrics["repair_sql"].input_tokens == 120
+
+    def test_run_id_is_consumed_after_end(self) -> None:
+        # The run→step map must not leak entries across the run's lifecycle.
+        recorder = EvalCollector()
+        cb = TokenCountingCallback(recorder)
+        run_id: UUID = uuid4()
+        cb.on_chat_model_start({}, [], run_id=run_id, tags=[step_tag("generate_sql")])
+        cb.on_llm_end(_result_with_usage(prompt=10, completion=1), run_id=run_id)
+        assert run_id not in cb._step_by_run
+
+
+class TestStepTagPropagatesThroughLangChain:
+    """End-to-end: a real BaseChatModel routed through LangChain's callback machinery.
+
+    Guards against a LangChain upgrade silently changing how ``with_config`` tags reach
+    callbacks — which would collapse sub-step attribution back to the node level.
+    """
+
+    def test_with_config_tag_attributes_tokens_to_the_step(self) -> None:
+        # arrange — a tagged model whose message carries usage metadata
+        message = AIMessage(
+            content="ok",
+            usage_metadata={"input_tokens": 11, "output_tokens": 3, "total_tokens": 14},
+        )  # type: ignore[call-arg]
+        tagged = GenericFakeChatModel(messages=iter([message])).with_config(
+            {"tags": [step_tag("generate_sql")]}
+        )
+        recorder = EvalCollector()
+        recorder.set_node("build_widget")  # the node TimedNode would mark current
+        # act
+        tagged.invoke(
+            [HumanMessage(content="q")],
+            config={"callbacks": [TokenCountingCallback(recorder)]},
+        )
+        # assert — tokens land on the step, not the current node
+        assert recorder.node_metrics["generate_sql"].input_tokens == 11
+        assert recorder.node_metrics["generate_sql"].output_tokens == 3
+        assert recorder.node_metrics["build_widget"].input_tokens is None

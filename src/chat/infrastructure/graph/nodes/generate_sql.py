@@ -9,6 +9,7 @@ from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
 from chat.domain.value_objects.chat_state import ChatState
+from chat.infrastructure.graph.observability import step_tag
 
 _SYSTEM_PROMPT = (
     "You are a SQL expert. Given a DuckDB database schema and a natural language "
@@ -43,7 +44,9 @@ class GenerateSql:
         """Wire the chat model as a structured-output runnable."""
         self._model: Runnable[LanguageModelInput, _SqlOutput] = cast(
             Runnable[LanguageModelInput, _SqlOutput],
-            chat_model.with_structured_output(_SqlOutput),
+            chat_model.with_structured_output(_SqlOutput).with_config(
+                {"tags": [step_tag("generate_sql")]}
+            ),
         )
 
     def __call__(self, state: ChatState) -> dict[str, str]:

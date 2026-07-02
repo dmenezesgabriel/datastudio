@@ -14,7 +14,11 @@ class _FakeStructuredRunnable:
         self._response = SimpleNamespace(**response_fields)
         self.last_messages: list[Any] = []
 
-    def invoke(self, messages: list[Any]) -> SimpleNamespace:
+    def with_config(self, *args: Any, **kwargs: Any) -> "_FakeStructuredRunnable":
+        """Honor the Runnable surface (tags/config are irrelevant to a fixed response)."""
+        return self
+
+    def invoke(self, messages: list[Any], *args: Any, **kwargs: Any) -> SimpleNamespace:
         self.last_messages = messages
         return self._response
 

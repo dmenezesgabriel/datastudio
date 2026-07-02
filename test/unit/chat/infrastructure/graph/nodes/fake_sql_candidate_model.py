@@ -15,7 +15,11 @@ class _SequencedRunnable:
         self._calls = 0
         self.all_messages: list[list[Any]] = []
 
-    def invoke(self, messages: list[Any]) -> SimpleNamespace:
+    def with_config(self, *args: Any, **kwargs: Any) -> "_SequencedRunnable":
+        """Honor the Runnable surface (tags/config are irrelevant to scripted replay)."""
+        return self
+
+    def invoke(self, messages: list[Any], *args: Any, **kwargs: Any) -> SimpleNamespace:
         self.all_messages.append(messages)
         index = min(self._calls, len(self._sqls) - 1)
         self._calls += 1

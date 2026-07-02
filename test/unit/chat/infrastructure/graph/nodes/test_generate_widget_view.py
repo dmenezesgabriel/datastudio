@@ -19,6 +19,10 @@ class FakeViewModel:
         self._content = content
         self.received: list[BaseMessage] = []
 
+    def with_config(self, *args: Any, **kwargs: Any) -> "FakeViewModel":
+        """Honor the Runnable surface; the fake replays a fixed content regardless."""
+        return self
+
     def invoke(self, messages: list[BaseMessage], *args: Any, **kwargs: Any) -> AIMessage:
         self.received = messages
         return AIMessage(content=self._content)  # type: ignore[arg-type]
