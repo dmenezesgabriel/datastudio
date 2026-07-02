@@ -144,7 +144,7 @@ def main() -> None:
     cases = _load_cases(Path(args.cases), judge_model, sql_engine)
     runner = EvalRunner(
         graph_factory=lambda recorder: build_eval_graph(
-            chat_model, sql_engine, recorder, format_chat_model
+            chat_model, sql_engine, recorder, format_chat_model, settings.openai_base_url
         ),
         model_name=settings.language_model_name,
         input_price_per_m=settings.input_token_price_per_million,

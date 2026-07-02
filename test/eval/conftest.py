@@ -77,7 +77,7 @@ def eval_report(app_settings: AppSettings, eval_cases: list[EvalCase]) -> EvalRe
     sql_engine = DuckDbSqlEngine(app_settings.duckdb_path)
     runner = EvalRunner(
         graph_factory=lambda recorder: build_eval_graph(
-            chat_model, sql_engine, recorder, format_chat_model
+            chat_model, sql_engine, recorder, format_chat_model, app_settings.openai_base_url
         ),
         model_name=app_settings.language_model_name,
         input_price_per_m=app_settings.input_token_price_per_million,
