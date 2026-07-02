@@ -346,6 +346,9 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "wire_integrity"
         }
       ]
     },
@@ -642,6 +645,9 @@
         {
           "type": "viz_rubric",
           "rubric": "Average maximum temperature by month is an ordered time series across the year; it should be a line chart, not a bar chart, pie chart, or KPI."
+        },
+        {
+          "type": "wire_integrity"
         }
       ]
     },
@@ -681,6 +687,9 @@
         {
           "type": "rubric",
           "rubric": "The answer should describe how monthly gross merchandise value changed over time (e.g. an overall upward trend)."
+        },
+        {
+          "type": "wire_integrity"
         }
       ]
     },
@@ -848,6 +857,9 @@
         {
           "type": "viz_rubric",
           "rubric": "Average tip by hour of day is an ordered series across 24 hours; a line chart is best and a bar chart is acceptable, but never a pie chart or a single KPI."
+        },
+        {
+          "type": "wire_integrity"
         }
       ]
     },
@@ -919,6 +931,9 @@
         {
           "type": "viz_rubric",
           "rubric": "This is an executive overview dashboard. The headline metrics (total GMV, total orders, average order value) should each be a single-value KPI, and the monthly GMV trend should be a line chart. No pie chart with more than 5 slices and no KPI bound to a multi-row result."
+        },
+        {
+          "type": "wire_integrity"
         }
       ]
     },
@@ -951,6 +966,9 @@
         {
           "type": "viz_rubric",
           "rubric": "This is an overview dashboard. Headline totals (total trips, total revenue) should each be a single-value KPI, and the trips-per-payment-type breakdown should be a bar chart, a table, or a pie chart of at most 5 slices. No pie chart with more than 5 slices, and no KPI bound to a multi-row result."
+        },
+        {
+          "type": "wire_integrity"
         }
       ]
     },
@@ -983,6 +1001,9 @@
         {
           "type": "viz_rubric",
           "rubric": "This is an overview dashboard. Headline metrics (total GMV, average review score) should each be a single-value KPI, and the top-five product categories by revenue should be a bar chart or table, never a pie chart."
+        },
+        {
+          "type": "wire_integrity"
         }
       ]
     }

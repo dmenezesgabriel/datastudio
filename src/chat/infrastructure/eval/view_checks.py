@@ -18,6 +18,7 @@ from pydantic import BaseModel
 
 from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.eval._check_base import (
+    CATALOG_COMPONENTS,
     CheckResult,
     all_results,
     view_lines,
@@ -88,7 +89,7 @@ class ViewIntegrityCheck:
 
 
 _VIEW_COMPONENTS = frozenset({"KpiStat", "ChartJs", "DataTable"})
-_KNOWN_COMPONENTS = _VIEW_COMPONENTS | {"Markdown", "Stack"}
+_KNOWN_COMPONENTS = CATALOG_COMPONENTS
 
 
 class ViewPresentCheck:

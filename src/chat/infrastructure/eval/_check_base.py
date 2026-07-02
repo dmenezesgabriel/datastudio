@@ -12,6 +12,11 @@ from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetResult
 from shared.domain.value_objects.query_result import QueryResult
 
+# The component types the frontend json-render catalogue renders (frontend/src/catalog.ts).
+# Single source both the view checks and the wire-integrity check validate element types
+# against, so "in-catalog" means the same thing everywhere.
+CATALOG_COMPONENTS = frozenset({"Stack", "Markdown", "KpiStat", "ChartJs", "DataTable"})
+
 
 class CheckResult(TypedDict):
     """Outcome of a single correctness check; serialises directly to JSON."""

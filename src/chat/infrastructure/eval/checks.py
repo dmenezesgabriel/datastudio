@@ -31,6 +31,7 @@ from chat.infrastructure.eval.view_checks import (
     VizRubricCheck,
     WidgetCountCheck,
 )
+from chat.infrastructure.eval.wire_integrity_check import WireIntegrityCheck
 from shared.application.ports.sql_engine_port import SqlEnginePort
 
 
@@ -235,6 +236,7 @@ def deserialize_check(
         "chart_fit": ChartFitCheck,
         "widget_count": lambda: WidgetCountCheck(min_widgets=int(spec["min_widgets"])),
         "viz_rubric": lambda: VizRubricCheck(model=judge_model, rubric=spec["rubric"]),
+        "wire_integrity": WireIntegrityCheck,
     }
     check_type = spec.get("type", "")
     if check_type not in builders:
