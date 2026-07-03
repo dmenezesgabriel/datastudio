@@ -34,6 +34,14 @@ function streamResponse(lines: string[]): Response {
   return { ok: true, body: { getReader: () => reader } } as unknown as Response;
 }
 
+// A second turn's stream: a distinct narrative so the transcript is unambiguous.
+const FOLLOW_UP_LINES = [
+  '{"op":"add","path":"/root","value":"root"}',
+  '{"op":"add","path":"/elements/root","value":{"type":"Stack","props":{},"children":[]}}',
+  '{"op":"add","path":"/elements/narrative","value":{"type":"Markdown","props":{"text":"Broken down by week."},"children":[]}}',
+  '{"op":"add","path":"/elements/root/children/-","value":"narrative"}',
+];
+
 test("renders a widget from streamed /state — one request, no /api/result", async () => {
   // Arrange
   const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
@@ -59,4 +67,40 @@ test("renders a widget from streamed /state — one request, no /api/result", as
   const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
   expect(body.prompt).toBe("Revenue by month");
   expect(body.context.conversation_id).toBeTruthy();
+});
+
+test("accumulates a transcript across turns on one stable conversation_id", async () => {
+  // Arrange — each send gets its own stream; the follow-up carries a distinct narrative
+  const streams = [PATCH_LINES, FOLLOW_UP_LINES];
+  const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
+    Promise.resolve(streamResponse(streams[fetchMock.mock.calls.length - 1] ?? [])),
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  render(<App />);
+
+  // Act — first question, then a follow-up
+  fireEvent.change(screen.getByPlaceholderText(/Ask a question/i), {
+    target: { value: "Revenue by month" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: /ask/i }));
+  await waitFor(() => expect(screen.getByText(/Two months of revenue\./)).toBeTruthy());
+
+  fireEvent.change(screen.getByPlaceholderText(/Ask a question/i), {
+    target: { value: "Break it down by week" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: /ask/i }));
+  await waitFor(() => expect(screen.getByText(/Broken down by week\./)).toBeTruthy());
+
+  // Assert — the first turn is STILL on screen (transcript accumulated, not replaced),
+  // and both questions are echoed as turns
+  expect(screen.getByText(/Two months of revenue\./)).toBeTruthy();
+  expect(screen.getByText("Revenue by month")).toBeTruthy();
+  expect(screen.getByText("Break it down by week")).toBeTruthy();
+
+  // Both requests reused the same conversation_id (server-side memory key)
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  const cid = (call: number) =>
+    JSON.parse((fetchMock.mock.calls[call][1] as RequestInit).body as string).context
+      .conversation_id;
+  expect(cid(0)).toBe(cid(1));
 });
