@@ -34,7 +34,7 @@ class TestBuildEvalGraph:
         )
         graph = build_eval_graph(chat_model, _make_engine(), recorder)
         # act
-        graph.invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
+        graph.invoke({"question": "How many?", "history": []})  # pyright: ignore[reportUnknownMemberType]
         # assert — at least some nodes recorded latency
         assert recorder.node_metrics, "expected at least one timed node"
         assert any(m.latency_s >= 0.0 for m in recorder.node_metrics.values())
@@ -48,7 +48,7 @@ class TestBuildEvalGraph:
         )
         graph = build_eval_graph(chat_model, _make_engine(), recorder)
         # act
-        result = graph.invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
+        result = graph.invoke({"question": "How many?", "history": []})  # pyright: ignore[reportUnknownMemberType]
         # assert
         assert result["response"] == "One row."
 
@@ -60,7 +60,7 @@ class TestBuildEvalGraph:
         )
         graph = build_eval_graph(chat_model, _make_engine(), recorder)
         # act
-        graph.invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
+        graph.invoke({"question": "How many?", "history": []})  # pyright: ignore[reportUnknownMemberType]
         # assert — every key must be a string (not None)
         assert all(isinstance(k, str) for k in recorder.node_metrics), recorder.node_metrics
         assert None not in recorder.node_metrics
@@ -78,6 +78,6 @@ class TestBuildEvalGraph:
             sql_model, _make_engine(), EvalCollector(), format_chat_model=fmt_model
         )
         # act
-        result = graph.invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
+        result = graph.invoke({"question": "How many?", "history": []})  # pyright: ignore[reportUnknownMemberType]
         # assert — format_chat_model's answer must be used, not sql_model's
         assert result["response"] == "Format answer"

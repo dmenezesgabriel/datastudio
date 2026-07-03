@@ -5,7 +5,9 @@ from chat.application.ports.conversation_repository import ConversationRepositor
 from chat.application.ports.text2sql_port import Text2SqlPort
 from chat.application.use_cases.stream_message import StreamMessage
 from chat.domain.entities.conversation import Conversation
+from chat.domain.value_objects.render_tree import RenderElement, RenderTree
 from chat.domain.value_objects.stream_event import ChatStreamEvent, SqlReady, WidgetDataReady
+from chat.domain.value_objects.text2sql_result import Text2SqlResult
 from shared.domain.value_objects.query_result import QueryResult
 from test.unit.chat.application.use_cases.fakes import (
     FakeConversationRepository,
@@ -18,6 +20,13 @@ def _use_case(
     repository: FakeConversationRepository, engine: FakeStreamingText2SqlEngine
 ) -> StreamMessage:
     return StreamMessage(cast(ConversationRepository, repository), cast(Text2SqlPort, engine))
+
+
+def _result(response: str) -> Text2SqlResult:
+    view = RenderTree(
+        root="root", elements={"root": RenderElement(type="Stack", props={}, children=[])}
+    )
+    return Text2SqlResult(response=response, sql_query="SELECT 1", view=view)
 
 
 def _drain(use_case: StreamMessage, cid: str, question: str) -> list[ChatStreamEvent]:
@@ -59,6 +68,27 @@ class TestStreamMessage:
             "follow-up",
             "ans",
         ]
+
+    def test_new_conversation_forwards_empty_history(self) -> None:
+        engine = FakeStreamingText2SqlEngine(make_events())
+        _drain(_use_case(FakeConversationRepository(), engine), "c-1", "first question")
+        # A brand-new conversation has no prior turns to inject.
+        assert list(engine.histories[0]) == []
+
+    def test_forwards_prior_turns_without_duplicating_current_question(self) -> None:
+        # arrange — a conversation with one completed exchange already recorded
+        repository = FakeConversationRepository()
+        existing = Conversation.new("c-1")
+        existing.append_user_message("earlier")
+        existing.append_assistant_message(_result("earlier answer"))
+        repository.save(existing)
+        engine = FakeStreamingText2SqlEngine(make_events("ans"))
+        # act
+        _drain(_use_case(repository, engine), "c-1", "follow-up")
+        # assert — the window is the prior turns only; "follow-up" is passed as the
+        # question, never injected into history (which would double-count it).
+        assert [m.content for m in engine.histories[0]] == ["earlier", "earlier answer"]
+        assert engine.questions == ["follow-up"]
 
     def test_does_not_persist_assistant_turn_when_no_narrative_ready(self) -> None:
         # Engine emits data and SQL but no NarrativeReady — nothing to remember.

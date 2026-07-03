@@ -36,8 +36,10 @@ def _node(widgets: list[SimpleNamespace], **kwargs: Any) -> PlanWidgets:
     return PlanWidgets(cast(Any, FakePlanModel(widgets)), **kwargs)
 
 
-def _state(question: str = "q", schema: str = "-- orders") -> ChatState:
-    return cast(ChatState, {"question": question, "schema": schema})
+def _state(
+    question: str = "q", schema: str = "-- orders", history: list[Any] | None = None
+) -> ChatState:
+    return cast(ChatState, {"question": question, "schema": schema, "history": history or []})
 
 
 class TestPlanWidgets:
@@ -70,6 +72,24 @@ class TestPlanWidgets:
         PlanWidgets(cast(Any, model))(_state(question="Revenue?", schema="-- sales\namount INT"))
         human = str(model.received[-1].content)
         assert "Revenue?" in human and "-- sales" in human
+
+    def test_injects_prior_turns_between_system_and_current_question(self) -> None:
+        # arrange — a prior exchange as short-term memory
+        from langchain_core.messages import AIMessage, HumanMessage
+
+        model = FakePlanModel([_intent("KPI", "total")])
+        history = [HumanMessage(content="prior q"), AIMessage(content="prior a")]
+        # act
+        PlanWidgets(cast(Any, model))(_state(question="now", history=history))
+        # assert — [System, *history, Human(current)] in order
+        assert [type(m).__name__ for m in model.received] == [
+            "SystemMessage",
+            "HumanMessage",
+            "AIMessage",
+            "HumanMessage",
+        ]
+        assert model.received[1].content == "prior q"
+        assert "now" in str(model.received[-1].content)
 
 
 class TestPlanWidgetsResilience:

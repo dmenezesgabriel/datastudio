@@ -65,13 +65,13 @@ class TestBuildText2SqlGraph:
         assert isinstance(_make_graph(), CompiledStateGraph)
 
     def test_invoke_returns_overall_narrative(self) -> None:
-        result = _make_graph().invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
+        result = _make_graph().invoke({"question": "How many?", "history": []})  # pyright: ignore[reportUnknownMemberType]
         assert result["response"] == "One row."
 
     def test_invoke_aggregates_results_from_parallel_widgets(self) -> None:
         # two planned widgets → two build_widget workers → two aggregated results
         graph = _make_graph([_widget("A", "qa"), _widget("B", "qb")])
-        result = graph.invoke({"question": "overview"})  # pyright: ignore[reportUnknownMemberType]
+        result = graph.invoke({"question": "overview", "history": []})  # pyright: ignore[reportUnknownMemberType]
         assert len(result["widget_results"]) == 2
         assert {w.widget_id for w in result["widget_results"]} == {"widget-0", "widget-1"}
         # each widget contributed view patch lines to the shared reducer channel
@@ -115,7 +115,8 @@ class TestFailurePath:
         sql_engine = FakeSqlEngine(
             tables=["movies"], schemas={"movies": "-- movies"}, error=ValueError("Binder Error")
         )
-        result = build_text2sql_graph(chat_model, sql_engine).invoke({"question": "q"})  # pyright: ignore[reportUnknownMemberType]
+        graph = build_text2sql_graph(chat_model, sql_engine)
+        result = graph.invoke({"question": "q", "history": []})  # pyright: ignore[reportUnknownMemberType]
         assert "couldn't" in str(result["response"]).lower()
 
 

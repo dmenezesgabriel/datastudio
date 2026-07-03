@@ -70,7 +70,7 @@ def build_text2sql_graph(
 
     Example:
         graph = build_text2sql_graph(llm, engine)
-        result = graph.invoke({"question": "Sales overview"})
+        result = graph.invoke({"question": "Sales overview", "history": []})
         print(result["response"])
     """
     nodes = build_text2sql_nodes(chat_model, sql_engine, format_chat_model, api_base)

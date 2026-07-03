@@ -35,7 +35,9 @@ _SYSTEM_PROMPT = (
     "primary trend or breakdown, then supporting breakdowns or a detail list — each a "
     "distinct, non-overlapping sub_question.\n"
     "- Give each widget a short title and a precise, self-contained sub_question.\n"
-    "- Never propose data the schema does not support."
+    "- Never propose data the schema does not support.\n"
+    "- Earlier conversation turns, when present, are context for follow-ups (e.g. 'break "
+    "it down by month'): resolve references against them, but plan for the CURRENT question."
 )
 
 
@@ -70,6 +72,7 @@ class PlanWidgets:
         human_content = f"Question: {state['question']}\n\nSchema:\n{state['schema']}"
         messages = [
             SystemMessage(content=_SYSTEM_PROMPT),
+            *state["history"],
             HumanMessage(content=human_content),
         ]
         plan = invoke_structured(self._model, messages, "plan_widgets")

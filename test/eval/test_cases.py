@@ -64,3 +64,13 @@ class TestEvalBudgets:
         assert avg_out <= app_settings.eval_max_avg_output_tokens, (
             f"avg output tokens {avg_out} > budget {app_settings.eval_max_avg_output_tokens}"
         )
+
+    @pytest.mark.eval
+    def test_avg_input_tokens_within_budget(
+        self, eval_report: EvalReport, app_settings: AppSettings
+    ) -> None:
+        # Guards against conversation-memory bloat: injected history is billed as input.
+        avg_in = float(eval_report.summary["avg_input_tokens"])  # type: ignore[arg-type]
+        assert avg_in <= app_settings.eval_max_avg_input_tokens, (
+            f"avg input tokens {avg_in} > budget {app_settings.eval_max_avg_input_tokens}"
+        )

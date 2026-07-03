@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from chat.infrastructure.eval.checks import deserialize_check
+from chat.infrastructure.eval.checks import Check, deserialize_check
 from chat.infrastructure.eval.graph_builder import build_eval_graph
-from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner
+from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner, EvalTurn
 from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
 from shared.infrastructure.config.settings import AppSettings
 from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
@@ -45,13 +45,20 @@ def eval_cases(request: pytest.FixtureRequest, app_settings: AppSettings) -> lis
     ).get_chat_model()
     sql_engine = DuckDbSqlEngine(app_settings.duckdb_path)
 
+    def checks_for(specs: list[dict[str, str]]) -> list[Check]:
+        return [deserialize_check(c, judge_model, sql_engine) for c in specs]
+
     raw = json.loads(_CASES_PATH.read_text())
     return [
         EvalCase(
             id=spec["id"],
             question=spec["question"],
-            checks=[deserialize_check(c, judge_model, sql_engine) for c in spec.get("checks", [])],
+            checks=checks_for(spec.get("checks", [])),
             tags=spec.get("tags", []),
+            follow_ups=[
+                EvalTurn(question=turn["question"], checks=checks_for(turn.get("checks", [])))
+                for turn in spec.get("follow_ups", [])
+            ],
         )
         for spec in raw["cases"]
         if spec["id"] in selected_ids

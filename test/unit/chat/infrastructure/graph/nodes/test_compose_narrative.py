@@ -4,6 +4,7 @@ from typing import cast
 
 import pytest
 from langchain_core.exceptions import OutputParserException
+from langchain_core.messages import BaseMessage
 
 from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetResult
@@ -26,28 +27,30 @@ def _widget(widget_id: str, title: str, value: int) -> WidgetResult:
     )
 
 
+def _state(
+    question: str,
+    widget_results: list[WidgetResult],
+    history: list[BaseMessage] | None = None,
+) -> ChatState:
+    return cast(
+        ChatState,
+        {"question": question, "widget_results": widget_results, "history": history or []},
+    )
+
+
 class TestComposeNarrative:
     def test_summarizes_via_structured_output(self) -> None:
         model = FakeStructuredChatModel(answer="Revenue is strong across categories.")
-        state = cast(
-            ChatState,
-            {"question": "overview", "widget_results": [_widget("widget-0", "Revenue", 42)]},
-        )
+        state = _state("overview", [_widget("widget-0", "Revenue", 42)])
         assert ComposeNarrative(model)(state) == {
             "response": "Revenue is strong across categories."
         }
 
     def test_prompt_includes_each_widget_title_and_rows(self) -> None:
         model = FakeStructuredChatModel(answer="ok")
-        state = cast(
-            ChatState,
-            {
-                "question": "sales overview",
-                "widget_results": [
-                    _widget("widget-0", "Total revenue", 1000),
-                    _widget("widget-1", "Orders", 50),
-                ],
-            },
+        state = _state(
+            "sales overview",
+            [_widget("widget-0", "Total revenue", 1000), _widget("widget-1", "Orders", 50)],
         )
         ComposeNarrative(model)(state)
         human = str(model.last_runnable.last_messages[-1].content)
@@ -56,7 +59,7 @@ class TestComposeNarrative:
 
     def test_no_results_returns_failure_message(self) -> None:
         model = FakeStructuredChatModel(answer="unused")
-        state = cast(ChatState, {"question": "q", "widget_results": []})
+        state = _state("q", [])
         response = ComposeNarrative(model)(state)["response"]
         assert "couldn't" in response.lower()
 
@@ -65,15 +68,9 @@ class TestComposeNarrativeResilience:
     def test_malformed_output_falls_back_to_titled_summary(self) -> None:
         # arrange — the summary model returns malformed output, but widgets DID run
         model = FailingStructuredChatModel(OutputParserException("bad"))
-        state = cast(
-            ChatState,
-            {
-                "question": "overview",
-                "widget_results": [
-                    _widget("widget-0", "Total revenue", 1000),
-                    _widget("widget-1", "Orders", 50),
-                ],
-            },
+        state = _state(
+            "overview",
+            [_widget("widget-0", "Total revenue", 1000), _widget("widget-1", "Orders", 50)],
         )
         # act
         response = ComposeNarrative(model)(state)["response"]
@@ -82,9 +79,6 @@ class TestComposeNarrativeResilience:
 
     def test_transient_error_propagates_to_retry_policy(self) -> None:
         model = FailingStructuredChatModel(ConnectionError("blip"))
-        state = cast(
-            ChatState,
-            {"question": "q", "widget_results": [_widget("widget-0", "Revenue", 42)]},
-        )
+        state = _state("q", [_widget("widget-0", "Revenue", 42)])
         with pytest.raises(ConnectionError):
             ComposeNarrative(model)(state)

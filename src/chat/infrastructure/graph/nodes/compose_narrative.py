@@ -29,7 +29,9 @@ _SYSTEM_PROMPT = (
     "- Report every numeric value exactly as it appears; never multiply or divide it. Never "
     "convert between fractions and percentages: in a percentage column, 0.63 means 0.63% (not "
     "63%). Do not compute percentages yourself.\n"
-    "- Cite figures from the widget results only; never invent numbers."
+    "- Cite figures from the widget results only; never invent numbers.\n"
+    "- Earlier conversation turns, when present, are prior context; summarize the results "
+    "for the CURRENT question and you may reference earlier answers naturally."
 )
 
 _NO_RESULT_RESPONSE = (
@@ -85,6 +87,7 @@ class ComposeNarrative:
             return {"response": _NO_RESULT_RESPONSE}
         messages = [
             SystemMessage(content=_SYSTEM_PROMPT),
+            *state["history"],
             HumanMessage(content=_build_human_content(state["question"], results)),
         ]
         answer = invoke_structured(self._model, messages, "compose_narrative")

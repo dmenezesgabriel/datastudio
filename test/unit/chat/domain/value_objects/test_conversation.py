@@ -52,3 +52,26 @@ class TestConversationAppendAssistantMessage:
         conv = Conversation.new("c-1")
         conv.append_assistant_message(_result())
         assert len(conv.messages) == 1
+
+
+class TestConversationRecentMessages:
+    def test_returns_the_last_n_turns(self) -> None:
+        # arrange — six turns; the window keeps only the most recent four
+        conv = Conversation.new("c-1")
+        for i in range(3):
+            conv.append_user_message(f"q{i}")
+            conv.append_assistant_message(_result(f"a{i}"))
+        # act
+        window = conv.recent_messages(4)
+        # assert — the tail, in order
+        assert [m.content for m in window] == ["q1", "a1", "q2", "a2"]
+
+    def test_returns_all_when_fewer_than_window(self) -> None:
+        conv = Conversation.new("c-1")
+        conv.append_user_message("only")
+        assert [m.content for m in conv.recent_messages(10)] == ["only"]
+
+    def test_non_positive_window_yields_no_memory(self) -> None:
+        conv = Conversation.new("c-1")
+        conv.append_user_message("q")
+        assert conv.recent_messages(0) == []

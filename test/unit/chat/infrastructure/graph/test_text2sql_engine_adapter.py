@@ -47,6 +47,8 @@ class TestText2SqlEngineAdapter:
         assert result.view.elements["narrative"].props["text"] == "Two widgets."
         assert "widget-0-chart" in result.view.elements
         assert graph.last_input["question"] == "overview"
+        # The CLI path is stateless: it seeds an empty conversation history.
+        assert graph.last_input["history"] == []
 
     def test_defaults_to_narrative_only_without_widgets(self) -> None:
         graph = FakeChatGraph({"response": "Could not answer."})

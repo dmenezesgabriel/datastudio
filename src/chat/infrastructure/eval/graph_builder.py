@@ -31,7 +31,7 @@ def build_eval_graph(
     Example:
         collector = EvalCollector()
         graph = build_eval_graph(model, engine, collector)
-        graph.invoke({"question": "How many trips?"}, config={"callbacks": [cb]})
+        graph.invoke({"question": "How many trips?", "history": []}, config={"callbacks": [cb]})
     """
     nodes = build_text2sql_nodes(chat_model, sql_engine, format_chat_model, api_base)
     timed: dict[str, ChatNode] = {

@@ -3,6 +3,8 @@
 from operator import add
 from typing import Annotated, NotRequired, TypedDict
 
+from langchain_core.messages import BaseMessage
+
 from chat.domain.value_objects.widget import WidgetResult, WidgetSpec
 from shared.domain.value_objects.query_result import QueryResult
 
@@ -22,6 +24,10 @@ class ChatState(TypedDict):
 
     request_id: NotRequired[str]  # UUID set by the engine adapter; absent in eval/test runs
     question: str
+    # Prior-turn conversation context (short-term memory) the LLM nodes read as they
+    # build their message list: ``[System, *history, Human]``. Required and empty on
+    # the first turn; the adapter fills it from the Conversation repository each turn.
+    history: list[BaseMessage]
     tables: list[str]
     schema: str
     widget_specs: NotRequired[list[WidgetSpec]]  # set by plan_widgets; read by the fan-out edge

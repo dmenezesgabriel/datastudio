@@ -41,6 +41,10 @@ class AppSettings(BaseSettings):
     eval_min_pass_rate: float = 0.8
     eval_max_p95_latency_s: float = 180.0
     eval_max_avg_output_tokens: float = 3000.0
+    # Guards against conversation-memory bloat: injected history lands in input tokens,
+    # so a runaway window (or double-injected turns) trips this before it hits cost. Full
+    # runs sit ~2.1k/case today; the ceiling leaves ~2x headroom.
+    eval_max_avg_input_tokens: float = 4000.0
     # Cases run through a bounded thread pool; the ceiling is LLM rate limits.
     eval_max_workers: int = 4
     # Per-question wall-clock ceiling in the CLI; None disables it in the eval runner.

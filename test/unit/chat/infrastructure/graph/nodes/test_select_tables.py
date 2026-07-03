@@ -16,7 +16,7 @@ def _state(
     tables: list[str] | None = None,
     question: str = "How many films has Warner Bros. released?",
 ) -> ChatState:
-    return ChatState(tables=tables or ["movies", "cars", "nyc_taxi"], question=question)  # type: ignore[call-arg]
+    return ChatState(tables=tables or ["movies", "cars", "nyc_taxi"], question=question, history=[])  # type: ignore[call-arg]
 
 
 class TestSelectTables:

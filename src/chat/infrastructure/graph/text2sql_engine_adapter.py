@@ -1,13 +1,14 @@
 """Adapter exposing the compiled text2sql graph behind the Text2SqlPort."""
 
 import asyncio
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from time import perf_counter
 from typing import cast
 from uuid import uuid4
 
 from chat.domain.value_objects.chat_state import ChatState
+from chat.domain.value_objects.message import Message
 from chat.domain.value_objects.stream_event import (
     ChatStreamEvent,
     NarrativeReady,
@@ -19,6 +20,7 @@ from chat.domain.value_objects.stream_event import (
 )
 from chat.domain.value_objects.text2sql_result import Text2SqlResult
 from chat.domain.value_objects.widget import WidgetResult
+from chat.infrastructure.graph.history_messages import to_chat_history
 from chat.infrastructure.graph.types import TypedChatGraph
 from chat.infrastructure.graph.view.render_tree_builder import compile_view_tree, narrative_tree
 from shared.infrastructure.logging.logger_factory import get_logger
@@ -51,12 +53,22 @@ class Text2SqlEngineAdapter:
         self._timeout_s = timeout_s
 
     def answer(self, question: str) -> Text2SqlResult:
-        """Answer a question, returning a graceful timeout result if it runs too long."""
+        """Answer a single question with no conversation memory (stateless CLI path).
+
+        The CLI is a memory-less entry point, so history is always empty here — the
+        HTTP path (:meth:`stream`) is the one that carries short-term memory.
+        """
         request_id = str(uuid4())
-        initial_state = cast(ChatState, {"question": question, "request_id": request_id})
+        initial_state = cast(
+            ChatState, {"question": question, "request_id": request_id, "history": []}
+        )
         _logger.info(
             "graph.start",
-            extra={"request_id": request_id, "question_length": len(question)},
+            extra={
+                "request_id": request_id,
+                "question_length": len(question),
+                "history_message_count": 0,
+            },
         )
         t0 = perf_counter()
         with ThreadPoolExecutor(max_workers=1) as executor:
@@ -76,23 +88,37 @@ class Text2SqlEngineAdapter:
         _logger.info("graph.complete", extra={"request_id": request_id, "duration_ms": duration_ms})
         return _to_result(cast(ChatState, raw))
 
-    async def stream(self, question: str) -> TypedChatStream:
+    async def stream(self, question: str, history: Sequence[Message]) -> TypedChatStream:
         """Stream the answer as it is produced: progress, then narrative, then view.
 
-        Uses LangGraph's native ``astream(stream_mode="updates")`` with an
-        ``asyncio.timeout`` budget (no thread pool), so each node's output reaches
-        the caller the moment it completes. On timeout it yields the same graceful
-        fallback as ``answer`` instead of leaving the stream hanging.
+        ``history`` is the prior-turn conversation window (short-term memory); it is
+        converted to LangChain messages and seeded into the graph state so the LLM
+        nodes can resolve follow-ups. Uses LangGraph's native
+        ``astream(stream_mode="updates")`` with an ``asyncio.timeout`` budget (no
+        thread pool), so each node's output reaches the caller the moment it
+        completes. On timeout it yields the same graceful fallback as ``answer``
+        instead of leaving the stream hanging.
 
         Example:
-            async for event in engine.stream("How many orders?"):
+            async for event in engine.stream("How many orders?", []):
                 ...
         """
         request_id = str(uuid4())
-        initial_state = cast(ChatState, {"question": question, "request_id": request_id})
+        initial_state = cast(
+            ChatState,
+            {
+                "question": question,
+                "request_id": request_id,
+                "history": to_chat_history(history),
+            },
+        )
         _logger.info(
             "graph.stream.start",
-            extra={"request_id": request_id, "question_length": len(question)},
+            extra={
+                "request_id": request_id,
+                "question_length": len(question),
+                "history_message_count": len(history),
+            },
         )
         try:
             async with asyncio.timeout(self._timeout_s):

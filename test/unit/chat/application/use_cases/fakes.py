@@ -1,6 +1,7 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 
 from chat.domain.entities.conversation import Conversation
+from chat.domain.value_objects.message import Message
 from chat.domain.value_objects.stream_event import (
     ChatStreamEvent,
     NarrativeReady,
@@ -30,9 +31,13 @@ class FakeStreamingText2SqlEngine:
     def __init__(self, events: list[ChatStreamEvent]) -> None:
         self._events = events
         self.questions: list[str] = []
+        self.histories: list[Sequence[Message]] = []
 
-    async def stream(self, question: str) -> AsyncIterator[ChatStreamEvent]:
+    async def stream(
+        self, question: str, history: Sequence[Message]
+    ) -> AsyncIterator[ChatStreamEvent]:
         self.questions.append(question)
+        self.histories.append(history)
         for event in self._events:
             yield event
 

@@ -14,7 +14,9 @@ from chat.infrastructure.graph.nodes._structured_output import invoke_structured
 _SYSTEM_PROMPT = (
     "You are a SQL expert. Given a list of available table names and a question, "
     "return only the names of tables needed to answer the question. "
-    "Return names exactly as given."
+    "Return names exactly as given. "
+    "Earlier conversation turns, when present, are context for resolving references — "
+    "select tables for the CURRENT question."
 )
 
 
@@ -49,6 +51,7 @@ class SelectTables:
         human_content = f"Tables: {state['tables']}\n\nQuestion: {state['question']}"
         messages = [
             SystemMessage(content=_SYSTEM_PROMPT),
+            *state["history"],
             HumanMessage(content=human_content),
         ]
         result = invoke_structured(self._model, messages, "select_tables")

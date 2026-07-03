@@ -27,6 +27,19 @@ class Conversation:
         """Start an empty conversation with the given id."""
         return cls(conversation_id, [])
 
+    def recent_messages(self, max_messages: int) -> list[Message]:
+        """Return the last ``max_messages`` turns — the short-term memory window.
+
+        Bounds the context injected into the graph so prompt size stays flat as a
+        conversation grows. ``max_messages <= 0`` yields no memory.
+
+        Example:
+            conv.recent_messages(10)  # up to the last 10 turns (~5 exchanges)
+        """
+        if max_messages <= 0:
+            return []
+        return self.messages[-max_messages:]
+
     def append_user_message(self, question: str) -> Message:
         """Append the user's question turn and return it."""
         message = Message(role="user", content=question, view=None)

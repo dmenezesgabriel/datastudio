@@ -10,6 +10,10 @@ from shared.infrastructure.logging.logger_factory import get_logger
 
 _logger = get_logger(__name__)
 
+# Short-term memory window: how many prior turns are injected as context each turn.
+# ~5 exchanges — enough to resolve follow-ups while keeping prompt size flat.
+_MEMORY_WINDOW_MESSAGES = 10
+
 
 class StreamMessage:
     """Orchestrates one streamed chat round-trip over conversation memory and the engine.
@@ -31,16 +35,26 @@ class StreamMessage:
         self._engine = engine
 
     async def execute(self, conversation_id: str, question: str) -> TypedChatStream:
-        """Record the question, stream the answer, then persist both turns."""
+        """Record the question, stream the answer, then persist both turns.
+
+        The short-term memory window is read *before* the current question is
+        appended, so ``question`` is passed once (as the current turn) and never
+        duplicated inside the injected history.
+        """
         existing = self._repository.get(conversation_id)
+        conversation = existing or Conversation.new(conversation_id)
+        history = conversation.recent_messages(_MEMORY_WINDOW_MESSAGES)  # prior turns only
         _logger.info(
             "stream_message.start",
-            extra={"conversation_id": conversation_id, "is_new": existing is None},
+            extra={
+                "conversation_id": conversation_id,
+                "is_new": existing is None,
+                "history_message_count": len(history),
+            },
         )
-        conversation = existing or Conversation.new(conversation_id)
         conversation.append_user_message(question)
         response = ""
-        async for event in self._engine.stream(question):
+        async for event in self._engine.stream(question, history):
             if isinstance(event, NarrativeReady):
                 response = event.text
             yield event

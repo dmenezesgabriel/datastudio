@@ -3,6 +3,7 @@
 import asyncio
 from typing import cast
 
+from chat.domain.value_objects.message import Message
 from chat.domain.value_objects.stream_event import (
     ChatStreamEvent,
     NarrativeReady,
@@ -55,7 +56,7 @@ def _adapter(
 
 def _collect(adapter: Text2SqlEngineAdapter, question: str) -> list[ChatStreamEvent]:
     async def run() -> list[ChatStreamEvent]:
-        return [event async for event in adapter.stream(question)]
+        return [event async for event in adapter.stream(question, [])]
 
     return asyncio.run(run())
 
@@ -101,6 +102,30 @@ class TestStreamHappyPath:
             "list_tables",
             "plan_widgets",
         ]
+
+
+class TestStreamSeedsHistory:
+    def test_history_is_converted_to_messages_in_initial_state(self) -> None:
+        # arrange — a prior exchange handed to the engine as short-term memory
+        graph = FakeStreamingChatGraph(_chunks())
+        history = [
+            Message(role="user", content="prior q", view=None),
+            Message(role="assistant", content="prior a", view=None),
+        ]
+
+        # act
+        async def run() -> None:
+            async for _ in _adapter(graph).stream("now", history):
+                pass
+
+        asyncio.run(run())
+        # assert — history reaches the graph as LangChain messages; question is current
+        seeded = cast(dict[str, object], graph.last_input)
+        assert [type(m).__name__ for m in cast(list[object], seeded["history"])] == [
+            "HumanMessage",
+            "AIMessage",
+        ]
+        assert seeded["question"] == "now"
 
 
 class TestStreamFailedWidget:

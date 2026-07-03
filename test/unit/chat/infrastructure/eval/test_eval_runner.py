@@ -10,7 +10,7 @@ import pytest
 from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetResult
 from chat.infrastructure.eval.metrics import MetricsRecorder
-from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner
+from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner, EvalTurn
 from shared.domain.value_objects.query_result import QueryResult
 
 
@@ -80,6 +80,34 @@ class _FakeGraph:
         if self._raise is not None:
             raise self._raise
         return _state_for(str(state.get("question", "")), self._response)
+
+
+class TestEvalRunnerMultiTurn:
+    """A case with follow-ups threads each prior turn into the next as history."""
+
+    def test_follow_up_turn_receives_prior_turn_as_history(self) -> None:
+        # arrange — one base turn plus one follow-up
+        fake_graph = _FakeGraph(response="ans")
+        runner = EvalRunner(graph_factory=lambda _r: fake_graph, model_name="test-model")
+        case = EvalCase(
+            id="c1",
+            question="turn one",
+            checks=[],
+            follow_ups=[EvalTurn(question="turn two", checks=[])],
+        )
+        # act
+        runner.run([case])
+        # assert — turn 1 runs with empty history; turn 2 sees turn 1's Q + answer
+        states = [state for state, _config in fake_graph.invoke_calls]
+        assert states[0]["question"] == "turn one" and states[0]["history"] == []
+        assert states[1]["question"] == "turn two"
+        assert [m.content for m in states[1]["history"]] == ["turn one", "ans"]
+
+    def test_single_turn_case_runs_with_empty_history(self) -> None:
+        fake_graph = _FakeGraph()
+        runner = EvalRunner(graph_factory=lambda _r: fake_graph, model_name="test-model")
+        runner.run([EvalCase(id="c1", question="just one", checks=[])])
+        assert [s["history"] for s, _c in fake_graph.invoke_calls] == [[]]
 
 
 class TestEvalRunnerGraphFactory:

@@ -1,7 +1,9 @@
 """Port interface for answering questions through the text2sql pipeline."""
 
+from collections.abc import Sequence
 from typing import Protocol, runtime_checkable
 
+from chat.domain.value_objects.message import Message
 from chat.domain.value_objects.stream_event import TypedChatStream
 
 
@@ -16,10 +18,10 @@ class Text2SqlPort(Protocol):
 
     Example:
         engine: Text2SqlPort = Text2SqlEngineAdapter(graph, timeout_s=120.0)
-        async for event in engine.stream("How many orders were delivered?"):
+        async for event in engine.stream("How many orders were delivered?", []):
             ...
     """
 
-    def stream(self, question: str) -> TypedChatStream:
-        """Stream the answer to a single question as it is produced."""
+    def stream(self, question: str, history: Sequence[Message]) -> TypedChatStream:
+        """Stream the answer to a question, given the prior-turn conversation history."""
         ...

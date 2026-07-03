@@ -7,6 +7,8 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Literal, cast
 
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+
 from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetResult
 from chat.infrastructure.eval.checks import Check, CheckResult
@@ -16,13 +18,32 @@ from chat.infrastructure.graph.types import TypedChatGraph
 
 
 @dataclass
+class EvalTurn:
+    """One turn within a case: a question and the checks asserted on its answer.
+
+    Follow-up turns are how short-term memory is graded: a turn whose question only
+    resolves against prior turns (e.g. "now break it down by month") passes only when
+    the accumulated conversation history reaches the graph.
+    """
+
+    question: str
+    checks: list[Check]
+
+
+@dataclass
 class EvalCase:
-    """A single evaluation case: a question plus a set of correctness checks."""
+    """An evaluation case: a base question plus optional follow-up turns.
+
+    ``question``/``checks`` are the first turn; ``follow_ups`` are later turns in the
+    same conversation, run with the prior turns injected as history. A case with no
+    ``follow_ups`` is an ordinary single-turn case.
+    """
 
     id: str
     question: str
     checks: list[Check]
     tags: list[str] = field(default_factory=list[str])
+    follow_ups: list[EvalTurn] = field(default_factory=list[EvalTurn])
 
 
 @dataclass
@@ -49,6 +70,11 @@ class EvalReport:
     model: str
     summary: dict[str, object]
     cases: list[CaseResult]
+
+
+def _case_turns(case: EvalCase) -> list[EvalTurn]:
+    """The case as an ordered turn list: the base question then any follow-ups."""
+    return [EvalTurn(case.question, case.checks), *case.follow_ups]
 
 
 def _widget_results(state_dict: dict[str, object]) -> list[WidgetResult]:
@@ -130,6 +156,7 @@ def compute_summary(
         # cached_input is a subset of input, not subtracted — effective-fresh is input − cached.
         "total_cached_input_tokens": cached_input_tokens,
         "cache_read_rate": round(cached_input_tokens / input_tokens, 3) if input_tokens else 0.0,
+        "avg_input_tokens": round(input_tokens / total, 1) if total else 0.0,
         "avg_output_tokens": round(output_tokens / total, 1) if total else 0.0,
         "cost_usd": round(cost, 6),
         "by_tag": _by_tag(cases),
@@ -196,17 +223,12 @@ class EvalRunner:
             return list(pool.map(self._run_case, cases))
 
     def _run_case(self, case: EvalCase) -> CaseResult:
+        # One collector spans all turns so node latency/tokens reflect the whole
+        # conversation — a follow-up's injected history shows up as extra input tokens.
         collector = EvalCollector()
-        graph = self._graph_factory(collector)
         callback = TokenCountingCallback(collector)
         try:
-            raw = graph.invoke(  # pyright: ignore[reportUnknownMemberType]
-                cast(ChatState, {"question": case.question}),
-                config={"callbacks": [callback]},
-            )
-            state = cast(ChatState, raw)
-            state_dict = cast(dict[str, object], state)
-            check_results = [c.evaluate(state) for c in case.checks]
+            check_results, state_dict = self._run_turns(case, collector, callback)
             widget_results = _widget_results(state_dict)
             return CaseResult(
                 case_id=case.id,
@@ -233,3 +255,28 @@ class EvalRunner:
                 error=str(exc),
                 tags=case.tags,
             )
+
+    def _run_turns(
+        self, case: EvalCase, collector: MetricsRecorder, callback: TokenCountingCallback
+    ) -> tuple[list[CheckResult], dict[str, object]]:
+        """Drive each turn with the prior turns injected as history.
+
+        Returns the concatenated per-turn check results and the final turn's state
+        (whose response/SQL the CaseResult reports — for a follow-up case that is the
+        follow-up itself, i.e. "did memory make the follow-up resolve").
+        """
+        history: list[BaseMessage] = []
+        check_results: list[CheckResult] = []
+        state_dict: dict[str, object] = {}
+        for turn in _case_turns(case):
+            graph = self._graph_factory(collector)
+            raw = graph.invoke(  # pyright: ignore[reportUnknownMemberType]
+                cast(ChatState, {"question": turn.question, "history": list(history)}),
+                config={"callbacks": [callback]},
+            )
+            state = cast(ChatState, raw)
+            state_dict = cast(dict[str, object], state)
+            check_results.extend(check.evaluate(state) for check in turn.checks)
+            response = str(state_dict.get("response", ""))
+            history.extend([HumanMessage(content=turn.question), AIMessage(content=response)])
+        return check_results, state_dict

@@ -47,7 +47,7 @@ class TestNodeRetryPolicy:
         engine = _make_engine(ConnectionError("temporary network blip"), fail_times=1)
         graph = build_text2sql_graph(_make_model(), engine)
         # act
-        result = graph.invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
+        result = graph.invoke({"question": "How many?", "history": []})  # pyright: ignore[reportUnknownMemberType]
         # assert — retry fired (two calls) and the pipeline completed
         assert engine.list_tables_calls == 2
         assert result["response"] == "One row."
@@ -59,5 +59,5 @@ class TestNodeRetryPolicy:
         graph = build_text2sql_graph(_make_model(), engine)
         # act / assert — error propagates without a retry
         with pytest.raises(ValueError):
-            graph.invoke({"question": "How many?"})  # pyright: ignore[reportUnknownMemberType]
+            graph.invoke({"question": "How many?", "history": []})  # pyright: ignore[reportUnknownMemberType]
         assert engine.list_tables_calls == 1
