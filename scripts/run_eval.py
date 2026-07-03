@@ -2,13 +2,13 @@
 
 Usage:
     python scripts/run_eval.py
-    python scripts/run_eval.py --cases test/eval/cases.json --output eval_report.json
+    python scripts/run_eval.py --cases test/eval/cases.json --reports-dir reports
     python scripts/run_eval.py --judge-model openai/glm-4
 """
 
 import argparse
+import datetime
 import json
-import time
 from dataclasses import asdict
 from pathlib import Path
 from typing import cast
@@ -22,8 +22,16 @@ from shared.infrastructure.config.settings import AppSettings
 from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
 
 
-def _default_output_path() -> str:
-    return f"reports/eval_report_{int(time.time())}.json"
+def _report_path(reports_dir: Path, report: EvalReport) -> Path:
+    """Canonical report path derived from the run's own timestamp.
+
+    Naming from ``report.run_at`` (not a separate ``time.time()``) keeps the
+    filename reproducible from file content, so it's the only name a run can
+    produce. Example: ``_report_path(Path("reports"), report)`` ->
+    ``reports/eval_report_1782962765.json``.
+    """
+    epoch = int(datetime.datetime.fromisoformat(report.run_at).timestamp())
+    return reports_dir / f"eval_report_{epoch}.json"
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
@@ -38,10 +46,11 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         help="Path to the cases JSON file (default: test/eval/cases.json)",
     )
     parser.add_argument(
-        "--output",
-        default=_default_output_path(),
+        "--reports-dir",
+        default="reports",
         metavar="PATH",
-        help="Path to write the JSON report (default: reports/eval_report_<epoch>.json)",
+        help="Directory to write the JSON report into (default: reports). "
+        "The filename is always eval_report_<epoch>.json.",
     )
     parser.add_argument(
         "--judge-model",
@@ -153,7 +162,7 @@ def main() -> None:
     )
     report = runner.run(cases)
 
-    output_path = Path(args.output)
+    output_path = _report_path(Path(args.reports_dir), report)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(asdict(report), indent=2))
 
