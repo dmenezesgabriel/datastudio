@@ -1,6 +1,8 @@
-/* App shell layout: a fixed sidebar beside a main column whose transcript scrolls
-   above a composer docked to the bottom (Claude/ChatGPT-style). Visuals are token-
-   driven; see tokens.css. */
+/* App shell layout + component-specific rules that can't reduce to utility classes:
+   interactive pseudo-states (:hover/:focus/:disabled), status-color variants, media-query
+   layout, and descendant selectors over markdown-generated markup. Generic layout/spacing/
+   border/text is composed from utilities.css in the JSX. Visuals are token-driven; see
+   tokens.css. This file loads AFTER utilities.css so these rules win on conflict. */
 
 html,
 body,
@@ -23,94 +25,6 @@ body {
   overflow: hidden;
 }
 
-/* --- Sidebar -------------------------------------------------------------- */
-
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  background: var(--color-bg-subtle);
-  border-right: 1px solid var(--color-border);
-  overflow-y: auto;
-}
-
-.sidebar__brand {
-  font-size: var(--text-lg);
-  font-weight: 600;
-  padding: var(--space-1) var(--space-2);
-}
-
-.sidebar__new-chat {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  width: 100%;
-  padding: var(--space-3);
-  font-size: var(--text-base);
-  font-weight: 500;
-  color: var(--color-text);
-  background: var(--color-bg-raised);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-}
-
-.sidebar__new-chat:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-}
-
-.sidebar__section-label {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: var(--space-2) var(--space-2) 0;
-}
-
-.thread-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.thread-list__item {
-  width: 100%;
-  text-align: left;
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--text-base);
-  color: var(--color-text);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.thread-list__item:hover {
-  background: var(--color-bg-raised);
-}
-
-.thread-list__item--active {
-  background: var(--color-accent-subtle);
-  color: var(--color-accent);
-  font-weight: 500;
-}
-
-.thread-list__empty {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
-  padding: var(--space-2) var(--space-3);
-}
-
-/* --- Main column ---------------------------------------------------------- */
-
 .main {
   display: flex;
   flex-direction: column;
@@ -118,23 +32,49 @@ body {
   height: 100vh;
 }
 
-.message-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--space-6) var(--space-4);
+/* --- Sidebar -------------------------------------------------------------- */
+
+/* Layout/spacing/surface come from utilities; the border and the responsive collapse
+   (below) are what keep this class. */
+.sidebar {
+  border-right: 1px solid var(--color-border);
 }
 
-.message-list__inner {
-  max-width: var(--content-max);
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-  min-width: 0; /* let flex children shrink so wide content scrolls instead of overflowing */
+/* A <button> doesn't inherit page color, so set it explicitly (as .thread-list__item does)
+   — otherwise it falls back to the UA default black and fails contrast on the dark surface. */
+.sidebar__new-chat {
+  color: var(--color-text);
 }
+
+.sidebar__new-chat:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* Reset the UA button chrome; layout/spacing come from utilities. */
+.thread-list__item {
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+}
+
+.thread-list__item:hover {
+  background: var(--color-bg-raised);
+}
+
+/* The stronger accent shade (not --color-accent) so the label clears WCAG AA (4.5:1) on the
+   tinted active background in both themes — plain --color-accent lands at ~4.0. */
+.thread-list__item--active {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-hover);
+  font-weight: 500;
+}
+
+/* --- Main column ---------------------------------------------------------- */
 
 /* Wide content (SQL disclosures, wide result tables) must scroll inside its own box —
-   never widen the page. Code blocks get a readable panel with horizontal scroll. */
+   never widen the page. Code blocks get a readable panel with horizontal scroll. The
+   markup is produced by `marked`, so these are descendant selectors, not utilities. */
 .message-list pre {
   overflow-x: auto;
   max-width: 100%;
@@ -156,11 +96,11 @@ body {
   overflow-x: auto;
 }
 
+/* The empty-state hero sits ~15vh down and centers itself — a specific offset, not a
+   spacing-scale step, so it stays a named class. */
 .message-list__empty {
   max-width: var(--content-max);
   margin: 15vh auto 0;
-  text-align: center;
-  color: var(--color-text-muted);
 }
 
 .message-list__empty h2 {
@@ -169,17 +109,26 @@ body {
   margin: 0 0 var(--space-2);
 }
 
-.turn__prompt {
-  margin: 0 0 var(--space-3);
-  font-weight: 600;
-  font-size: var(--text-lg);
+.error-banner {
+  color: var(--color-failed);
 }
 
-.error-banner {
-  max-width: var(--content-max);
-  margin: 0 auto var(--space-4);
-  color: var(--color-failed);
-  font-size: var(--text-base);
+/* The rendered markdown answer. */
+.markdown {
+  line-height: 1.5;
+}
+
+/* Result table: border-collapse + per-cell borders read better as one named rule than
+   as a utility on every <th>/<td>. Token-driven, so it themes in dark mode. */
+.data-table {
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  border: 1px solid var(--color-border);
+  padding: var(--space-1) var(--space-2);
+  text-align: left;
 }
 
 /* --- Composer (bottom-docked) -------------------------------------------- */
@@ -187,27 +136,13 @@ body {
 .composer {
   border-top: 1px solid var(--color-border);
   background: var(--color-bg);
-  padding: var(--space-4);
 }
 
-.composer__form {
-  max-width: var(--content-max);
-  margin: 0 auto;
-  display: flex;
-  gap: var(--space-2);
-  align-items: flex-end;
-}
-
+/* resize/font/line-height and the focus ring can't be utilities; the rest is composed. */
 .composer__input {
-  flex: 1;
   resize: none;
   font-family: inherit;
-  font-size: var(--text-base);
   color: var(--color-text);
-  background: var(--color-bg-raised);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-md);
-  padding: var(--space-3);
   line-height: 1.4;
 }
 
@@ -217,14 +152,9 @@ body {
 }
 
 .composer__send {
-  padding: var(--space-3) var(--space-5);
-  font-size: var(--text-base);
-  font-weight: 500;
   color: var(--color-text-inverted);
   background: var(--color-accent);
   border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
 }
 
 .composer__send:hover:not(:disabled) {
@@ -237,31 +167,6 @@ body {
 }
 
 /* --- Progress checklist --------------------------------------------------- */
-
-.checklist {
-  margin: 0 0 var(--space-4);
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-bg-subtle);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-}
-
-.checklist__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.checklist__item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-base);
-  color: var(--color-text);
-}
 
 .checklist__item--child {
   padding-left: var(--space-5);

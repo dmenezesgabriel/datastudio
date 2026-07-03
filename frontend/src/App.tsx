@@ -14,7 +14,9 @@ import type { SpecWithState, ThreadSummary, Turn } from "./types";
 export function App() {
   const firstId = useMemo(() => newConversationId(), []);
   const [activeId, setActiveId] = useState(firstId);
-  const [turnsByConv, setTurnsByConv] = useState<Record<string, Turn[]>>({ [firstId]: [] });
+  const [turnsByConv, setTurnsByConv] = useState<Record<string, Turn[]>>({
+    [firstId]: [],
+  });
   const [question, setQuestion] = useState("");
   const { threads, refresh, loadTurns } = useConversations();
 
@@ -29,7 +31,10 @@ export function App() {
       const id = activeIdRef.current;
       setTurnsByConv((prev) => ({
         ...prev,
-        [id]: [...(prev[id] ?? []), { prompt: livePrompt.current, spec: finished as SpecWithState }],
+        [id]: [
+          ...(prev[id] ?? []),
+          { prompt: livePrompt.current, spec: finished as SpecWithState },
+        ],
       }));
       void refresh(); // the completed turn is now persisted server-side → update the sidebar
     },
@@ -74,8 +79,17 @@ export function App() {
           turns={activeTurns}
           streaming={isStreaming ? { prompt: livePrompt.current, spec } : null}
         />
-        {error && <p className="error-banner">{error.message}</p>}
-        <Composer value={question} onChange={setQuestion} onSubmit={ask} disabled={isStreaming} />
+        {error && (
+          <p className="error-banner max-w-content mx-auto mb-4 text-base">
+            {error.message}
+          </p>
+        )}
+        <Composer
+          value={question}
+          onChange={setQuestion}
+          onSubmit={ask}
+          disabled={isStreaming}
+        />
       </main>
     </div>
   );

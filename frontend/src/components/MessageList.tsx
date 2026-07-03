@@ -17,8 +17,8 @@ export function MessageList({
 }) {
   if (turns.length === 0 && !streaming) {
     return (
-      <div className="message-list">
-        <div className="message-list__empty">
+      <div className="message-list flex-1 overflow-y-auto py-6 px-4">
+        <div className="message-list__empty text-center text-muted">
           <h2>What would you like to know?</h2>
           <p>Ask a question about your data to build a dashboard.</p>
         </div>
@@ -27,10 +27,15 @@ export function MessageList({
   }
 
   return (
-    <div className="message-list">
-      <div className="message-list__inner">
+    <div className="message-list flex-1 overflow-y-auto py-6 px-4">
+      <div className="message-list__inner max-w-content mx-auto flex flex-col gap-6 min-w-0">
         {turns.map((turn, index) => (
-          <TurnView key={index} prompt={turn.prompt} spec={turn.spec} loading={false} />
+          <TurnView
+            key={index}
+            prompt={turn.prompt}
+            spec={turn.spec}
+            loading={false}
+          />
         ))}
         {/* The in-progress turn renders below the settled transcript until it completes,
             at which point the parent moves it into `turns`. Its live checklist shows what
@@ -70,7 +75,8 @@ function TurnView({
 
   return (
     <section>
-      <p className="turn__prompt">{prompt}</p>
+      {/* The question is this turn's heading (labels the dashboard below it), not a paragraph. */}
+      <h2 className="m-0 mb-3 font-semibold text-lg">{prompt}</h2>
       <ProgressChecklist steps={progress} />
       <JSONUIProvider registry={registry} initialState={stateModel}>
         {/* loading lets the renderer show partial trees gracefully while patches arrive */}

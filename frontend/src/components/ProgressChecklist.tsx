@@ -21,8 +21,12 @@ export function ProgressChecklist({ steps }: { steps?: ProgressSteps }) {
   if (topLevel.length === 0) return null;
 
   return (
-    <div className="checklist" aria-label="Progress" aria-live="polite">
-      <ul className="checklist__list">
+    <div
+      className="mb-4 py-3 px-4 bg-subtle border rounded-md"
+      aria-label="Progress"
+      aria-live="polite"
+    >
+      <ul className="flex flex-col gap-1 list-none m-0 p-0">
         {topLevel.map(([id, step]) => (
           <Fragment key={id}>
             <ChecklistItem step={step} />
@@ -38,15 +42,24 @@ export function ProgressChecklist({ steps }: { steps?: ProgressSteps }) {
   );
 }
 
-function ChecklistItem({ step, child }: { step: ProgressStep; child?: boolean }) {
+function ChecklistItem({
+  step,
+  child,
+}: {
+  step: ProgressStep;
+  child?: boolean;
+}) {
   const classes = [
-    "checklist__item",
+    "checklist__item flex items-center gap-2 text-base",
     child ? "checklist__item--child" : "",
     step.status === "pending" ? "checklist__item--pending" : "",
   ].join(" ");
   return (
     <li className={classes}>
-      <span className={`checklist__glyph checklist__glyph--${step.status}`} aria-hidden="true">
+      <span
+        className={`checklist__glyph checklist__glyph--${step.status}`}
+        aria-hidden="true"
+      >
         {GLYPH[step.status]}
       </span>
       {step.label}

@@ -21,23 +21,27 @@ export function Composer({
   }
 
   return (
-    <div className="composer">
+    <div className="composer p-4">
       <form
-        className="composer__form"
+        className="composer__form max-w-content mx-auto flex gap-2 items-end"
         onSubmit={(event) => {
           event.preventDefault();
           onSubmit();
         }}
       >
         <textarea
-          className="composer__input"
+          className="composer__input flex-1 text-base bg-raised border-strong rounded-md p-3"
           rows={1}
           value={value}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask a question about your data…"
         />
-        <button type="submit" className="composer__send" disabled={disabled}>
+        <button
+          type="submit"
+          className="composer__send px-5 py-3 text-base font-medium rounded-md cursor-pointer"
+          disabled={disabled}
+        >
           {disabled ? "…" : "Ask"}
         </button>
       </form>
