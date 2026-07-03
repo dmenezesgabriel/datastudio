@@ -33,6 +33,12 @@
 
 - Prefer small focused modules over god files.
 - Use Package by component (src/component/domain/entities, src/component/domain/value_objects, src/component/application/ports, src/component/application/use_cases, src/component/infrastructure)
+- Data-agnostic core: no dataset identity in `src/`. Table/column names and domain
+  values (and prompt examples that name them) are discovered at runtime via
+  `SqlEnginePort` — never hardcoded. Sample-dataset identity lives only in
+  `scripts/seed_dev_data.py`, `test/`, and `dev_data/`. Use neutral placeholders
+  (`events`, `category`, `amount`) in docstrings/examples. Guarded by
+  `test/unit/architecture/test_no_dataset_identity_in_src.py`.
 
 ## Formatting
 
