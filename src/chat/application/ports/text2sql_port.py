@@ -18,7 +18,7 @@ class Text2SqlPort(Protocol):
 
     Example:
         engine: Text2SqlPort = Text2SqlEngineAdapter(graph, timeout_s=120.0)
-        async for event in engine.stream("How many orders were delivered?", []):
+        async for event in engine.stream("How many events were there?", []):
             ...
     """
 

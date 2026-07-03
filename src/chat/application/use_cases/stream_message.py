@@ -25,7 +25,7 @@ class StreamMessage:
 
     Example:
         use_case = StreamMessage(repository, engine)
-        async for event in use_case.execute("c-1", "Sales overview"):
+        async for event in use_case.execute("c-1", "Overview"):
             ...
     """
 

@@ -69,7 +69,7 @@ class ComposeNarrative:
     Example:
         node = ComposeNarrative(chat_model)
         node({"question": "overview", "widget_results": [WidgetResult(...), ...]})
-        # → {"response": "Revenue grew 12% over the year across 5 categories."}
+        # → {"response": "The total is 42 across 5 categories."}
     """
 
     def __init__(self, chat_model: BaseChatModel) -> None:

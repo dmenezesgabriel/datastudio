@@ -15,7 +15,7 @@ class StreamChatRequest(BaseModel):
     turns accumulate in the same conversation (short-term memory).
 
     Example:
-        StreamChatRequest(prompt="How many orders?", context={"conversation_id": "c-1"})
+        StreamChatRequest(prompt="How many events?", context={"conversation_id": "c-1"})
     """
 
     prompt: str

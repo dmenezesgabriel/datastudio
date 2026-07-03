@@ -9,8 +9,8 @@ class GetSchema:
 
     Example:
         node = GetSchema(engine)
-        result = node({"tables": ["orders"], ...})
-        # result == {"schema": "-- orders\nid INTEGER\n..."}
+        result = node({"tables": ["events"], ...})
+        # result == {"schema": "-- events\nid INTEGER\n..."}
     """
 
     def __init__(self, sql_engine: SqlEnginePort) -> None:

@@ -20,7 +20,7 @@ def to_chat_history(messages: Sequence[Message]) -> list[BaseMessage]:
     carries no extra signal for follow-up reasoning, so it is intentionally omitted.
 
     Example:
-        to_chat_history([Message("user", "Sales?", None)]) == [HumanMessage("Sales?")]
+        to_chat_history([Message("user", "How many?", None)]) == [HumanMessage("How many?")]
     """
     return [_to_message(message) for message in messages]
 

@@ -168,7 +168,7 @@ class GenerateWidgetView:
 
     Example:
         view = GenerateWidgetView(model, system_prompt, extractor)
-        lines = view.author("widget-0", "Revenue by month", query_result)
+        lines = view.author("widget-0", "Amount by category", query_result)
     """
 
     def __init__(

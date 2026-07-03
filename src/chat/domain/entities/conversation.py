@@ -13,7 +13,7 @@ class Conversation:
 
     Example:
         conv = Conversation.new("c-1")
-        conv.append_user_message("How many orders?")
+        conv.append_user_message("How many events?")
         msg = conv.append_assistant_message(result)
     """
 

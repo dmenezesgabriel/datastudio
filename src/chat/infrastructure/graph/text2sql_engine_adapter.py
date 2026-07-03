@@ -44,7 +44,7 @@ class Text2SqlEngineAdapter:
 
     Example:
         engine = Text2SqlEngineAdapter(graph, timeout_s=120.0)
-        result = engine.answer("How many orders were delivered?")
+        result = engine.answer("How many events were there?")
     """
 
     def __init__(self, graph: TypedChatGraph, timeout_s: float | None = None) -> None:
@@ -100,7 +100,7 @@ class Text2SqlEngineAdapter:
         instead of leaving the stream hanging.
 
         Example:
-            async for event in engine.stream("How many orders?", []):
+            async for event in engine.stream("How many events?", []):
                 ...
         """
         request_id = str(uuid4())

@@ -16,7 +16,7 @@ class WidgetSpec:
     """A planned dashboard widget: a titled sub-question to answer and visualize.
 
     Example:
-        WidgetSpec(id="widget-0", title="Revenue by month", sub_question="monthly revenue")
+        WidgetSpec(id="widget-0", title="Amount by category", sub_question="amount per category")
     """
 
     id: str
@@ -29,7 +29,7 @@ class WidgetResult:
     """A widget's executed result: its title, rows (for the ``/state`` patch), and SQL.
 
     Example:
-        WidgetResult(widget_id="widget-0", title="Revenue", result=QueryResult(...), sql="SELECT 1")
+        WidgetResult(widget_id="widget-0", title="Amount", result=QueryResult(...), sql="SELECT 1")
     """
 
     widget_id: str

@@ -59,7 +59,7 @@ class BuildWidget:
 
     Example:
         worker = BuildWidget(chat_model, engine, view_model, prompt, extractor)
-        worker({"widget": WidgetSpec(...), "schema": "...", "tables": ["orders"]})
+        worker({"widget": WidgetSpec(...), "schema": "...", "tables": ["events"]})
         # → {"widget_views": [...], "widget_results": [WidgetResult(...)]}
     """
 

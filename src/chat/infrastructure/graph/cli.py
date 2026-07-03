@@ -97,7 +97,7 @@ def invoke_graph(graph: TypedChatGraph, message: str, *, timeout_s: float | None
     place shared with the API.
 
     Example:
-        response = invoke_graph(graph, "How many trips were there?", timeout_s=120.0)
+        response = invoke_graph(graph, "How many events were there?", timeout_s=120.0)
     """
     return Text2SqlEngineAdapter(graph, timeout_s=timeout_s).answer(message).response
 
@@ -108,7 +108,7 @@ def run_non_interactive(
     """Sends a single message, prints the response, and returns.
 
     Example:
-        run_non_interactive("How many trips?", graph, timeout_s=120.0)
+        run_non_interactive("How many events?", graph, timeout_s=120.0)
     """
     print(invoke_graph(graph, message, timeout_s=timeout_s))
 
@@ -136,7 +136,7 @@ def main() -> None:
     """Entry point: parse args, wire infrastructure, dispatch to mode.
 
     Example:
-        # python main.py -m "How many trips had fare > $20?"
+        # python main.py -m "How many events had amount > 20?"
         # python main.py -i
     """
     args = build_arg_parser().parse_args()

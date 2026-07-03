@@ -16,7 +16,7 @@ class Message:
     for user turns (which carry only the question text).
 
     Example:
-        Message(role="user", content="How many orders?", view=None)
+        Message(role="user", content="How many events?", view=None)
     """
 
     role: MessageRole

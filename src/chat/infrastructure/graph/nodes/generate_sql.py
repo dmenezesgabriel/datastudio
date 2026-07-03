@@ -36,8 +36,8 @@ class GenerateSql:
 
     Example:
         node = GenerateSql(chat_model)
-        result = node({"schema": "-- orders\nid INT", "question": "Count orders"})
-        # result == {"sql_query": "SELECT COUNT(*) FROM orders"}
+        result = node({"schema": "-- events\nid INT", "question": "Count events"})
+        # result == {"sql_query": "SELECT COUNT(*) FROM events"}
     """
 
     def __init__(self, chat_model: BaseChatModel) -> None:

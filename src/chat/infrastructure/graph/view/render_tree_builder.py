@@ -36,7 +36,7 @@ def compile_view_tree(narrative: str, view_lines: list[str], sql_query: str) -> 
     emits, so the batch and streaming views stay equivalent.
 
     Example:
-        tree = compile_view_tree("42 orders.", ['{"op":"add",...}'], "SELECT 1")
+        tree = compile_view_tree("42 events.", ['{"op":"add",...}'], "SELECT 1")
     """
     elements: dict[str, dict[str, object]] = {
         "root": {"type": "Stack", "props": {}, "children": ["narrative"]},

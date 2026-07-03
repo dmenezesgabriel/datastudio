@@ -15,7 +15,7 @@ class ExecuteSql:
 
     Example:
         node = ExecuteSql(engine)
-        result = node({"sql_query": "SELECT COUNT(*) FROM orders"})
+        result = node({"sql_query": "SELECT COUNT(*) FROM events"})
         # success → {"query_result": QueryResult(...), "sql_error": ""}
         # failure → {"sql_error": "Binder Error: ..."}
     """

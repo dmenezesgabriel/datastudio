@@ -115,7 +115,7 @@ class ExecutionMatchCheck:
     cannot dump the whole table (row counts must be equal).
 
     Example:
-        check = ExecutionMatchCheck("SELECT COUNT(*) FROM movies", engine)
+        check = ExecutionMatchCheck("SELECT COUNT(*) FROM events", engine)
         result = check.evaluate(state)
         # {"type": "execution_match", "passed": True, ...}
     """

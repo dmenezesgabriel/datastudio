@@ -19,8 +19,8 @@ class SqlEnginePort(Protocol):
     Example:
         engine: SqlEnginePort = DuckDbSqlEngine("./data.duckdb")
         tables = engine.list_tables()
-        schema = engine.get_table_schema("orders")
-        result = engine.execute_query("SELECT COUNT(*) FROM orders")
+        schema = engine.get_table_schema("events")
+        result = engine.execute_query("SELECT COUNT(*) FROM events")
     """
 
     def list_tables(self) -> list[str]:

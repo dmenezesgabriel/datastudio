@@ -11,6 +11,6 @@ def get_logger(name: str) -> logging.Logger:
 
     Example:
         _logger = get_logger(__name__)
-        _logger.info("query executed", extra={"table": "orders", "rows": 42})
+        _logger.info("query executed", extra={"table": "events", "rows": 42})
     """
     return logging.getLogger(name)

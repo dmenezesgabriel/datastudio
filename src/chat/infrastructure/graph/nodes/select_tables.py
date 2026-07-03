@@ -35,8 +35,8 @@ class SelectTables:
 
     Example:
         node = SelectTables(chat_model)
-        result = node({"tables": ["movies", "cars", "nyc_taxi"], "question": "How many films?"})
-        # result == {"tables": ["movies"]}
+        result = node({"tables": ["events", "customers"], "question": "How many events?"})
+        # result == {"tables": ["events"]}
     """
 
     def __init__(self, chat_model: BaseChatModel) -> None:

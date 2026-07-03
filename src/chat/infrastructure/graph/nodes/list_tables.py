@@ -10,7 +10,7 @@ class ListTables:
     Example:
         node = ListTables(engine)
         result = node({"question": "How many rows?"})
-        # result == {"tables": ["nyc_taxi", "movies"]}
+        # result == {"tables": ["events", "customers"]}
     """
 
     def __init__(self, sql_engine: SqlEnginePort) -> None:

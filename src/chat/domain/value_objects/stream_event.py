@@ -60,7 +60,7 @@ class SqlReady:
     """The SQL that produced one widget, for its deterministic SQL disclosure.
 
     Example:
-        SqlReady(widget_id="widget-0", sql_query="SELECT count(*) FROM orders")
+        SqlReady(widget_id="widget-0", sql_query="SELECT count(*) FROM events")
     """
 
     widget_id: str
@@ -72,7 +72,7 @@ class NarrativeReady:
     """The deterministic overall summary (exact numbers) across the widgets.
 
     Example:
-        NarrativeReady(text="Revenue grew 12% over the year across 5 categories.")
+        NarrativeReady(text="The total is 42 across 5 categories.")
     """
 
     text: str

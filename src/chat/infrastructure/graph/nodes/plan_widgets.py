@@ -55,7 +55,7 @@ class PlanWidgets:
 
     Example:
         node = PlanWidgets(chat_model)
-        result = node({"question": "Sales overview", "schema": "..."})
+        result = node({"question": "Overview", "schema": "..."})
         # result == {"widget_specs": [WidgetSpec(id="widget-0", ...), ...]}
     """
 

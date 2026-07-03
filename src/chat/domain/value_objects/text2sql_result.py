@@ -13,7 +13,7 @@ class Text2SqlResult:
     renderable presentation tree, so the application layer never touches the graph.
 
     Example:
-        Text2SqlResult(response="There are 42 orders.", sql_query="SELECT ...", view=tree)
+        Text2SqlResult(response="There are 42 events.", sql_query="SELECT ...", view=tree)
     """
 
     response: str
