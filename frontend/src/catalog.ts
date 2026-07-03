@@ -32,7 +32,7 @@ export const catalog = defineCatalog(schema, {
       description:
         "A single headline metric (single-row results only). valueColumn names the result " +
         "column holding the number; bind data to the result rows.",
-      example: { label: "Total orders", valueColumn: "order_count", data: { $state: "/result/rows" } },
+      example: { label: "Total records", valueColumn: "total", data: { $state: "/result/rows" } },
     },
     ChartJs: {
       props: z.object({
@@ -48,9 +48,9 @@ export const catalog = defineCatalog(schema, {
         "parts-of-a-whole breakdown of at most 5 slices.",
       example: {
         kind: "bar",
-        title: "Revenue by month",
-        labelColumn: "month",
-        valueColumns: ["revenue"],
+        title: "Value by category",
+        labelColumn: "category",
+        valueColumns: ["value"],
         data: { $state: "/result/rows" },
       },
     },
