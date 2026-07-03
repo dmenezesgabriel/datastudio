@@ -23,22 +23,24 @@ class FakeChatGraph:
 
 
 class FakeStreamingChatGraph:
-    """Fake compiled graph whose astream() yields canned ``{node: update}`` chunks.
+    """Fake compiled graph whose astream() yields canned ``(mode, data)`` items.
 
-    Mirrors LangGraph's ``stream_mode="updates"`` output. An optional per-chunk
-    delay lets tests exercise the adapter's asyncio.timeout fallback.
+    Mirrors LangGraph's ``stream_mode=["updates", "custom"]`` output. A plain-dict
+    chunk is wrapped as an ``("updates", chunk)`` item; a chunk already given as a
+    ``(mode, data)`` tuple (e.g. ``("custom", ProgressStep(...))``) is yielded as-is.
+    An optional per-chunk delay lets tests exercise the adapter's timeout fallback.
     """
 
-    def __init__(self, chunks: list[dict[str, Any]], *, delay_s: float = 0.0) -> None:
+    def __init__(self, chunks: list[Any], *, delay_s: float = 0.0) -> None:
         self._chunks = chunks
         self._delay_s = delay_s
         self.last_input: dict[str, Any] | None = None
 
     async def astream(
         self, state: dict[str, Any], *args: Any, **kwargs: Any
-    ) -> AsyncIterator[dict[str, Any]]:
+    ) -> AsyncIterator[tuple[str, Any]]:
         self.last_input = state
         for chunk in self._chunks:
             if self._delay_s:
                 await asyncio.sleep(self._delay_s)
-            yield chunk
+            yield chunk if isinstance(chunk, tuple) else ("updates", chunk)

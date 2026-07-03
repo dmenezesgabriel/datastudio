@@ -5,28 +5,42 @@ can render it widget-by-widget. They are pure data — no json-render wire forma
 HTTP concern leaks in here; the infrastructure layer translates them into a
 json-render SpecStream.
 
-Order over a run: ``ProgressUpdate`` (schema/planning), then per widget (as each
-parallel worker finishes) a ``WidgetDataReady`` (its rows, streamed as a backend
-``/state`` patch — never through the LLM) followed by its ``ViewPatchLine``s (the
-LLM-authored visualization bound to ``$state``) and a ``SqlReady`` (its disclosure),
-then one ``NarrativeReady`` (the deterministic overall summary).
+Order over a run: ``ProgressStep``s (each pipeline step transitioning through
+running → done/failed, so the UI can render a live checklist), interleaved with the
+per-widget payload — a ``WidgetDataReady`` (its rows, streamed as a backend ``/state``
+patch — never through the LLM) followed by its ``ViewPatchLine``s (the LLM-authored
+visualization bound to ``$state``) and a ``SqlReady`` (its disclosure) — then one
+``NarrativeReady`` (the deterministic overall summary).
 """
 
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
+from typing import Literal
 
 from shared.domain.value_objects.query_result import QueryResult
 
+ProgressStatus = Literal["running", "done", "failed"]
+"""Lifecycle of a single progress step as it is surfaced to the checklist."""
+
 
 @dataclass(frozen=True)
-class ProgressUpdate:
-    """A pipeline stage completed, so the UI can show what's happening.
+class ProgressStep:
+    """One pipeline step's state, so the UI can render/advance a live checklist.
+
+    A step is identified by ``step_id`` (stable across its running→done transition) and
+    may nest under a parent step via ``parent_id`` — e.g. a widget's "Generating SQL"
+    child nests under its "Building <widget>" parent.
 
     Example:
-        ProgressUpdate(stage="plan_widgets")
+        ProgressStep(step_id="plan_widgets", label="Planning the dashboard", status="running")
+        ProgressStep(step_id="widget-0:sql", label="Generating SQL", status="done",
+                     parent_id="widget-0")
     """
 
-    stage: str
+    step_id: str
+    label: str
+    status: ProgressStatus
+    parent_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -78,7 +92,7 @@ class NarrativeReady:
     text: str
 
 
-ChatStreamEvent = ProgressUpdate | WidgetDataReady | ViewPatchLine | SqlReady | NarrativeReady
+ChatStreamEvent = ProgressStep | WidgetDataReady | ViewPatchLine | SqlReady | NarrativeReady
 """Union of everything the engine can yield for a single answered question."""
 
 TypedChatStream = AsyncIterator[ChatStreamEvent]

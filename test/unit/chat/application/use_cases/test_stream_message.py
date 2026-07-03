@@ -8,6 +8,7 @@ from chat.domain.entities.conversation import Conversation
 from chat.domain.value_objects.render_tree import RenderElement, RenderTree
 from chat.domain.value_objects.stream_event import ChatStreamEvent, SqlReady, WidgetDataReady
 from chat.domain.value_objects.text2sql_result import Text2SqlResult
+from chat.infrastructure.api.dashboard_view_builder import DashboardViewBuilder
 from shared.domain.value_objects.query_result import QueryResult
 from test.unit.chat.application.use_cases.fakes import (
     FakeConversationRepository,
@@ -19,7 +20,9 @@ from test.unit.chat.application.use_cases.fakes import (
 def _use_case(
     repository: FakeConversationRepository, engine: FakeStreamingText2SqlEngine
 ) -> StreamMessage:
-    return StreamMessage(cast(ConversationRepository, repository), cast(Text2SqlPort, engine))
+    return StreamMessage(
+        cast(ConversationRepository, repository), cast(Text2SqlPort, engine), DashboardViewBuilder()
+    )
 
 
 def _result(response: str) -> Text2SqlResult:
@@ -117,3 +120,13 @@ class TestStreamMessage:
         narrative = view.elements["narrative"]
         assert narrative.type == "Markdown"
         assert narrative.props.get("text") == "42 orders."
+
+    def test_persists_full_dashboard_widgets_and_state_for_reopen(self) -> None:
+        # Regression: reopening a thread must re-render charts/tables, not just text — so
+        # the persisted view carries the widget element AND its $state data.
+        repository = FakeConversationRepository()
+        _drain(_use_case(repository, FakeStreamingText2SqlEngine(make_events("Rev."))), "c-1", "q")
+        view = repository.saved["c-1"].messages[1].view
+        assert view is not None
+        assert "widget-0-table" in view.elements  # the LLM-authored widget, not just narrative
+        assert view.state == {"widget-0": {"columns": ["n"], "rows": [{"n": 42}]}}

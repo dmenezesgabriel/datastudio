@@ -25,11 +25,18 @@ class RenderElement(BaseModel):
 
 
 class RenderTree(BaseModel):
-    """A flat json-render spec: a root element id plus the element map.
+    """A flat json-render spec: a root element id, the element map, and optional state.
+
+    ``state`` carries each widget's backend-authored ``{columns, rows}`` data keyed by
+    widget id, resolved by the elements' ``$state`` bindings — so a persisted dashboard
+    (charts/tables) can be re-rendered faithfully, not just its narrative. It is ``None``
+    for narrative-only trees (the SQL-failure/CLI paths).
 
     Example:
-        RenderTree(root="stack", elements={"stack": RenderElement(...)})
+        RenderTree(root="stack", elements={"stack": RenderElement(...)},
+                   state={"widget-0": {"columns": ["n"], "rows": [{"n": 42}]}})
     """
 
     root: str
     elements: dict[str, RenderElement]
+    state: dict[str, object] | None = None

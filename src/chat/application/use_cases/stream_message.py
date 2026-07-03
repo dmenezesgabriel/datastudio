@@ -2,9 +2,14 @@
 
 from chat.application.ports.conversation_repository import ConversationRepository
 from chat.application.ports.text2sql_port import Text2SqlPort
+from chat.application.ports.turn_view_builder import TurnViewBuilder
 from chat.domain.entities.conversation import Conversation
-from chat.domain.value_objects.render_tree import RenderElement, RenderTree
-from chat.domain.value_objects.stream_event import NarrativeReady, TypedChatStream
+from chat.domain.value_objects.stream_event import (
+    ChatStreamEvent,
+    NarrativeReady,
+    ProgressStep,
+    TypedChatStream,
+)
 from chat.domain.value_objects.text2sql_result import Text2SqlResult
 from shared.infrastructure.logging.logger_factory import get_logger
 
@@ -29,10 +34,16 @@ class StreamMessage:
             ...
     """
 
-    def __init__(self, repository: ConversationRepository, engine: Text2SqlPort) -> None:
-        """Wire the conversation repository and the text2sql engine."""
+    def __init__(
+        self,
+        repository: ConversationRepository,
+        engine: Text2SqlPort,
+        view_builder: TurnViewBuilder,
+    ) -> None:
+        """Wire the conversation repository, the text2sql engine, and the view builder."""
         self._repository = repository
         self._engine = engine
+        self._view_builder = view_builder
 
     async def execute(self, conversation_id: str, question: str) -> TypedChatStream:
         """Record the question, stream the answer, then persist both turns.
@@ -54,28 +65,23 @@ class StreamMessage:
         )
         conversation.append_user_message(question)
         response = ""
+        turn_events: list[ChatStreamEvent] = []
         async for event in self._engine.stream(question, history):
             if isinstance(event, NarrativeReady):
                 response = event.text
+            if not isinstance(event, ProgressStep):
+                turn_events.append(event)  # keep the payload; progress is transient chrome
             yield event
-        self._record_assistant_turn(conversation, response)
+        self._record_assistant_turn(conversation, response, turn_events)
         self._repository.save(conversation)
         _logger.info("stream_message.complete", extra={"conversation_id": conversation_id})
 
-    def _record_assistant_turn(self, conversation: Conversation, response: str) -> None:
-        """Append the assistant turn for memory (narrative-only view; never re-rendered)."""
+    def _record_assistant_turn(
+        self, conversation: Conversation, response: str, events: list[ChatStreamEvent]
+    ) -> None:
+        """Append the assistant turn, persisting the full dashboard so it re-renders on reopen."""
         if not response:
             return  # stream ended without a summary (abnormal) — nothing to remember
-        result = Text2SqlResult(response=response, sql_query="", view=_narrative_view(response))
+        view = self._view_builder.build(events)
+        result = Text2SqlResult(response=response, sql_query="", view=view)
         conversation.append_assistant_message(result)
-
-
-def _narrative_view(response: str) -> RenderTree:
-    """A minimal narrative-only render tree for the persisted assistant turn."""
-    return RenderTree(
-        root="root",
-        elements={
-            "root": RenderElement(type="Stack", props={}, children=["narrative"]),
-            "narrative": RenderElement(type="Markdown", props={"text": response}, children=[]),
-        },
-    )

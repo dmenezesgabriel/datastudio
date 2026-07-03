@@ -7,6 +7,7 @@ from langchain_core.language_models import BaseChatModel
 from langgraph.graph import END, START, StateGraph  # pyright: ignore[reportMissingTypeStubs]
 from langgraph.types import RetryPolicy, Send
 
+from chat.application.ports.progress_reporter import NullProgressReporter, ProgressReporter
 from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetSpec
 from chat.infrastructure.graph.nodes.build_widget import BuildWidget
@@ -17,11 +18,25 @@ from chat.infrastructure.graph.nodes.list_tables import ListTables
 from chat.infrastructure.graph.nodes.plan_widgets import PlanWidgets
 from chat.infrastructure.graph.nodes.select_tables import SelectTables
 from chat.infrastructure.graph.observable_node import ObservableNode
+from chat.infrastructure.graph.progress_node import ProgressNode
 from chat.infrastructure.graph.response_content_extractor_factory import (
     create_response_content_extractor,
 )
+from chat.infrastructure.graph.stream_writer_progress_reporter import (
+    StreamWriterProgressReporter,
+)
 from chat.infrastructure.graph.types import TypedChatGraph
 from shared.application.ports.sql_engine_port import SqlEnginePort
+
+# User-facing checklist copy for each sequential pipeline node (the parallel
+# build_widget workers report their own per-widget steps). Data-agnostic by design.
+_STEP_LABELS: dict[str, str] = {
+    "list_tables": "Looking at your data",
+    "select_tables": "Choosing the right tables",
+    "get_schema": "Reading the schema",
+    "plan_widgets": "Planning the dashboard",
+    "compose_narrative": "Writing the summary",
+}
 
 
 class ChatNode(Protocol):
@@ -73,9 +88,26 @@ def build_text2sql_graph(
         result = graph.invoke({"question": "Overview", "history": []})
         print(result["response"])
     """
-    nodes = build_text2sql_nodes(chat_model, sql_engine, format_chat_model, api_base)
-    observed = {name: ObservableNode(name, node) for name, node in nodes.items()}
-    return wire_text2sql_graph(observed)
+    reporter = StreamWriterProgressReporter()
+    nodes = build_text2sql_nodes(chat_model, sql_engine, format_chat_model, api_base, reporter)
+    return wire_text2sql_graph(_instrument_nodes(nodes, reporter))
+
+
+def _instrument_nodes(
+    nodes: Mapping[str, ChatNode], reporter: ProgressReporter
+) -> dict[str, ChatNode]:
+    """Wrap each node for observability, and each sequential node for checklist progress.
+
+    ``build_widget`` is excluded from ProgressNode: its N parallel workers would each
+    report the same step id, so they report their own per-widget steps instead.
+    """
+    observed: dict[str, ChatNode] = {}
+    for name, node in nodes.items():
+        wrapped: ChatNode = ObservableNode(name, node)
+        if name in _STEP_LABELS:
+            wrapped = ProgressNode(name, _STEP_LABELS[name], reporter, wrapped)
+        observed[name] = wrapped
+    return observed
 
 
 def build_text2sql_nodes(
@@ -83,6 +115,7 @@ def build_text2sql_nodes(
     sql_engine: SqlEnginePort,
     format_chat_model: BaseChatModel | None = None,
     api_base: str | None = None,
+    reporter: ProgressReporter | None = None,
 ) -> dict[str, ChatNode]:
     """Builds the named, unwrapped pipeline nodes for the text2sql graph.
 
@@ -105,6 +138,7 @@ def build_text2sql_nodes(
             fast_model,
             load_catalog_prompt(),
             create_response_content_extractor(api_base),
+            reporter or NullProgressReporter(),
         ),
         "compose_narrative": ComposeNarrative(fast_model),
     }

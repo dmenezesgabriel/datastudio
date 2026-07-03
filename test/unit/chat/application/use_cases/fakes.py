@@ -1,6 +1,7 @@
 from collections.abc import AsyncIterator, Sequence
 
 from chat.domain.entities.conversation import Conversation
+from chat.domain.value_objects.conversation_summary import ConversationSummary
 from chat.domain.value_objects.message import Message
 from chat.domain.value_objects.stream_event import (
     ChatStreamEvent,
@@ -23,6 +24,17 @@ class FakeConversationRepository:
 
     def save(self, conversation: Conversation) -> None:
         self.saved[conversation.conversation_id] = conversation
+
+    def list_summaries(self) -> list[ConversationSummary]:
+        return [
+            ConversationSummary(
+                conversation_id=c.conversation_id,
+                title=c.title(),
+                message_count=len(c.messages),
+                updated_at=0.0,
+            )
+            for c in self.saved.values()
+        ]
 
 
 class FakeStreamingText2SqlEngine:

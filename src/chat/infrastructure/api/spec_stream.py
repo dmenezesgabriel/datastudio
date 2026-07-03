@@ -18,32 +18,19 @@ from chat.domain.value_objects.render_tree import RenderElement
 from chat.domain.value_objects.stream_event import (
     ChatStreamEvent,
     NarrativeReady,
-    ProgressUpdate,
+    ProgressStep,
     ViewPatchLine,
     WidgetDataReady,
 )
 from chat.infrastructure.graph.view.render_tree_builder import build_markdown_element
 from shared.domain.value_objects.query_result import QueryResult
 
-# The narrative answer lives under a fixed id so progress updates can replace it in
-# place (no add/remove flicker as the dashboard is planned then summarized).
+# The narrative answer lives under a fixed id so the final summary replaces any earlier
+# text in place (no add/remove flicker).
 _NARRATIVE_ID = "narrative"
 
 # Cap rows put on the wire so a large detail result can't bloat the stream.
 _MAX_STREAM_ROWS = 500
-
-_STAGE_LABELS = {
-    "list_tables": "Looking at your data…",
-    "select_tables": "Choosing the right tables…",
-    "get_schema": "Reading the schema…",
-    "plan_widgets": "Planning the dashboard…",
-}
-_DEFAULT_LABEL = "Building the dashboard…"
-
-
-def _stage_label(stage: str) -> str:
-    """Map a graph node name to user-facing progress copy."""
-    return _STAGE_LABELS.get(stage, _DEFAULT_LABEL)
 
 
 def _json_default(value: object) -> object:
@@ -74,6 +61,15 @@ def _state_rows(result: QueryResult) -> list[dict[str, object]]:
     return [dict(zip(result.columns, row, strict=True)) for row in result.rows[:_MAX_STREAM_ROWS]]
 
 
+def state_value(result: QueryResult) -> dict[str, object]:
+    """The ``{columns, rows}`` object a widget's ``$state`` bindings read (row-capped).
+
+    Shared by the streaming serializer and the persisted-dashboard builder so the wire
+    and the stored snapshot shape a widget's data identically.
+    """
+    return {"columns": result.columns, "rows": _state_rows(result)}
+
+
 class SpecStreamSerializer:
     """Stateful translator from ``ChatStreamEvent`` to SpecStream patch lines.
 
@@ -88,14 +84,16 @@ class SpecStreamSerializer:
     """
 
     def __init__(self) -> None:
-        """Start with an uninitialized spec and no narrative yet."""
+        """Start with an uninitialized spec, no narrative, and no progress steps yet."""
         self._root_initialized = False
         self._narrative_added = False
+        self._progress_initialized = False
+        self._progress_orders: dict[str, int] = {}
 
     def lines_for(self, event: ChatStreamEvent) -> list[str]:
         """Return the patch lines for one event, advancing internal state."""
-        if isinstance(event, ProgressUpdate):
-            return self._narrative_lines(_stage_label(event.stage))
+        if isinstance(event, ProgressStep):
+            return self._progress_lines(event)
         if isinstance(event, NarrativeReady):
             return self._narrative_lines(event.text)
         if isinstance(event, WidgetDataReady):
@@ -106,9 +104,40 @@ class SpecStreamSerializer:
             return self._root_init_lines() + [event.line]
         return self._sql_lines(event.widget_id, event.sql_query)  # SqlReady (union exhausted)
 
+    def _progress_lines(self, step: ProgressStep) -> list[str]:
+        """Add a checklist step under ``/state/progress`` on first sight; replace status after.
+
+        Progress rides a reserved ``/state/progress`` key (never ``/elements``) so the
+        live checklist stays out of the answer tree. It lives under ``/state`` — not a
+        top-level ``/progress`` — because the json-render client only applies ``/state``
+        and ``/elements`` patches; unknown top-level paths are dropped. The key can't
+        collide with a widget's ``/state/<widget_id>`` data (ids are ``widget-N``). Each
+        step carries an ``order`` (first-seen index) so the client renders pipeline order.
+        """
+        lines = self._progress_init_lines()
+        if step.step_id in self._progress_orders:
+            path = f"/state/progress/{step.step_id}/status"
+            return lines + [_patch_line("replace", path, step.status)]
+        order = len(self._progress_orders)
+        self._progress_orders[step.step_id] = order
+        value = {
+            "label": step.label,
+            "status": step.status,
+            "parentId": step.parent_id,
+            "order": order,
+        }
+        return lines + [_patch_line("add", f"/state/progress/{step.step_id}", value)]
+
+    def _progress_init_lines(self) -> list[str]:
+        """Emit the empty ``/state/progress`` map exactly once (no-op afterwards)."""
+        if self._progress_initialized:
+            return []
+        self._progress_initialized = True
+        return [_patch_line("add", "/state/progress", {})]
+
     def _state_value(self, result: QueryResult) -> dict[str, object]:
         """The ``{columns, rows}`` object a widget's $state bindings read."""
-        return {"columns": result.columns, "rows": _state_rows(result)}
+        return state_value(result)
 
     def _narrative_lines(self, text: str) -> list[str]:
         """Add the narrative element on first use; replace its text thereafter."""

@@ -3,6 +3,7 @@
 from typing import Protocol, runtime_checkable
 
 from chat.domain.entities.conversation import Conversation
+from chat.domain.value_objects.conversation_summary import ConversationSummary
 
 
 @runtime_checkable
@@ -25,4 +26,8 @@ class ConversationRepository(Protocol):
 
     def save(self, conversation: Conversation) -> None:
         """Persist the conversation, overwriting any prior state for its id."""
+        ...
+
+    def list_summaries(self) -> list[ConversationSummary]:
+        """Return summaries of all stored conversations, most-recently-updated first."""
         ...

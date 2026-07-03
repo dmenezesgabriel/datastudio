@@ -8,8 +8,11 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from langchain_core.language_models import BaseChatModel
 
+from chat.application.ports.conversation_repository import ConversationRepository
 from chat.application.use_cases.stream_message import StreamMessage
 from chat.infrastructure.api.chat_router import ChatRouter
+from chat.infrastructure.api.conversations_router import ConversationsRouter
+from chat.infrastructure.api.dashboard_view_builder import DashboardViewBuilder
 from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
 from chat.infrastructure.graph.text2sql_engine_adapter import Text2SqlEngineAdapter
 from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
@@ -24,11 +27,16 @@ from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlE
 _logger = get_logger(__name__)
 
 
-def build_stream_message(settings: AppSettings) -> StreamMessage:
-    """Wire the graph, engine adapter, in-memory memory, and use case from settings.
+def build_stream_message(
+    settings: AppSettings, repository: ConversationRepository
+) -> StreamMessage:
+    """Wire the graph, engine adapter, and use case from settings over a shared repository.
+
+    The repository is injected (not built here) so the read-side conversations API and
+    the write-side chat stream share one store — otherwise the sidebar sees an empty one.
 
     Example:
-        use_case = build_stream_message(AppSettings())
+        use_case = build_stream_message(AppSettings(), InMemoryConversationRepository())
     """
     chat_model = _build_chat_model(settings, settings.language_model_name)
     format_chat_model = _build_chat_model(settings, settings.format_model_name)
@@ -39,11 +47,11 @@ def build_stream_message(settings: AppSettings) -> StreamMessage:
         api_base=settings.openai_base_url,
     )
     engine = Text2SqlEngineAdapter(graph, timeout_s=settings.query_timeout_s)
-    return StreamMessage(InMemoryConversationRepository(), engine)
+    return StreamMessage(repository, engine, DashboardViewBuilder())
 
 
 def create_app() -> FastAPI:
-    """Build the FastAPI app: register the chat API, then mount the built frontend.
+    """Build the FastAPI app: register the chat + conversations APIs, then mount the frontend.
 
     Example:
         app = create_app()
@@ -53,7 +61,9 @@ def create_app() -> FastAPI:
     # LiteLLM emits INFO for every LLM call — reduces noise in our structured stream.
     logging.getLogger("LiteLLM").setLevel(logging.WARNING)
     app = FastAPI(title="datastudio chat")
-    app.include_router(ChatRouter(build_stream_message(settings)).router)
+    repository = InMemoryConversationRepository()  # one store shared by both routers
+    app.include_router(ChatRouter(build_stream_message(settings, repository)).router)
+    app.include_router(ConversationsRouter(repository).router)
     _mount_frontend(app, settings.frontend_dist_path)
     return app
 

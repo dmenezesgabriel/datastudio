@@ -7,7 +7,7 @@ from chat.domain.value_objects.message import Message
 from chat.domain.value_objects.stream_event import (
     ChatStreamEvent,
     NarrativeReady,
-    ProgressUpdate,
+    ProgressStep,
     SqlReady,
     WidgetDataReady,
 )
@@ -38,9 +38,12 @@ def _widget_chunk(widget_id: str, value: int) -> dict[str, object]:
     }
 
 
-def _chunks() -> list[dict[str, object]]:
+def _chunks() -> list[object]:
+    # updates chunks (plain dicts) mixed with a custom progress chunk (a tuple), as
+    # LangGraph yields under stream_mode=["updates", "custom"].
     return [
         {"list_tables": {"tables": ["orders"]}},
+        ("custom", ProgressStep(step_id="plan_widgets", label="Planning", status="running")),
         {"plan_widgets": {"widget_specs": []}},
         _widget_chunk("widget-0", 42),
         _widget_chunk("widget-1", 7),
@@ -65,8 +68,7 @@ class TestStreamHappyPath:
     def test_event_sequence_streams_each_widget_then_narrative(self) -> None:
         events = _collect(_adapter(FakeStreamingChatGraph(_chunks())), "overview")
         assert [type(e).__name__ for e in events] == [
-            "ProgressUpdate",  # list_tables
-            "ProgressUpdate",  # plan_widgets
+            "ProgressStep",  # custom progress (plan_widgets running)
             "WidgetDataReady",  # widget-0 data (/state patch)
             "ViewPatchLine",  # widget-0 view
             "SqlReady",  # widget-0 sql
@@ -96,12 +98,10 @@ class TestStreamHappyPath:
             == "Two widgets summarized."
         )
 
-    def test_progress_forwards_node_names(self) -> None:
+    def test_forwards_custom_progress_steps(self) -> None:
         events = _collect(_adapter(FakeStreamingChatGraph(_chunks())), "q")
-        assert [e.stage for e in events if isinstance(e, ProgressUpdate)] == [
-            "list_tables",
-            "plan_widgets",
-        ]
+        steps = [(e.step_id, e.status) for e in events if isinstance(e, ProgressStep)]
+        assert steps == [("plan_widgets", "running")]
 
 
 class TestStreamSeedsHistory:

@@ -12,7 +12,7 @@ from chat.domain.value_objects.message import Message
 from chat.domain.value_objects.stream_event import (
     ChatStreamEvent,
     NarrativeReady,
-    ProgressUpdate,
+    ProgressStep,
     SqlReady,
     TypedChatStream,
     ViewPatchLine,
@@ -30,10 +30,6 @@ _logger = get_logger(__name__)
 _TIMEOUT_RESPONSE = (
     "This query is taking longer than expected. Please try again or rephrase your question."
 )
-
-# Nodes whose completion is shown as progress while the dashboard is being built.
-# build_widget (data + view), compose_narrative (summary) are handled explicitly.
-_PROGRESS_NODES = frozenset({"list_tables", "select_tables", "get_schema", "plan_widgets"})
 
 
 class Text2SqlEngineAdapter:
@@ -94,9 +90,10 @@ class Text2SqlEngineAdapter:
         ``history`` is the prior-turn conversation window (short-term memory); it is
         converted to LangChain messages and seeded into the graph state so the LLM
         nodes can resolve follow-ups. Uses LangGraph's native
-        ``astream(stream_mode="updates")`` with an ``asyncio.timeout`` budget (no
-        thread pool), so each node's output reaches the caller the moment it
-        completes. On timeout it yields the same graceful fallback as ``answer``
+        ``astream(stream_mode=["updates", "custom"])`` with an ``asyncio.timeout``
+        budget (no thread pool): ``updates`` carry each node's output the moment it
+        completes, while ``custom`` carries the live ``ProgressStep``s nodes emit
+        mid-execution. On timeout it yields the same graceful fallback as ``answer``
         instead of leaving the stream hanging.
 
         Example:
@@ -122,14 +119,11 @@ class Text2SqlEngineAdapter:
         )
         try:
             async with asyncio.timeout(self._timeout_s):
-                async for chunk in self._graph.astream(  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]
-                    initial_state, stream_mode="updates"
+                async for mode, chunk in self._graph.astream(  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]
+                    initial_state, stream_mode=["updates", "custom"]
                 ):
-                    for node_name, update in cast(
-                        Mapping[str, Mapping[str, object]], chunk
-                    ).items():
-                        for event in _events_for(node_name, update):
-                            yield event
+                    for event in _events_for_chunk(cast(str, mode), chunk):
+                        yield event
         except TimeoutError:
             _logger.warning(
                 "graph.stream.timeout",
@@ -140,10 +134,22 @@ class Text2SqlEngineAdapter:
         _logger.info("graph.stream.complete", extra={"request_id": request_id})
 
 
+def _events_for_chunk(mode: str, chunk: object) -> list[ChatStreamEvent]:
+    """Map one astream item to stream events by its mode (``custom`` vs ``updates``).
+
+    ``custom`` items are the ``ProgressStep``s nodes emit mid-execution; ``updates``
+    items are ``{node: partial_state}`` dicts yielded when a node completes.
+    """
+    if mode == "custom":
+        return [chunk] if isinstance(chunk, ProgressStep) else []
+    events: list[ChatStreamEvent] = []
+    for node_name, update in cast(Mapping[str, Mapping[str, object]], chunk).items():
+        events += _events_for(node_name, update)
+    return events
+
+
 def _events_for(node_name: str, update: Mapping[str, object]) -> list[ChatStreamEvent]:
-    """Map one node update to zero or more stream events (silent nodes yield none)."""
-    if node_name in _PROGRESS_NODES:
-        return [ProgressUpdate(stage=node_name)]
+    """Map one node update to zero or more payload events (silent nodes yield none)."""
     if node_name == "build_widget":
         return _widget_events(update)
     if node_name == "compose_narrative":

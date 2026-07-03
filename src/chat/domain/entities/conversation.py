@@ -3,6 +3,10 @@
 from chat.domain.value_objects.message import Message
 from chat.domain.value_objects.text2sql_result import Text2SqlResult
 
+# Sidebar labels are one line; a longer first question is truncated with an ellipsis.
+_TITLE_MAX_CHARS = 60
+_UNTITLED = "New chat"
+
 
 class Conversation:
     """A chat conversation identified by ``conversation_id``.
@@ -26,6 +30,17 @@ class Conversation:
     def new(cls, conversation_id: str) -> "Conversation":
         """Start an empty conversation with the given id."""
         return cls(conversation_id, [])
+
+    def title(self) -> str:
+        """The sidebar label: the first user question, truncated (``"New chat"`` if none).
+
+        Example:
+            conv.title()  # "How many events were there last month?"
+        """
+        for message in self.messages:
+            if message.role == "user":
+                return _truncate(message.content)
+        return _UNTITLED
 
     def recent_messages(self, max_messages: int) -> list[Message]:
         """Return the last ``max_messages`` turns — the short-term memory window.
@@ -51,3 +66,11 @@ class Conversation:
         message = Message(role="assistant", content=result.response, view=result.view)
         self.messages.append(message)
         return message
+
+
+def _truncate(text: str) -> str:
+    """Collapse a question to a single-line label of at most ``_TITLE_MAX_CHARS``."""
+    label = " ".join(text.split())
+    if len(label) <= _TITLE_MAX_CHARS:
+        return label
+    return label[: _TITLE_MAX_CHARS - 1].rstrip() + "…"

@@ -3,6 +3,7 @@
 import json
 from typing import cast
 
+from chat.application.ports.progress_reporter import NullProgressReporter
 from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetSpec
 from chat.infrastructure.graph.nodes.build_widget import BuildWidget
@@ -29,6 +30,7 @@ def _worker(engine: FakeSqlEngine, view_content: object = _VIEW) -> BuildWidget:
         cast(object, FakeViewModel(view_content)),  # type: ignore[arg-type]
         "prompt",
         PlainTextExtractor(),
+        NullProgressReporter(),
     )
 
 

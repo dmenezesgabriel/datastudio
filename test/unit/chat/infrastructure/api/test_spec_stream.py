@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from chat.domain.value_objects.stream_event import (
     NarrativeReady,
-    ProgressUpdate,
+    ProgressStep,
     SqlReady,
     ViewPatchLine,
     WidgetDataReady,
@@ -35,16 +35,64 @@ class TestNarrative:
         ]
         assert patches[2]["value"]["props"]["text"] == "Summary."  # type: ignore[index]
 
-    def test_progress_then_narrative_replaces_text_in_place(self) -> None:
+    def test_narrative_is_added_once_then_replaced_in_place(self) -> None:
         serializer = SpecStreamSerializer()
-        patches = _patches(
-            serializer, ProgressUpdate(stage="plan_widgets"), NarrativeReady(text="Done.")
-        )
+        patches = _patches(serializer, NarrativeReady(text="Draft."), NarrativeReady(text="Done."))
         replace = [p for p in patches if p["op"] == "replace"]
         assert replace == [
             {"op": "replace", "path": "/elements/narrative/props/text", "value": "Done."}
         ]
         assert sum(1 for p in patches if p["path"] == "/elements/narrative") == 1
+
+
+class TestProgress:
+    def test_first_step_initializes_channel_and_adds_step(self) -> None:
+        # Arrange / Act — a step never seen before
+        serializer = SpecStreamSerializer()
+        patches = _patches(
+            serializer, ProgressStep(step_id="get_schema", label="Reading", status="running")
+        )
+        # Assert — the /state/progress map is created once (json-render only applies /state
+        # and /elements patches), then the step is added with order 0
+        assert patches[0] == {"op": "add", "path": "/state/progress", "value": {}}
+        assert patches[1] == {
+            "op": "add",
+            "path": "/state/progress/get_schema",
+            "value": {"label": "Reading", "status": "running", "parentId": None, "order": 0},
+        }
+
+    def test_repeat_step_replaces_only_its_status(self) -> None:
+        # Arrange — the same step id transitions running → done
+        serializer = SpecStreamSerializer()
+        patches = _patches(
+            serializer,
+            ProgressStep(step_id="get_schema", label="Reading", status="running"),
+            ProgressStep(step_id="get_schema", label="Reading", status="done"),
+        )
+        # Assert — the map init/add happen once; the second sighting only flips status
+        assert patches[-1] == {
+            "op": "replace",
+            "path": "/state/progress/get_schema/status",
+            "value": "done",
+        }
+        assert sum(1 for p in patches if p["path"] == "/state/progress") == 1
+
+    def test_child_step_carries_parent_and_incrementing_order(self) -> None:
+        # Arrange — a parent step then its nested child
+        serializer = SpecStreamSerializer()
+        patches = _patches(
+            serializer,
+            ProgressStep(step_id="widget-0", label='Building "T"', status="running"),
+            ProgressStep(
+                step_id="widget-0:sql",
+                label="Generating SQL",
+                status="running",
+                parent_id="widget-0",
+            ),
+        )
+        child = next(p for p in patches if p["path"] == "/state/progress/widget-0:sql")
+        assert child["value"]["parentId"] == "widget-0"  # type: ignore[index]
+        assert child["value"]["order"] == 1  # type: ignore[index]
 
 
 class TestWidgetData:

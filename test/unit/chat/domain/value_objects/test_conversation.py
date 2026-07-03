@@ -54,6 +54,30 @@ class TestConversationAppendAssistantMessage:
         assert len(conv.messages) == 1
 
 
+class TestConversationTitle:
+    def test_title_is_the_first_user_question(self) -> None:
+        # arrange
+        conv = Conversation.new("c-1")
+        conv.append_user_message("How many orders were there?")
+        conv.append_assistant_message(_result())
+        conv.append_user_message("And by month?")
+        # act / assert — the first question labels the thread
+        assert conv.title() == "How many orders were there?"
+
+    def test_title_defaults_when_no_user_message(self) -> None:
+        assert Conversation.new("c-1").title() == "New chat"
+
+    def test_title_truncates_a_long_question(self) -> None:
+        # arrange — a question longer than the 60-char label budget
+        conv = Conversation.new("c-1")
+        conv.append_user_message("word " * 30)
+        # act
+        title = conv.title()
+        # assert — clipped to the budget and ellipsised
+        assert len(title) <= 60
+        assert title.endswith("…")
+
+
 class TestConversationRecentMessages:
     def test_returns_the_last_n_turns(self) -> None:
         # arrange — six turns; the window keeps only the most recent four
