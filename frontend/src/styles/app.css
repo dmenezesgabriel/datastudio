@@ -1,0 +1,300 @@
+/* App shell layout: a fixed sidebar beside a main column whose transcript scrolls
+   above a composer docked to the bottom (Claude/ChatGPT-style). Visuals are token-
+   driven; see tokens.css. */
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* --- Sidebar -------------------------------------------------------------- */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-bg-subtle);
+  border-right: 1px solid var(--color-border);
+  overflow-y: auto;
+}
+
+.sidebar__brand {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  padding: var(--space-1) var(--space-2);
+}
+
+.sidebar__new-chat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3);
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--color-text);
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.sidebar__new-chat:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.sidebar__section-label {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: var(--space-2) var(--space-2) 0;
+}
+
+.thread-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.thread-list__item {
+  width: 100%;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-list__item:hover {
+  background: var(--color-bg-raised);
+}
+
+.thread-list__item--active {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.thread-list__empty {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  padding: var(--space-2) var(--space-3);
+}
+
+/* --- Main column ---------------------------------------------------------- */
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100vh;
+}
+
+.message-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+.message-list__inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0; /* let flex children shrink so wide content scrolls instead of overflowing */
+}
+
+/* Wide content (SQL disclosures, wide result tables) must scroll inside its own box —
+   never widen the page. Code blocks get a readable panel with horizontal scroll. */
+.message-list pre {
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 0;
+  padding: var(--space-3);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.message-list code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+.message-list table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.message-list__empty {
+  max-width: var(--content-max);
+  margin: 15vh auto 0;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.message-list__empty h2 {
+  color: var(--color-text);
+  font-size: var(--text-xl);
+  margin: 0 0 var(--space-2);
+}
+
+.turn__prompt {
+  margin: 0 0 var(--space-3);
+  font-weight: 600;
+  font-size: var(--text-lg);
+}
+
+.error-banner {
+  max-width: var(--content-max);
+  margin: 0 auto var(--space-4);
+  color: var(--color-failed);
+  font-size: var(--text-base);
+}
+
+/* --- Composer (bottom-docked) -------------------------------------------- */
+
+.composer {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg);
+  padding: var(--space-4);
+}
+
+.composer__form {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-end;
+}
+
+.composer__input {
+  flex: 1;
+  resize: none;
+  font-family: inherit;
+  font-size: var(--text-base);
+  color: var(--color-text);
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  line-height: 1.4;
+}
+
+.composer__input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.composer__send {
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--color-text-inverted);
+  background: var(--color-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.composer__send:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.composer__send:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* --- Progress checklist --------------------------------------------------- */
+
+.checklist {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.checklist__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.checklist__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  color: var(--color-text);
+}
+
+.checklist__item--child {
+  padding-left: var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.checklist__glyph {
+  flex: none;
+  width: 1.1em;
+  text-align: center;
+}
+
+.checklist__item--pending {
+  color: var(--color-text-muted);
+}
+.checklist__glyph--running {
+  color: var(--color-running);
+}
+.checklist__glyph--done {
+  color: var(--color-done);
+}
+.checklist__glyph--failed {
+  color: var(--color-failed);
+}
+
+/* --- Responsive: collapse the sidebar on narrow screens ------------------- */
+
+@media (max-width: 720px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    display: none;
+  }
+}

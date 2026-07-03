@@ -1,31 +1,38 @@
 import { useMemo, useRef, useState } from "react";
-import { JSONUIProvider, Renderer, useUIStream } from "@json-render/react";
-import type { Spec } from "@json-render/react";
+import { useUIStream } from "@json-render/react";
 
-import { registry } from "./registry";
-import { CONVERSATION_ID } from "./session";
+import { Sidebar } from "./components/Sidebar";
+import { MessageList } from "./components/MessageList";
+import { Composer } from "./components/Composer";
+import { useConversations } from "./hooks/useConversations";
+import { newConversationId } from "./session";
+import type { SpecWithState, ThreadSummary, Turn } from "./types";
 
-// The stream carries both /elements patches (the LLM-authored widgets) and /state
-// patches (each widget's rows, authored by the backend). useUIStream applies both,
-// so spec.state holds the data the widgets' $state bindings resolve against.
-type SpecWithState = Spec & { state?: Record<string, unknown> };
-
-// One completed exchange in the transcript: the question the user asked and the
-// dashboard the assistant produced for it.
-type Turn = { prompt: string; spec: SpecWithState };
-
+// Transcripts are cached client-side per conversation id so switching threads is instant;
+// the sidebar list and each reopened transcript come from the server (which owns the
+// short-term memory keyed by the same id). "New chat" mints a fresh id.
 export function App() {
+  const firstId = useMemo(() => newConversationId(), []);
+  const [activeId, setActiveId] = useState(firstId);
+  const [turnsByConv, setTurnsByConv] = useState<Record<string, Turn[]>>({ [firstId]: [] });
   const [question, setQuestion] = useState("");
-  // The conversation transcript grows client-side; the backend keeps its own memory
-  // keyed by CONVERSATION_ID. Each completed turn keeps its own finished spec because
-  // useUIStream resets `spec` to empty on the next send (which would wipe it otherwise).
-  const [turns, setTurns] = useState<Turn[]>([]);
-  // Remembered when the send fires so onComplete can pair the answer with its question.
+  const { threads, refresh, loadTurns } = useConversations();
+
+  // Refs so useUIStream's onComplete (bound once) records against the live thread/prompt.
+  const activeIdRef = useRef(activeId);
+  activeIdRef.current = activeId;
   const livePrompt = useRef("");
+
   const { spec, isStreaming, error, send } = useUIStream({
     api: "/api/chat",
-    onComplete: (finished) =>
-      setTurns((prev) => [...prev, { prompt: livePrompt.current, spec: finished as SpecWithState }]),
+    onComplete: (finished) => {
+      const id = activeIdRef.current;
+      setTurnsByConv((prev) => ({
+        ...prev,
+        [id]: [...(prev[id] ?? []), { prompt: livePrompt.current, spec: finished as SpecWithState }],
+      }));
+      void refresh(); // the completed turn is now persisted server-side → update the sidebar
+    },
   });
 
   function ask() {
@@ -33,86 +40,55 @@ export function App() {
     if (!trimmed || isStreaming) return;
     livePrompt.current = trimmed;
     setQuestion("");
-    void send(trimmed, { conversation_id: CONVERSATION_ID });
+    void send(trimmed, { conversation_id: activeId });
   }
 
+  function newChat() {
+    if (isStreaming) return;
+    const id = newConversationId();
+    setTurnsByConv((prev) => ({ ...prev, [id]: [] }));
+    setActiveId(id);
+  }
+
+  async function selectThread(id: string) {
+    if (isStreaming || id === activeId) return;
+    setActiveId(id);
+    if (turnsByConv[id]) return; // already cached this session
+    const loaded = await loadTurns(id);
+    setTurnsByConv((prev) => ({ ...prev, [id]: prev[id] ?? loaded }));
+  }
+
+  const activeTurns = turnsByConv[activeId] ?? [];
+  const threadList = mergeActiveThread(threads, activeId, activeTurns);
+
   return (
-    <main style={mainStyle}>
-      <h1 style={{ fontSize: 20 }}>datastudio</h1>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          ask();
-        }}
-        style={{ display: "flex", gap: 8 }}
-      >
-        <input
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Ask a question about your data…"
-          style={{ flex: 1, padding: 8, fontSize: 14 }}
+    <div className="app-shell">
+      <Sidebar
+        threads={threadList}
+        activeId={activeId}
+        onNewChat={newChat}
+        onSelect={selectThread}
+      />
+      <main className="main">
+        <MessageList
+          turns={activeTurns}
+          streaming={isStreaming ? { prompt: livePrompt.current, spec } : null}
         />
-        <button type="submit" disabled={isStreaming} style={{ padding: "8px 16px" }}>
-          {isStreaming ? "…" : "Ask"}
-        </button>
-      </form>
-      {error && <p style={{ color: "#c00" }}>{error.message}</p>}
-      <div style={transcriptStyle}>
-        {turns.map((turn, index) => (
-          <TurnView key={index} prompt={turn.prompt} spec={turn.spec} loading={false} />
-        ))}
-        {/* The in-progress turn renders below the settled transcript until it completes,
-            at which point onComplete moves it into `turns`. */}
-        {isStreaming && <TurnView prompt={livePrompt.current} spec={spec} loading />}
-      </div>
-    </main>
+        {error && <p className="error-banner">{error.message}</p>}
+        <Composer value={question} onChange={setQuestion} onSubmit={ask} disabled={isStreaming} />
+      </main>
+    </div>
   );
 }
 
-// One turn's dashboard. Each turn gets its OWN JSONUIProvider because widget $state
-// bindings are scoped per spec — sharing one store across turns would cross-bind data.
-function TurnView({
-  prompt,
-  spec,
-  loading,
-}: {
-  prompt: string;
-  spec: Spec | null;
-  loading: boolean;
-}) {
-  // A fresh object per spec ref (one per patch) so JSONUIProvider re-flattens the
-  // streamed state into its store, resolving $state as each widget's data arrives.
-  const stateModel = useMemo(() => {
-    const state = (spec as SpecWithState | null)?.state;
-    return state ? { ...state } : {};
-  }, [spec]);
-
-  return (
-    <section>
-      <p style={promptStyle}>{prompt}</p>
-      <JSONUIProvider registry={registry} initialState={stateModel}>
-        {/* loading lets the renderer show partial trees gracefully while patches arrive */}
-        <Renderer spec={spec} registry={registry} loading={loading} />
-      </JSONUIProvider>
-    </section>
-  );
+// The active conversation may be brand-new (not yet saved server-side), so it won't be in
+// the fetched list. Surface it at the top so the current thread is always visible/selected.
+function mergeActiveThread(
+  threads: ThreadSummary[],
+  activeId: string,
+  activeTurns: Turn[],
+): ThreadSummary[] {
+  if (threads.some((thread) => thread.id === activeId)) return threads;
+  const title = activeTurns[0]?.prompt ?? "New chat";
+  return [{ id: activeId, title }, ...threads];
 }
-
-const mainStyle = {
-  maxWidth: 720,
-  margin: "40px auto",
-  padding: "0 16px",
-  fontFamily: "system-ui, sans-serif",
-} as const;
-
-const transcriptStyle = {
-  marginTop: 24,
-  display: "flex",
-  flexDirection: "column",
-  gap: 32,
-} as const;
-
-const promptStyle = {
-  margin: "0 0 12px",
-  fontWeight: 600,
-} as const;
