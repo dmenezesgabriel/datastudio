@@ -1,6 +1,6 @@
 """Proxy node that brackets a graph node with running/done progress steps.
 
-Mirrors the ``ObservableNode`` proxy pattern: wraps a ChatNode so the checklist gets a
+Mirrors the ``ObservableNode`` proxy pattern: wraps a ``TypedChatNode`` so the checklist gets a
 ``running`` step when the node starts and a ``done`` step when it returns, without the
 node knowing about progress. Applied only to the sequential pipeline nodes — the
 parallel ``build_widget`` workers report their own per-widget steps.

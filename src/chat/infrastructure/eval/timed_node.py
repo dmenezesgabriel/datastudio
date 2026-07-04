@@ -2,14 +2,10 @@
 
 from collections.abc import Mapping
 from time import perf_counter
-from typing import Protocol
 
 from chat.infrastructure.eval.metrics import MetricsRecorder
 from chat.infrastructure.graph.chat_state import ChatState
-
-
-class _ChatNode(Protocol):
-    def __call__(self, state: ChatState) -> Mapping[str, object]: ...
+from chat.infrastructure.graph.types import TypedChatNode
 
 
 class TimedNode:
@@ -24,7 +20,7 @@ class TimedNode:
         result = node(state)  # latency recorded, current_node set during inner call
     """
 
-    def __init__(self, name: str, inner: _ChatNode, recorder: MetricsRecorder) -> None:
+    def __init__(self, name: str, inner: TypedChatNode, recorder: MetricsRecorder) -> None:
         """Wire the node name, inner callable, and metrics recorder."""
         self._name = name
         self._inner = inner

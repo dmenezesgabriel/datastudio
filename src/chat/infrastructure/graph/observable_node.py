@@ -3,9 +3,10 @@
 import logging
 from collections.abc import Mapping
 from time import perf_counter
-from typing import Protocol, cast
+from typing import cast
 
 from chat.infrastructure.graph.chat_state import ChatState
+from chat.infrastructure.graph.types import TypedChatNode
 from shared.domain.value_objects.query_result import QueryResult
 from shared.infrastructure.logging.logger_factory import get_logger
 
@@ -22,10 +23,6 @@ _CHANNEL_COUNT_KEYS: dict[str, str] = {
     "widget_views": "view_patch_count",
     "widget_specs": "planned_widget_count",
 }
-
-
-class _ChatNode(Protocol):
-    def __call__(self, state: ChatState) -> Mapping[str, object]: ...
 
 
 def _summarize_field(key: str, value: object) -> tuple[str, object]:
@@ -65,7 +62,7 @@ def _extract_log_safe_fields(result: Mapping[str, object]) -> dict[str, object]:
 
 
 class ObservableNode:
-    """Proxy that wraps any ChatNode and emits one structured log event per call.
+    """Proxy that wraps any ``TypedChatNode`` and emits one structured log event per call.
 
     Records wall-clock duration, propagates ``request_id`` from ChatState, and
     emits WARNING when the result contains a non-empty ``sql_error`` so log
@@ -77,7 +74,7 @@ class ObservableNode:
         # → logs generate_sql.complete with request_id and duration_ms
     """
 
-    def __init__(self, name: str, inner: _ChatNode) -> None:
+    def __init__(self, name: str, inner: TypedChatNode) -> None:
         """Wire the node name and the inner callable."""
         self._name = name
         self._inner = inner

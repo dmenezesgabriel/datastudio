@@ -5,11 +5,10 @@ from langchain_core.language_models import BaseChatModel
 from chat.infrastructure.eval.metrics import MetricsRecorder
 from chat.infrastructure.eval.timed_node import TimedNode
 from chat.infrastructure.graph.text2sql_graph import (
-    ChatNode,
     build_text2sql_nodes,
     wire_text2sql_graph,
 )
-from chat.infrastructure.graph.types import TypedChatGraph
+from chat.infrastructure.graph.types import TypedChatGraph, TypedChatNode
 from shared.application.ports.sql_engine_port import SqlEnginePort
 
 
@@ -34,7 +33,7 @@ def build_eval_graph(
         graph.invoke({"question": "How many events?", "history": []}, config={"callbacks": [cb]})
     """
     nodes = build_text2sql_nodes(chat_model, sql_engine, format_chat_model, api_base)
-    timed: dict[str, ChatNode] = {
+    timed: dict[str, TypedChatNode] = {
         name: TimedNode(name, node, recorder) for name, node in nodes.items()
     }
     return wire_text2sql_graph(timed)

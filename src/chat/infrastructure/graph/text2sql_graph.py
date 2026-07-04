@@ -1,7 +1,7 @@
 """LangGraph assembly for the text-to-SQL dashboard pipeline (orchestrator–workers)."""
 
 from collections.abc import Mapping
-from typing import Protocol, cast
+from typing import cast
 
 from langchain_core.language_models import BaseChatModel
 from langgraph.graph import END, START, StateGraph  # pyright: ignore[reportMissingTypeStubs]
@@ -26,7 +26,7 @@ from chat.infrastructure.graph.response_content_extractor_factory import (
 from chat.infrastructure.graph.stream_writer_progress_reporter import (
     StreamWriterProgressReporter,
 )
-from chat.infrastructure.graph.types import TypedChatGraph
+from chat.infrastructure.graph.types import TypedChatGraph, TypedChatNode
 from shared.application.ports.sql_engine_port import SqlEnginePort
 
 # User-facing checklist copy for each sequential pipeline node (the parallel
@@ -39,17 +39,6 @@ _STEP_LABELS: dict[str, str] = {
     "answer_text": "Answering",
     "compose_narrative": "Writing the summary",
 }
-
-
-class ChatNode(Protocol):
-    """Structural contract for a callable that accepts ChatState and returns a partial state dict.
-
-    Each graph node implements this protocol.
-    """
-
-    def __call__(self, state: ChatState) -> Mapping[str, object]:
-        """Process state and return a partial update dict."""
-        ...
 
 
 def fan_out_widgets(state: ChatState) -> list[Send]:
@@ -107,16 +96,16 @@ def build_text2sql_graph(
 
 
 def _instrument_nodes(
-    nodes: Mapping[str, ChatNode], reporter: ProgressReporter
-) -> dict[str, ChatNode]:
+    nodes: Mapping[str, TypedChatNode], reporter: ProgressReporter
+) -> dict[str, TypedChatNode]:
     """Wrap each node for observability, and each sequential node for checklist progress.
 
     ``build_widget`` is excluded from ProgressNode: its N parallel workers would each
     report the same step id, so they report their own per-widget steps instead.
     """
-    observed: dict[str, ChatNode] = {}
+    observed: dict[str, TypedChatNode] = {}
     for name, node in nodes.items():
-        wrapped: ChatNode = ObservableNode(name, node)
+        wrapped: TypedChatNode = ObservableNode(name, node)
         if name in _STEP_LABELS:
             wrapped = ProgressNode(name, _STEP_LABELS[name], reporter, wrapped)
         observed[name] = wrapped
@@ -129,7 +118,7 @@ def build_text2sql_nodes(
     format_chat_model: BaseChatModel | None = None,
     api_base: str | None = None,
     reporter: ProgressReporter | None = None,
-) -> dict[str, ChatNode]:
+) -> dict[str, TypedChatNode]:
     """Builds the named, unwrapped pipeline nodes for the text2sql graph.
 
     Exposed so the eval harness can wrap these nodes (e.g. in TimedNode) before
@@ -164,8 +153,8 @@ def build_text2sql_nodes(
 _NODE_RETRY_POLICY = RetryPolicy(max_attempts=3)
 
 
-def wire_text2sql_graph(nodes: Mapping[str, ChatNode]) -> TypedChatGraph:
-    """Wires the named ChatNode callables into a compiled orchestrator–workers graph.
+def wire_text2sql_graph(nodes: Mapping[str, TypedChatNode]) -> TypedChatGraph:
+    """Wires the named TypedChatNode callables into a compiled orchestrator–workers graph.
 
     Discover the schema once, then ``plan_widgets`` classifies the turn. A ``"text"``
     question routes to ``answer_text`` and ends. Otherwise it plans 1..N widgets and

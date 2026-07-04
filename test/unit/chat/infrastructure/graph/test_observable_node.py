@@ -11,7 +11,7 @@ from shared.infrastructure.logging.json_formatter import JsonFormatter
 
 
 class _StubNode:
-    """A ChatNode whose output is a fixed partial-state dict."""
+    """A graph node whose output is a fixed partial-state dict."""
 
     def __init__(self, result: dict[str, object]) -> None:
         self._result = result
