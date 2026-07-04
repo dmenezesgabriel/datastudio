@@ -191,8 +191,9 @@ def _to_result(state: ChatState) -> Text2SqlResult:
     response = state["response"]
     results = [r for r in _as_list(data.get("widget_results")) if isinstance(r, WidgetResult)]
     sql = "; ".join(r.sql for r in results)
+    sql_by_widget = {r.widget_id: r.sql for r in results if r.sql}
     lines = [ln for ln in _as_list(data.get("widget_views")) if isinstance(ln, str)]
-    view = compile_view_tree(response, lines, "") if lines else narrative_tree(response)
+    view = compile_view_tree(response, lines, sql_by_widget) if lines else narrative_tree(response)
     return Text2SqlResult(response=response, sql_query=sql, view=view)
 
 

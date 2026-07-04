@@ -11,6 +11,7 @@ import {
   Markdown,
   Stack,
 } from "./components/Panels";
+import { WidgetFrame } from "./components/WidgetFrame";
 import { formatCell, formatLabel, formatValue } from "./format";
 
 // Bind each catalogue component to its React implementation. Data props arrive
@@ -47,6 +48,9 @@ export const { registry } = defineRegistry(catalog, {
     Stack: ({ children }) => <Stack>{children}</Stack>,
     KpiRow: ({ children }) => <KpiRow>{children}</KpiRow>,
     Grid: ({ children }) => <Grid>{children}</Grid>,
+    // Backend-owned wrapper: receives both the widget's SQL (prop) and its rendered
+    // visualization (children) — see BaseComponentProps in @json-render/react.
+    WidgetFrame: ({ props, children }) => <WidgetFrame sql={props.sql}>{children}</WidgetFrame>,
     Markdown: ({ props }) => <Markdown text={props.text} />,
     KpiStat: ({ props }) => {
       const rows = asRows(props.data);

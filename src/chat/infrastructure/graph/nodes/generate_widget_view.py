@@ -140,7 +140,7 @@ def namespace_widget_patches(lines: list[str], widget_id: str) -> list[str]:
         if path == _ROOT_CHILDREN:
             child = patch.get("value")
             if isinstance(child, str):
-                out.append(_patch("add", f"/elements/{region}/children/-", f"{widget_id}-{child}"))
+                out.extend(_frame_patches(widget_id, f"{widget_id}-{child}", region))
             continue
         parts = path.split("/")
         if len(parts) < 3 or parts[1] != "elements" or parts[2] == "root":
@@ -153,6 +153,25 @@ def namespace_widget_patches(lines: list[str], widget_id: str) -> list[str]:
 
 def _patch(op: str, path: str, value: object) -> str:
     return json.dumps({"op": op, "path": path, "value": value})
+
+
+def _frame_patches(widget_id: str, child_id: str, region: str) -> list[str]:
+    """Wrap a widget's leaf in a WidgetFrame (holds its SQL) placed in its F-layout region.
+
+    The frame is backend-owned — the model authors only the leaf visualization. Wrapping
+    every widget uniformly lets the serializer fill the SQL with one `/props/sql` patch (no
+    per-widget special-casing); the ``sql`` prop starts empty and is set when SQL is ready.
+    """
+    frame_id = f"{widget_id}-frame"
+    frame: dict[str, object] = {
+        "type": "WidgetFrame",
+        "props": {"sql": ""},
+        "children": [child_id],
+    }
+    return [
+        _patch("add", f"/elements/{frame_id}", frame),
+        _patch("add", f"/elements/{region}/children/-", frame_id),
+    ]
 
 
 def _fallback_table_lines() -> list[str]:

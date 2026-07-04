@@ -16,7 +16,7 @@ from shared.domain.value_objects.query_result import QueryResult
 # Single source both the view checks and the wire-integrity check validate element types
 # against, so "in-catalog" means the same thing everywhere.
 CATALOG_COMPONENTS = frozenset(
-    {"Stack", "KpiRow", "Grid", "Markdown", "KpiStat", "ChartJs", "DataTable"}
+    {"Stack", "KpiRow", "Grid", "WidgetFrame", "Markdown", "KpiStat", "ChartJs", "DataTable"}
 )
 
 

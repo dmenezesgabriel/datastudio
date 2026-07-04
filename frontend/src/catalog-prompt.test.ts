@@ -14,9 +14,10 @@ const PROMPT_PATH = resolve(
   "../../src/chat/infrastructure/graph/prompts/catalog_prompt.generated.txt",
 );
 
-// Layout containers are backend-assembled, not authored per-widget, so gen-catalog-prompt
-// omits them from the authorable vocabulary. Keep this in sync with LAYOUT_CONTAINERS there.
-const LAYOUT_CONTAINERS = new Set(["Stack", "KpiRow", "Grid"]);
+// Backend-owned components (F-layout containers + the per-widget WidgetFrame) are not
+// authored per-widget, so gen-catalog-prompt omits them from the authorable vocabulary.
+// Keep this in sync with LAYOUT_CONTAINERS there.
+const LAYOUT_CONTAINERS = new Set(["Stack", "KpiRow", "Grid", "WidgetFrame"]);
 
 test("generated catalog prompt is in sync with the catalog", () => {
   const prompt = readFileSync(PROMPT_PATH, "utf8");

@@ -33,13 +33,13 @@ class DashboardViewBuilder(TurnViewBuilder):
         """Assemble the persistable dashboard tree from one answered question's events."""
         narrative = _last_narrative(events)
         view_lines = _view_patch_lines(events)
-        sql = _combined_sql(events)
+        sql_by_widget = _sql_by_widget(events)
         state = {
             e.widget_id: state_value(e.result) for e in events if isinstance(e, WidgetDataReady)
         }
         if not view_lines:
             return narrative_tree(narrative)  # narrative-only answer (no dashboard)
-        tree = compile_view_tree(narrative, view_lines, sql)
+        tree = compile_view_tree(narrative, view_lines, sql_by_widget)
         return tree.model_copy(update={"state": state})
 
 
@@ -66,6 +66,6 @@ def _last_narrative(events: Sequence[ChatStreamEvent]) -> str:
     return texts[-1] if texts else ""
 
 
-def _combined_sql(events: Sequence[ChatStreamEvent]) -> str:
-    """Join the per-widget SQL into one disclosure block (empty when none ran)."""
-    return "\n\n".join(e.sql_query for e in events if isinstance(e, SqlReady) and e.sql_query)
+def _sql_by_widget(events: Sequence[ChatStreamEvent]) -> dict[str, str]:
+    """Map each widget id to the SQL that produced it, for its frame's disclosure toggle."""
+    return {e.widget_id: e.sql_query for e in events if isinstance(e, SqlReady) and e.sql_query}

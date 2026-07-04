@@ -15,20 +15,20 @@ from shared.domain.value_objects.query_result import QueryResult
 
 
 def _chart_line(widget_id: str) -> str:
-    # A widget's view arrives as ONE ViewPatchLine holding TWO newline-joined patches:
-    # add the element, then append it to the root's children (as the real graph emits).
-    element = {
-        "type": "ChartJs",
-        "props": {"data": {"$state": f"/{widget_id}/rows"}},
-        "children": [],
-    }
-    add_element = json.dumps(
-        {"op": "add", "path": f"/elements/{widget_id}-chart", "value": element}
+    # A widget's view arrives as ONE ViewPatchLine holding the newline-joined patches the
+    # graph emits (see namespace_widget_patches): add the leaf, wrap it in a WidgetFrame,
+    # and place the frame in the grid region.
+    leaf = {"type": "ChartJs", "props": {"data": {"$state": f"/{widget_id}/rows"}}, "children": []}
+    frame = {"type": "WidgetFrame", "props": {"sql": ""}, "children": [f"{widget_id}-chart"]}
+    return "\n".join(
+        [
+            json.dumps({"op": "add", "path": f"/elements/{widget_id}-chart", "value": leaf}),
+            json.dumps({"op": "add", "path": f"/elements/{widget_id}-frame", "value": frame}),
+            json.dumps(
+                {"op": "add", "path": "/elements/grid/children/-", "value": f"{widget_id}-frame"}
+            ),
+        ]
     )
-    add_child = json.dumps(
-        {"op": "add", "path": "/elements/root/children/-", "value": f"{widget_id}-chart"}
-    )
-    return add_element + "\n" + add_child
 
 
 def _dashboard_events() -> list[ChatStreamEvent]:
@@ -46,10 +46,11 @@ class TestDashboardViewBuilder:
     def test_builds_widget_element_bound_to_persisted_state(self) -> None:
         # Act
         view = DashboardViewBuilder().build(_dashboard_events())
-        # Assert — the widget element is present, wired into the root, and its $state data
-        # is persisted alongside (multi-patch view line must be split, not dropped)
+        # Assert — the widget element is present, wrapped in its frame in the grid, and its
+        # $state data is persisted alongside (multi-patch view line must be split, not dropped)
         assert "widget-0-chart" in view.elements
-        assert "widget-0-chart" in view.elements["root"].children
+        assert view.elements["widget-0-frame"].children == ["widget-0-chart"]
+        assert "widget-0-frame" in view.elements["grid"].children
         assert view.state == {
             "widget-0": {
                 "columns": ["month", "n"],
@@ -57,12 +58,15 @@ class TestDashboardViewBuilder:
             }
         }
 
-    def test_includes_narrative_and_sql_disclosure(self) -> None:
+    def test_narrative_present_and_sql_set_on_the_widget_frame(self) -> None:
         # Act
         view = DashboardViewBuilder().build(_dashboard_events())
-        # Assert
+        # Assert — SQL rides the widget's frame prop (its toggle), not a separate element
         assert view.elements["narrative"].props.get("text") == "Two months."
-        assert any("```sql" in str(e.props.get("text", "")) for e in view.elements.values())
+        assert (
+            view.elements["widget-0-frame"].props["sql"]
+            == "SELECT month, COUNT(*) n FROM t GROUP BY 1"
+        )
 
     def test_narrative_only_when_no_widgets(self) -> None:
         # Arrange — a plain answer with no view patches

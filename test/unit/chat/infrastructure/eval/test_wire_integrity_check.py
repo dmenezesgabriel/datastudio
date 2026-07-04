@@ -28,6 +28,21 @@ def _child_line(child_id: str) -> str:
     return json.dumps({"op": "add", "path": "/elements/root/children/-", "value": child_id})
 
 
+def _frame_lines(widget_id: str, region: str = "kpi-row") -> list[str]:
+    """Wrap the widget's leaf in its WidgetFrame and place the frame in a region.
+
+    Mirrors what namespace_widget_patches emits, so the frame exists when the SqlReady
+    event replaces its ``sql`` prop (as it does on the real wire).
+    """
+    frame = {"type": "WidgetFrame", "props": {"sql": ""}, "children": [f"{widget_id}-kpi"]}
+    return [
+        json.dumps({"op": "add", "path": f"/elements/{widget_id}-frame", "value": frame}),
+        json.dumps(
+            {"op": "add", "path": f"/elements/{region}/children/-", "value": f"{widget_id}-frame"}
+        ),
+    ]
+
+
 def _state(results: list[WidgetResult], views: list[str], response: str = "Answer.") -> ChatState:
     raw: dict[str, Any] = {
         "widget_results": results,
@@ -37,14 +52,14 @@ def _state(results: list[WidgetResult], views: list[str], response: str = "Answe
     return raw  # type: ignore[return-value]
 
 
-def _widget(widget_id: str, result: QueryResult) -> WidgetResult:
-    return WidgetResult(widget_id=widget_id, title="Total", result=result, sql="SELECT 42 AS n")
+def _widget(widget_id: str, result: QueryResult, sql: str = "SELECT 42 AS n") -> WidgetResult:
+    return WidgetResult(widget_id=widget_id, title="Total", result=result, sql=sql)
 
 
 class TestWireIntegrityValid:
     def test_valid_stream_passes(self) -> None:
         result = QueryResult(columns=["n"], rows=[(42,)], row_count=1)
-        views = [_kpi_line("widget-0"), _child_line("widget-0-kpi")]
+        views = [_kpi_line("widget-0"), *_frame_lines("widget-0")]
         check = WireIntegrityCheck().evaluate(_state([_widget("widget-0", result)], views))
         assert check["passed"] is True
         assert check["type"] == "wire_integrity"
@@ -54,7 +69,7 @@ class TestWireIntegrityValid:
         result = QueryResult(
             columns=["day", "amount"], rows=[(date(2024, 1, 1), Decimal("1.50"))], row_count=1
         )
-        views = [_kpi_line("widget-0"), _child_line("widget-0-kpi")]
+        views = [_kpi_line("widget-0"), *_frame_lines("widget-0")]
         check = WireIntegrityCheck().evaluate(_state([_widget("widget-0", result)], views))
         assert check["passed"] is True
 
@@ -63,7 +78,8 @@ class TestWireIntegrityBites:
     def test_non_catalogue_component_type_fails(self) -> None:
         result = QueryResult(columns=["n"], rows=[(42,)], row_count=1)
         views = [_kpi_line("widget-0", component="BadWidget"), _child_line("widget-0-kpi")]
-        check = WireIntegrityCheck().evaluate(_state([_widget("widget-0", result)], views))
+        # sql="" so no SqlReady frame patch — the non-catalogue leaf is the isolated failure.
+        check = WireIntegrityCheck().evaluate(_state([_widget("widget-0", result, sql="")], views))
         assert check["passed"] is False
         assert "non-catalogue" in check["reasoning"]
 
@@ -77,7 +93,8 @@ class TestWireIntegrityBites:
     def test_dangling_child_reference_fails(self) -> None:
         result = QueryResult(columns=["n"], rows=[(42,)], row_count=1)
         views = [_child_line("ghost")]  # references an element that is never added
-        check = WireIntegrityCheck().evaluate(_state([_widget("widget-0", result)], views))
+        # sql="" so no SqlReady frame patch — the dangling child is the isolated failure.
+        check = WireIntegrityCheck().evaluate(_state([_widget("widget-0", result, sql="")], views))
         assert check["passed"] is False
         assert "missing child" in check["reasoning"]
 

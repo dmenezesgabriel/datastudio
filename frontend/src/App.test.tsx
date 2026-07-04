@@ -87,6 +87,43 @@ test("renders a widget from streamed /state — one chat request, no /api/result
   expect(body.context.conversation_id).toBeTruthy();
 });
 
+// A grid widget the way the real serializer emits it: rows as /state, the DataTable leaf,
+// the WidgetFrame wrapping it in the grid, and the SQL replaced onto the frame's prop.
+const WIDGET_FRAME_LINES = [
+  '{"op":"add","path":"/root","value":"root"}',
+  '{"op":"add","path":"/elements/root","value":{"type":"Stack","props":{},"children":["narrative"]}}',
+  '{"op":"add","path":"/elements/narrative","value":{"type":"Markdown","props":{"text":"Revenue by month."},"children":[]}}',
+  '{"op":"add","path":"/elements/kpi-row","value":{"type":"KpiRow","props":{},"children":[]}}',
+  '{"op":"add","path":"/elements/root/children/-","value":"kpi-row"}',
+  '{"op":"add","path":"/elements/grid","value":{"type":"Grid","props":{},"children":[]}}',
+  '{"op":"add","path":"/elements/root/children/-","value":"grid"}',
+  '{"op":"add","path":"/state/widget-0","value":{"columns":["month","revenue"],"rows":[{"month":"Jan","revenue":100}]}}',
+  '{"op":"add","path":"/elements/widget-0-table","value":{"type":"DataTable","props":{"data":{"$state":"/widget-0"}},"children":[]}}',
+  '{"op":"add","path":"/elements/widget-0-frame","value":{"type":"WidgetFrame","props":{"sql":""},"children":["widget-0-table"]}}',
+  '{"op":"add","path":"/elements/grid/children/-","value":"widget-0-frame"}',
+  '{"op":"replace","path":"/elements/widget-0-frame/props/sql","value":"SELECT month, revenue FROM t"}',
+];
+
+test("renders a widget's Preview/SQL toggle and swaps its body to the SQL", async () => {
+  // Arrange
+  vi.stubGlobal("fetch", routeFetch(() => streamResponse(WIDGET_FRAME_LINES)));
+  render(<App />);
+
+  // Act — ask a question that streams a framed widget
+  fireEvent.change(screen.getByPlaceholderText(/Ask a question/i), {
+    target: { value: "Revenue by month" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: /ask/i }));
+
+  // Assert — Preview is the default: the widget's data shows; toggling reveals its SQL and
+  // hides the data. This drives the real json-render Renderer + registry (WidgetFrame gets
+  // both its `sql` prop and its rendered child), not the component in isolation.
+  await waitFor(() => expect(screen.getByText("Jan")).toBeTruthy());
+  fireEvent.click(screen.getByRole("button", { name: "SQL" }));
+  expect(screen.getByText("SELECT month, revenue FROM t")).toBeTruthy();
+  expect(screen.queryByText("Jan")).toBeNull();
+});
+
 // A stream that emits two progress patches, then stays open until `release()` is called,
 // so the assertion runs while `isStreaming` is still true and the checklist is mounted.
 // Progress rides the /state/progress key (json-render only applies /state + /elements).

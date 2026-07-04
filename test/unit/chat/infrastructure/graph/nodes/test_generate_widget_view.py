@@ -54,11 +54,20 @@ class TestNamespaceWidgetPatches:
         ]
         out = [json.loads(line) for line in namespace_widget_patches(lines, "widget-0")]
         assert out[0]["path"] == "/elements/widget-0-chart"
-        # a chart is placed in the grid region, not directly under root
+        # the leaf is wrapped in a WidgetFrame (carrying its SQL) placed in the grid region
         assert out[1] == {
             "op": "add",
+            "path": "/elements/widget-0-frame",
+            "value": {
+                "type": "WidgetFrame",
+                "props": {"sql": ""},
+                "children": ["widget-0-chart"],
+            },
+        }
+        assert out[2] == {
+            "op": "add",
             "path": "/elements/grid/children/-",
-            "value": "widget-0-chart",
+            "value": "widget-0-frame",
         }
 
     def test_routes_a_kpistat_into_the_headline_band(self) -> None:
@@ -69,8 +78,17 @@ class TestNamespaceWidgetPatches:
         out = [json.loads(line) for line in namespace_widget_patches(lines, "widget-3")]
         assert out[1] == {
             "op": "add",
+            "path": "/elements/widget-3-frame",
+            "value": {
+                "type": "WidgetFrame",
+                "props": {"sql": ""},
+                "children": ["widget-3-k"],
+            },
+        }
+        assert out[2] == {
+            "op": "add",
             "path": "/elements/kpi-row/children/-",
-            "value": "widget-3-k",
+            "value": "widget-3-frame",
         }
 
     def test_rewrites_state_binding_to_widget_path(self) -> None:
@@ -102,7 +120,9 @@ class TestGenerateWidgetView:
         lines = node.author("widget-0", "Revenue", _result())
         assert json.loads(lines[0])["path"] == "/elements/widget-0-chart"
         assert json.loads(lines[0])["value"]["props"]["data"] == {"$state": "/widget-0/rows"}
-        assert json.loads(lines[1])["value"] == "widget-0-chart"
+        # the leaf is wrapped in a frame (lines[1]) that is placed in its region (lines[2])
+        assert json.loads(lines[1])["value"]["type"] == "WidgetFrame"
+        assert json.loads(lines[2])["value"] == "widget-0-frame"
 
     def test_falls_back_to_namespaced_data_table(self) -> None:
         node = GenerateWidgetView(FakeViewModel("sorry"), "prompt", PlainTextExtractor())  # type: ignore[arg-type]

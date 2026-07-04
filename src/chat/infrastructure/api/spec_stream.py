@@ -155,14 +155,16 @@ class SpecStreamSerializer:
         return lines + [_patch_line("replace", f"/elements/{_NARRATIVE_ID}/props/text", text)]
 
     def _sql_lines(self, widget_id: str, sql_query: str) -> list[str]:
-        """Emit a per-widget SQL-disclosure Markdown element (skipped when empty)."""
+        """Fill the widget frame's ``sql`` prop (skipped when empty).
+
+        The frame element was already added with the widget's view patches (they precede
+        the SqlReady event), so this only replaces its ``sql`` — mirroring how the narrative
+        text is replaced in place (see ``_narrative_lines``). An empty query leaves the frame
+        with no SQL, and the frontend then shows no toggle.
+        """
         if not sql_query:
             return []
-        lines = self._root_init_lines()
-        lines += self._add_element_lines(
-            f"{widget_id}-sql", build_markdown_element(f"```sql\n{sql_query}\n```")
-        )
-        return lines
+        return [_patch_line("replace", f"/elements/{widget_id}-frame/props/sql", sql_query)]
 
     def _root_init_lines(self) -> list[str]:
         """Emit the root Stack + a leading (empty) narrative element exactly once.

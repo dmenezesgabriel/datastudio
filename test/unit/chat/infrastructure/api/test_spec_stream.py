@@ -174,13 +174,14 @@ class TestViewAndSql:
         assert any("kpi-row" in ln for ln in first)
         assert not any("kpi-row" in ln for ln in second)  # no duplicate seeding
 
-    def test_sql_ready_emits_per_widget_fenced_markdown(self) -> None:
+    def test_sql_ready_sets_the_widget_frame_sql_prop(self) -> None:
+        # The frame is added with the widget's view patches (they precede SqlReady), so the
+        # SQL only replaces the frame's prop — mirroring how the narrative text is replaced.
         serializer = SpecStreamSerializer()
-        _patches(serializer, NarrativeReady(text="x"))
         patches = _patches(serializer, SqlReady(widget_id="widget-1", sql_query="SELECT 1"))
-        sql = next(p for p in patches if p["path"] == "/elements/widget-1-sql")
-        assert "```sql" in sql["value"]["props"]["text"]  # type: ignore[index]
-        assert "SELECT 1" in sql["value"]["props"]["text"]  # type: ignore[index]
+        assert patches == [
+            {"op": "replace", "path": "/elements/widget-1-frame/props/sql", "value": "SELECT 1"}
+        ]
 
     def test_empty_sql_emits_nothing(self) -> None:
         serializer = SpecStreamSerializer()

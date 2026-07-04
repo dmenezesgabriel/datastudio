@@ -42,10 +42,12 @@ ANTI-PATTERNS (never do these): a pie with more than 5 slices (use bar or a tabl
 chart for unordered categories; a KpiStat for a multi-row result; two series of different
 units or wildly different scales on one chart (one axis can't serve both — pick one).`;
 
-// Layout containers are assembled deterministically by the backend into the F-layout
-// (root Stack, KpiRow band, Grid region) — the per-widget author only emits ONE leaf
-// visualization, so they are omitted from the authorable vocabulary below.
-const LAYOUT_CONTAINERS = new Set(["Stack", "KpiRow", "Grid"]);
+// Backend-owned components, not authored per-widget: the F-layout containers (root
+// Stack, KpiRow band, Grid region) the backend assembles deterministically, plus the
+// WidgetFrame the backend wraps each widget in (it carries the widget's SQL). The
+// per-widget author only emits ONE leaf visualization, so these are omitted from the
+// authorable vocabulary below.
+const LAYOUT_CONTAINERS = new Set(["Stack", "KpiRow", "Grid", "WidgetFrame"]);
 
 const componentNames = catalog.componentNames as readonly string[];
 const components = catalog.data.components as Record<

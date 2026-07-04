@@ -28,6 +28,14 @@ export const catalog = defineCatalog(schema, {
       description: "A responsive grid region for a dashboard's charts and detail tables.",
       example: {},
     },
+    WidgetFrame: {
+      props: z.object({ sql: z.string() }),
+      description:
+        "Backend-owned wrapper that pairs a widget's visualization (its single child) with " +
+        "the SQL that produced it, exposing a Preview/SQL toggle. Never authored by the model — " +
+        "the backend wraps each widget in one; excluded from the authorable vocabulary.",
+      example: { sql: "" },
+    },
     Markdown: {
       props: z.object({ text: z.string() }),
       description: "A short note rendered as markdown text.",

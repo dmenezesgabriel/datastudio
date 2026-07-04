@@ -226,6 +226,50 @@ body {
   width: 100%;
 }
 
+/* Per-widget frame: stacks a top-left Preview/SQL toggle above the widget body and
+   swaps between the visualization and its SQL. Layout-neutral (a plain grid child of
+   .kpi-row / .dash-grid); grid widgets are borderless and KPI tiles carry their own
+   border, so the frame adds none of its own. */
+.widget-frame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.widget-frame__body {
+  min-width: 0;
+}
+
+/* Segmented toggle, pinned to the widget's top-left corner. */
+.widget-frame__toggle {
+  display: inline-flex;
+  align-self: flex-start;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.widget-frame__tab {
+  padding: 2px var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  border: 0;
+  cursor: pointer;
+}
+
+.widget-frame__tab + .widget-frame__tab {
+  border-left: 1px solid var(--color-border);
+}
+
+/* aria-pressed carries selection so the active mode reads without relying on color. */
+.widget-frame__tab[aria-pressed="true"] {
+  color: var(--color-accent);
+  background: var(--color-accent-subtle);
+  font-weight: 500;
+}
+
 .kpi-stat {
   display: flex;
   flex-direction: column;

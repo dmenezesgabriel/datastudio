@@ -28,16 +28,18 @@ def narrative_tree(narrative: str) -> RenderTree:
     return RenderTree(root="root", elements=elements)
 
 
-def compile_view_tree(narrative: str, view_lines: list[str], sql_query: str) -> RenderTree:
+def compile_view_tree(
+    narrative: str, view_lines: list[str], sql_by_widget: dict[str, str]
+) -> RenderTree:
     """Compile LLM-authored SpecStream lines into a RenderTree (sync CLI/eval path).
 
     Builds the deterministic F-layout base (root Stack over narrative → KpiRow band →
-    Grid), applies each JSON-Patch line (widgets namespace themselves into the band or
-    the grid), then appends the SQL disclosure — mirroring what the streaming serializer
-    emits, so the batch and streaming views stay equivalent.
+    Grid), applies each JSON-Patch line (each widget wraps its leaf in a WidgetFrame and
+    namespaces itself into the band or the grid), then fills each frame's SQL — mirroring
+    what the streaming serializer emits, so the batch and streaming views stay equivalent.
 
     Example:
-        tree = compile_view_tree("42 events.", ['{"op":"add",...}'], "SELECT 1")
+        tree = compile_view_tree("42 events.", ['{"op":"add",...}'], {"widget-0": "SELECT 1"})
     """
     elements: dict[str, dict[str, object]] = {
         "root": {"type": "Stack", "props": {}, "children": ["narrative", "kpi-row", "grid"]},
@@ -47,17 +49,21 @@ def compile_view_tree(narrative: str, view_lines: list[str], sql_query: str) -> 
     }
     for line in view_lines:
         _apply_view_patch(elements, line)
-    if sql_query:
-        sql_element = build_markdown_element(f"```sql\n{sql_query}\n```").model_dump()
-        elements["sql"] = cast(dict[str, object], sql_element)
-        _children(elements).append("sql")
+    _set_frame_sql(elements, sql_by_widget)
     return RenderTree(root="root", elements={k: _to_element(v) for k, v in elements.items()})
 
 
-def _children(elements: dict[str, dict[str, object]]) -> list[object]:
-    """Return the root Stack's mutable children list."""
-    children = elements["root"]["children"]
-    return cast(list[object], children) if isinstance(children, list) else []
+def _set_frame_sql(elements: dict[str, dict[str, object]], sql_by_widget: dict[str, str]) -> None:
+    """Set each widget frame's ``sql`` prop (the frame was added by the widget's view patches).
+
+    Mirrors the streaming serializer's per-widget ``/props/sql`` replace, so the batch and
+    streaming views hold SQL identically. A widget whose view produced no frame is skipped.
+    """
+    for widget_id, sql in sql_by_widget.items():
+        frame = elements.get(f"{widget_id}-frame")
+        props = frame.get("props") if isinstance(frame, dict) else None
+        if isinstance(props, dict):
+            cast(dict[str, object], props)["sql"] = sql
 
 
 def _apply_view_patch(elements: dict[str, dict[str, object]], line: str) -> None:
