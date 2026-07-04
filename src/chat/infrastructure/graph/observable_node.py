@@ -20,7 +20,7 @@ _RESPONSE_TRUNCATE_LEN = 500
 # a scalar count under a summary key rather than logged verbatim.
 _CHANNEL_COUNT_KEYS: dict[str, str] = {
     "widget_results": "widget_count",
-    "widget_views": "view_patch_count",
+    "widget_patch_lines": "view_patch_count",
     "widget_specs": "planned_widget_count",
 }
 

@@ -46,7 +46,7 @@ def _frame_lines(widget_id: str, region: str = "kpi-row") -> list[str]:
 def _state(results: list[WidgetResult], views: list[str], response: str = "Answer.") -> ChatState:
     raw: dict[str, Any] = {
         "widget_results": results,
-        "widget_views": views,
+        "widget_patch_lines": views,
         "response": response,
     }
     return raw  # type: ignore[return-value]

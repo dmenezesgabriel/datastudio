@@ -167,7 +167,7 @@ def _widget_events(update: Mapping[str, object]) -> list[ChatStreamEvent]:
     lines, then the SQL disclosure. A failed widget yields only its note view lines.
     """
     results = [r for r in _as_list(update.get("widget_results")) if isinstance(r, WidgetResult)]
-    lines = [ln for ln in _as_list(update.get("widget_views")) if isinstance(ln, str)]
+    lines = [ln for ln in _as_list(update.get("widget_patch_lines")) if isinstance(ln, str)]
     events: list[ChatStreamEvent] = [
         WidgetDataReady(widget_id=r.widget_id, result=r.result) for r in results
     ]
@@ -192,7 +192,7 @@ def _to_result(state: ChatState) -> Text2SqlResult:
     results = [r for r in _as_list(data.get("widget_results")) if isinstance(r, WidgetResult)]
     sql = "; ".join(r.sql for r in results)
     sql_by_widget = {r.widget_id: r.sql for r in results if r.sql}
-    lines = [ln for ln in _as_list(data.get("widget_views")) if isinstance(ln, str)]
+    lines = [ln for ln in _as_list(data.get("widget_patch_lines")) if isinstance(ln, str)]
     view = compile_view_tree(response, lines, sql_by_widget) if lines else narrative_tree(response)
     return Text2SqlResult(response=response, sql_query=sql, view=view)
 

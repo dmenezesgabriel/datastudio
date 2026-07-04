@@ -31,7 +31,7 @@ def _state_for(question: str, response: str) -> Mapping[str, object]:
             "widget_results": [
                 WidgetResult(widget_id="widget-0", title="A", result=result, sql="SELECT 1")
             ],
-            "widget_views": [],
+            "widget_patch_lines": [],
             "response": response,
         },
     )

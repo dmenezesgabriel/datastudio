@@ -77,7 +77,7 @@ class TestBuildText2SqlGraph:
         assert len(result["widget_results"]) == 2
         assert {w.widget_id for w in result["widget_results"]} == {"widget-0", "widget-1"}
         # each widget contributed view patch lines to the shared reducer channel
-        assert result["widget_views"]
+        assert result["widget_patch_lines"]
 
 
 class TestTextBranch:

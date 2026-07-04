@@ -32,7 +32,7 @@ def _widget_chunk(widget_id: str, value: int) -> dict[str, object]:
     line = f'{{"op":"add","path":"/elements/{widget_id}-chart","value":{{"type":"ChartJs"}}}}'
     return {
         "build_widget": {
-            "widget_views": [line],
+            "widget_patch_lines": [line],
             "widget_results": [_widget_result(widget_id, value)],
         }
     }
@@ -141,7 +141,7 @@ class TestStreamFailedWidget:
     def test_failed_widget_yields_only_its_note_view(self) -> None:
         # a build_widget that produced a note (no widget_results) → just the view line
         note = '{"op":"add","path":"/elements/widget-0-note","value":{"type":"Markdown"}}'
-        chunks = [{"build_widget": {"widget_views": [note]}}]
+        chunks = [{"build_widget": {"widget_patch_lines": [note]}}]
         events = _collect(_adapter(FakeStreamingChatGraph(chunks)), "q")
         assert [type(e).__name__ for e in events] == ["ViewPatchLine"]
 

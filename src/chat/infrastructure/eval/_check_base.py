@@ -64,7 +64,7 @@ def widget_results(state: ChatState) -> list[WidgetResult]:
 
 def view_lines(state: ChatState) -> list[str]:
     """Every widget's authored SpecStream patch line, aggregated."""
-    raw = cast(dict[str, object], state).get("widget_views")
+    raw = cast(dict[str, object], state).get("widget_patch_lines")
     items = cast(list[object], raw) if isinstance(raw, list) else []
     return [line for line in items if isinstance(line, str)]
 

@@ -416,7 +416,11 @@ def _state_with_view(view_lines: list[str], query_result: QueryResult) -> ChatSt
     widget = WidgetResult(widget_id="widget-0", title="V", result=query_result, sql="SELECT 1")
     return cast(
         ChatState,
-        {"question": "Revenue by month", "widget_results": [widget], "widget_views": view_lines},
+        {
+            "question": "Revenue by month",
+            "widget_results": [widget],
+            "widget_patch_lines": view_lines,
+        },
     )
 
 
@@ -488,7 +492,7 @@ class TestViewIntegrityCheck:
     def test_passes_vacuously_when_view_lines_but_no_results(self) -> None:
         # kills mutmut_5 (and → or): when view_lines exist but results absent, must still pass
         lines = [_view_line("c", _chart("month", ["revenue"]))]
-        state = cast(ChatState, {"widget_views": lines})  # no widget_results
+        state = cast(ChatState, {"widget_patch_lines": lines})  # no widget_results
         result = ViewIntegrityCheck().evaluate(state)
         assert result["passed"] is True
 
@@ -519,7 +523,9 @@ class TestViewPresentCheck:
     """ViewPresentCheck asserts the LLM-authored view is renderable and in-vocabulary."""
 
     def test_passes_when_a_viz_element_is_present(self) -> None:
-        state = cast(ChatState, {"widget_views": [_view_line("c", _chart("month", ["revenue"]))]})
+        state = cast(
+            ChatState, {"widget_patch_lines": [_view_line("c", _chart("month", ["revenue"]))]}
+        )
         result = ViewPresentCheck().evaluate(state)
         # kills mutmut_33-54: type/value/reasoning mutations in the success return
         assert result["passed"] is True
@@ -529,12 +535,12 @@ class TestViewPresentCheck:
 
     def test_passes_for_the_fallback_data_table(self) -> None:
         table = {"type": "DataTable", "props": {"data": {"$state": "/result"}}, "children": []}
-        state = cast(ChatState, {"widget_views": [_view_line("t", table)]})
+        state = cast(ChatState, {"widget_patch_lines": [_view_line("t", table)]})
         assert ViewPresentCheck().evaluate(state)["passed"] is True
 
     def test_fails_on_unknown_component(self) -> None:
         bogus = {"type": "Spreadsheet", "props": {}, "children": []}
-        state = cast(ChatState, {"widget_views": [_view_line("x", bogus)]})
+        state = cast(ChatState, {"widget_patch_lines": [_view_line("x", bogus)]})
         result = ViewPresentCheck().evaluate(state)
         assert result["passed"] is False
         assert "Spreadsheet" in result["reasoning"]
@@ -544,7 +550,7 @@ class TestViewPresentCheck:
 
     def test_fails_when_only_non_viz_elements(self) -> None:
         markdown = {"type": "Markdown", "props": {"text": "hi"}, "children": []}
-        state = cast(ChatState, {"widget_views": [_view_line("m", markdown)]})
+        state = cast(ChatState, {"widget_patch_lines": [_view_line("m", markdown)]})
         result = ViewPresentCheck().evaluate(state)
         assert result["passed"] is False
         # kills mutmut_40-54: reasoning mutations in the no-viz-element return
@@ -564,7 +570,7 @@ class TestViewPresentCheck:
         # kills _added_elements mutmut_9 (and → or): "typed_text" has "type" as substring;
         # with and→or that string would be appended and crash on .get("type")
         non_elem_line = json.dumps({"op": "add", "path": "/x", "value": "typed_text"})
-        state = cast(ChatState, {"widget_views": [non_elem_line]})
+        state = cast(ChatState, {"widget_patch_lines": [non_elem_line]})
         result = ViewPresentCheck().evaluate(state)
         assert result["passed"] is False
 
@@ -574,7 +580,9 @@ class TestViewContainsCheck:
 
     def test_passes_when_element_type_present(self) -> None:
         # arrange — view_lines add a ChartJs element
-        state = cast(ChatState, {"widget_views": [_view_line("c", _chart("month", ["revenue"]))]})
+        state = cast(
+            ChatState, {"widget_patch_lines": [_view_line("c", _chart("month", ["revenue"]))]}
+        )
         # act
         result = ViewContainsCheck(element_type="ChartJs").evaluate(state)
         # assert
@@ -584,7 +592,7 @@ class TestViewContainsCheck:
     def test_fails_when_element_type_absent(self) -> None:
         # arrange — only a DataTable, no ChartJs
         table = {"type": "DataTable", "props": {"data": {"$state": "/result"}}, "children": []}
-        state = cast(ChatState, {"widget_views": [_view_line("t", table)]})
+        state = cast(ChatState, {"widget_patch_lines": [_view_line("t", table)]})
         # act
         result = ViewContainsCheck(element_type="ChartJs").evaluate(state)
         # assert

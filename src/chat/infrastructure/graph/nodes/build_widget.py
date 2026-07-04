@@ -4,7 +4,7 @@ A ``build_widget`` worker is spawned per planned widget (via ``Send``) and runs 
 widget's own SQL pipeline — generate → execute → repair loop — then authors the
 widget's view. Reusing the existing SQL nodes as plain callables on a local state
 keeps the per-widget pipeline in one place; parallel workers append their outputs to
-the ``widget_views`` / ``widget_results`` reducer channels without clobbering.
+the ``widget_patch_lines`` / ``widget_results`` reducer channels without clobbering.
 """
 
 import json
@@ -91,7 +91,7 @@ class BuildWidget:
     Example:
         worker = BuildWidget(chat_model, engine, view_model, prompt, extractor, reporter)
         worker({"widget": WidgetSpec(...), "schema": "...", "tables": ["events"]})
-        # → {"widget_views": [...], "widget_results": [WidgetResult(...)]}
+        # → {"widget_patch_lines": [...], "widget_results": [WidgetResult(...)]}
     """
 
     def __init__(
@@ -119,10 +119,13 @@ class BuildWidget:
         result = local.get("query_result")
         if not isinstance(result, QueryResult):
             self._reporter.report(ProgressStep(widget.id, label, "failed"))
-            return {"widget_views": _failure_widget(widget)}
+            return {"widget_patch_lines": _failure_widget(widget)}
         views = self._author_view(widget, result)
         self._reporter.report(ProgressStep(widget.id, label, "done"))
-        return {"widget_views": views, "widget_results": [self._result(widget, result, local)]}
+        return {
+            "widget_patch_lines": views,
+            "widget_results": [self._result(widget, result, local)],
+        }
 
     def _run_pipeline(self, widget: WidgetSpec, state: ChatState) -> dict[str, object]:
         """Run the per-widget SQL generate → execute → repair loop on a local state."""

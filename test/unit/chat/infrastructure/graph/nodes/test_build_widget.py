@@ -47,7 +47,7 @@ class TestBuildWidget:
         # Act
         out = _worker(engine)(_state(widget))
         # Assert — view lines are namespaced to widget-1 and bound to its $state
-        lines = [json.loads(line) for line in out["widget_views"]]
+        lines = [json.loads(line) for line in out["widget_patch_lines"]]
         assert lines[0]["path"] == "/elements/widget-1-chart"
         assert lines[0]["value"]["props"]["data"] == {"$state": "/widget-1/rows"}
         # and the widget's executed result is returned for the /state patch + SQL disclosure
@@ -76,6 +76,6 @@ class TestBuildWidget:
         out = _worker(engine)(_state(widget))
         # Assert — a namespaced note element, and no widget_results (nothing to bind/disclose)
         assert out.get("widget_results", []) == []
-        note = json.loads(out["widget_views"][0])
+        note = json.loads(out["widget_patch_lines"][0])
         assert note["path"].startswith("/elements/widget-2-")
         assert note["value"]["type"] == "Markdown"

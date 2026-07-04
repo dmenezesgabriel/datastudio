@@ -35,7 +35,7 @@ class TestLogSafeExtraction:
         qr = QueryResult(columns=["n"], rows=[(1,)], row_count=1)
         result: dict[str, object] = {
             "widget_results": [WidgetResult(widget_id="w0", title="T", result=qr, sql="SELECT 1")],
-            "widget_views": ['{"op":"add","path":"/elements/w0-kpi","value":{}}'],
+            "widget_patch_lines": ['{"op":"add","path":"/elements/w0-kpi","value":{}}'],
         }
         # Act
         with caplog.at_level(logging.INFO):  # type: ignore[attr-defined]

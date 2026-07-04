@@ -56,7 +56,11 @@ def _widget(widget_id: str, result: QueryResult) -> WidgetResult:
 def _state(view_lines: list[str], widgets: list[WidgetResult]) -> ChatState:
     return cast(
         ChatState,
-        {"question": "How does it look?", "widget_views": view_lines, "widget_results": widgets},
+        {
+            "question": "How does it look?",
+            "widget_patch_lines": view_lines,
+            "widget_results": widgets,
+        },
     )
 
 

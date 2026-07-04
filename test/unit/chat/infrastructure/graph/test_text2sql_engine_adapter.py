@@ -35,7 +35,7 @@ class TestText2SqlEngineAdapter:
         graph = FakeChatGraph(
             {
                 "response": "Two widgets.",
-                "widget_views": [_view_line("widget-0"), _view_line("widget-1")],
+                "widget_patch_lines": [_view_line("widget-0"), _view_line("widget-1")],
                 "widget_results": [_widget_result("widget-0"), _widget_result("widget-1")],
             }
         )
