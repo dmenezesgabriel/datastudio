@@ -30,7 +30,7 @@ def _view_line(widget_id: str) -> str:
 
 
 class TestText2SqlEngineAdapter:
-    def test_compiles_aggregated_widget_views_and_combines_sql(self) -> None:
+    def test_compiles_aggregated_widget_views(self) -> None:
         # arrange — the final state holds aggregated widget views + results
         graph = FakeChatGraph(
             {
@@ -43,7 +43,6 @@ class TestText2SqlEngineAdapter:
         result = _adapter(graph).answer("overview")
         # assert
         assert result.narrative == "Two widgets."
-        assert result.sql_query == "SELECT widget-0; SELECT widget-1"
         assert result.view.elements["narrative"].props["text"] == "Two widgets."
         assert "widget-0-chart" in result.view.elements
         assert graph.last_input["question"] == "overview"
@@ -54,7 +53,6 @@ class TestText2SqlEngineAdapter:
         graph = FakeChatGraph({"narrative": "Could not answer."})
         result = _adapter(graph).answer("bad")
         assert result.view.elements["narrative"].props["text"] == "Could not answer."
-        assert result.sql_query == ""
 
 
 class TestText2SqlEngineAdapterTimeout:

@@ -190,17 +190,14 @@ def _to_result(state: ChatState) -> Text2SqlResult:
     state_dict = cast(dict[str, object], state)
     narrative = state["narrative"]
     results = [r for r in _as_list(state_dict.get("widget_results")) if isinstance(r, WidgetResult)]
-    sql = "; ".join(r.sql for r in results)
     sql_by_widget = {r.widget_id: r.sql for r in results if r.sql}
     lines = [ln for ln in _as_list(state_dict.get("widget_patch_lines")) if isinstance(ln, str)]
     view = (
         compile_render_tree(narrative, lines, sql_by_widget) if lines else narrative_tree(narrative)
     )
-    return Text2SqlResult(narrative=narrative, sql_query=sql, view=view)
+    return Text2SqlResult(narrative=narrative, view=view)
 
 
 def _timeout_result() -> Text2SqlResult:
     """Build the graceful result returned when a query exceeds the timeout."""
-    return Text2SqlResult(
-        narrative=_TIMEOUT_NARRATIVE, sql_query="", view=narrative_tree(_TIMEOUT_NARRATIVE)
-    )
+    return Text2SqlResult(narrative=_TIMEOUT_NARRATIVE, view=narrative_tree(_TIMEOUT_NARRATIVE))

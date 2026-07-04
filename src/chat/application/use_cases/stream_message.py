@@ -89,5 +89,5 @@ class StreamMessage:
         if not narrative:
             return  # stream ended without a summary (abnormal) — nothing to remember
         view = self._view_builder.build(events)
-        result = Text2SqlResult(narrative=narrative, sql_query="", view=view)
+        result = Text2SqlResult(narrative=narrative, view=view)
         conversation.append_assistant_message(result)

@@ -9,13 +9,13 @@ from chat.domain.value_objects.render_tree import RenderTree
 class Text2SqlResult:
     """What the text2sql engine returns for a single question.
 
-    Bundles the natural-language answer, the SQL that produced it, and the
-    renderable presentation tree, so the application layer never touches the graph.
+    Bundles the natural-language answer and the renderable presentation tree (which
+    already carries each widget's SQL for disclosure), so the application layer never
+    touches the graph.
 
     Example:
-        Text2SqlResult(narrative="There are 42 events.", sql_query="SELECT ...", view=tree)
+        Text2SqlResult(narrative="There are 42 events.", view=tree)
     """
 
     narrative: str
-    sql_query: str
     view: RenderTree

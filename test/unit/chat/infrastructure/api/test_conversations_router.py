@@ -20,7 +20,7 @@ def _narrative_result(text: str) -> Text2SqlResult:
             "narrative": RenderElement(type="Markdown", props={"text": text}, children=[]),
         },
     )
-    return Text2SqlResult(narrative=text, sql_query="", view=view)
+    return Text2SqlResult(narrative=text, view=view)
 
 
 def _repo_with_one_turn() -> InMemoryConversationRepository:
