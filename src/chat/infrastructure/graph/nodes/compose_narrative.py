@@ -19,9 +19,12 @@ from chat.domain.value_objects.widget import WidgetResult
 from chat.infrastructure.graph.nodes._structured_output import invoke_structured
 
 _SYSTEM_PROMPT = (
-    "You are a data analyst writing a brief dashboard summary. Given a question and the results "
-    "behind each dashboard widget, write 1-3 sentences highlighting the key figures. Do not "
-    "include SQL or raw tables.\n\n"
+    "You are a data analyst writing a brief dashboard summary for a business reader. Given a "
+    "question and the results behind each dashboard widget, write 2-4 sentences that lead with "
+    "the single most important finding, then interpret the main trend or breakdown — the 'so "
+    "what' (e.g. where it is growing or concentrated, a notable peak, a striking share) — not "
+    "just a list of numbers. Ground every claim in the widget results; do not include SQL or "
+    "raw tables, and never speculate beyond the data.\n\n"
     "Number formatting:\n"
     "- Format large integers and decimals with thousands separators (e.g. 1,234,567 or "
     "13,591,643.70); use exactly two decimals for monetary values.\n"
