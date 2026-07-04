@@ -91,21 +91,21 @@ def resolve_model_config(
 
 
 def invoke_graph(graph: TypedChatGraph, message: str, *, timeout_s: float | None = None) -> str:
-    """Invokes the compiled LangGraph with a user question and returns the response.
+    """Invokes the compiled LangGraph with a user question and returns the narrative.
 
     Delegates to Text2SqlEngineAdapter so the timeout/fallback logic lives in one
     place shared with the API.
 
     Example:
-        response = invoke_graph(graph, "How many events were there?", timeout_s=120.0)
+        narrative = invoke_graph(graph, "How many events were there?", timeout_s=120.0)
     """
-    return Text2SqlEngineAdapter(graph, timeout_s=timeout_s).answer(message).response
+    return Text2SqlEngineAdapter(graph, timeout_s=timeout_s).answer(message).narrative
 
 
 def run_non_interactive(
     message: str, graph: TypedChatGraph, timeout_s: float | None = None
 ) -> None:
-    """Sends a single message, prints the response, and returns.
+    """Sends a single message, prints the narrative, and returns.
 
     Example:
         run_non_interactive("How many events?", graph, timeout_s=120.0)

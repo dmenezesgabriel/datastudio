@@ -50,7 +50,7 @@ class TestBuildEvalGraph:
         # act
         result = graph.invoke({"question": "How many?", "history": []})  # pyright: ignore[reportUnknownMemberType]
         # assert
-        assert result["response"] == "One row."
+        assert result["narrative"] == "One row."
 
     def test_node_metrics_keys_are_string_node_names(self) -> None:
         # kills mutmut_9 (TimedNode(None, ...) makes recorder.node_metrics[None] the key)
@@ -80,4 +80,4 @@ class TestBuildEvalGraph:
         # act
         result = graph.invoke({"question": "How many?", "history": []})  # pyright: ignore[reportUnknownMemberType]
         # assert — format_chat_model's answer must be used, not sql_model's
-        assert result["response"] == "Format answer"
+        assert result["narrative"] == "Format answer"

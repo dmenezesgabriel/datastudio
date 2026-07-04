@@ -52,7 +52,7 @@ class WireIntegrityCheck:
 def _events_from_state(state: ChatState) -> list[ChatStreamEvent]:
     """Rebuild the stream events a completed run would have emitted, data-first."""
     results = widget_results(state)
-    response = cast(dict[str, object], state).get("response")
+    response = cast(dict[str, object], state).get("narrative")
     events: list[ChatStreamEvent] = [WidgetDataReady(r.widget_id, r.result) for r in results]
     events += [ViewPatchLine(line=line) for line in patch_lines(state)]
     if isinstance(response, str) and response:

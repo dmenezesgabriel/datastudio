@@ -63,7 +63,7 @@ class Conversation:
 
     def append_assistant_message(self, result: Text2SqlResult) -> Message:
         """Append the assistant turn built from an engine result and return it."""
-        message = Message(role="assistant", content=result.response, view=result.view)
+        message = Message(role="assistant", content=result.narrative, view=result.view)
         self.messages.append(message)
         return message
 

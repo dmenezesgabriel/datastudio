@@ -28,7 +28,7 @@ class _SlowFakeGraph:
 
     def invoke(self, input: ChatState) -> ChatState:  # noqa: A002
         time.sleep(0.05)  # 50 ms — longer than any timeout used in tests
-        return cast(ChatState, {"response": "too slow"})
+        return cast(ChatState, {"narrative": "too slow"})
 
 
 class FakeGraph:
@@ -44,7 +44,7 @@ class FakeGraph:
 
     def invoke(self, input: ChatState) -> ChatState:  # noqa: A002
         self.last_input = input
-        return cast(ChatState, {"response": self._response})
+        return cast(ChatState, {"narrative": self._response})
 
 
 class TestBuildArgParser:

@@ -42,4 +42,4 @@ class ChatState(TypedDict):
     query_result: NotRequired[QueryResult]
     widget_patch_lines: Annotated[list[str], add]  # each worker appends its SpecStream patch lines
     widget_results: Annotated[list[WidgetResult], add]  # each worker appends its executed result
-    response: str  # the overall narrative, set by compose_narrative
+    narrative: str  # the overall narrative, set by compose_narrative

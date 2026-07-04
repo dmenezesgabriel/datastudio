@@ -33,7 +33,7 @@ def _result(response: str) -> Text2SqlResult:
     view = RenderTree(
         root="root", elements={"root": RenderElement(type="Stack", props={}, children=[])}
     )
-    return Text2SqlResult(response=response, sql_query="SELECT 1", view=view)
+    return Text2SqlResult(narrative=response, sql_query="SELECT 1", view=view)
 
 
 def _drain(use_case: StreamMessage, cid: str, question: str) -> list[ChatStreamEvent]:

@@ -34,7 +34,7 @@ class TestText2SqlEngineAdapter:
         # arrange — the final state holds aggregated widget views + results
         graph = FakeChatGraph(
             {
-                "response": "Two widgets.",
+                "narrative": "Two widgets.",
                 "widget_patch_lines": [_view_line("widget-0"), _view_line("widget-1")],
                 "widget_results": [_widget_result("widget-0"), _widget_result("widget-1")],
             }
@@ -42,7 +42,7 @@ class TestText2SqlEngineAdapter:
         # act
         result = _adapter(graph).answer("overview")
         # assert
-        assert result.response == "Two widgets."
+        assert result.narrative == "Two widgets."
         assert result.sql_query == "SELECT widget-0; SELECT widget-1"
         assert result.view.elements["narrative"].props["text"] == "Two widgets."
         assert "widget-0-chart" in result.view.elements
@@ -51,7 +51,7 @@ class TestText2SqlEngineAdapter:
         assert graph.last_input["history"] == []
 
     def test_defaults_to_narrative_only_without_widgets(self) -> None:
-        graph = FakeChatGraph({"response": "Could not answer."})
+        graph = FakeChatGraph({"narrative": "Could not answer."})
         result = _adapter(graph).answer("bad")
         assert result.view.elements["narrative"].props["text"] == "Could not answer."
         assert result.sql_query == ""
@@ -59,7 +59,7 @@ class TestText2SqlEngineAdapter:
 
 class TestText2SqlEngineAdapterTimeout:
     def test_returns_graceful_result_on_timeout(self) -> None:
-        graph = FakeChatGraph({"response": "late"}, delay_s=0.05)
+        graph = FakeChatGraph({"narrative": "late"}, delay_s=0.05)
         result = _adapter(graph, timeout_s=0.01).answer("slow")
-        assert "longer than expected" in result.response
+        assert "longer than expected" in result.narrative
         assert "longer than expected" in result.view.elements["narrative"].props["text"]

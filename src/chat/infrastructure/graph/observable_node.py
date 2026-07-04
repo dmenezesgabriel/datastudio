@@ -13,7 +13,7 @@ from shared.infrastructure.logging.logger_factory import get_logger
 _logger = get_logger(__name__)
 
 _SKIP_FIELDS: frozenset[str] = frozenset({"schema"})
-_RESPONSE_TRUNCATE_LEN = 500
+_NARRATIVE_TRUNCATE_LEN = 500
 
 # Orchestrator–workers aggregation channels: each holds non-JSON-native value
 # objects (WidgetResult/WidgetSpec) or verbose patch lists, so they are reduced to
@@ -36,8 +36,8 @@ def _summarize_field(key: str, value: object) -> tuple[str, object]:
     count_key = _CHANNEL_COUNT_KEYS.get(key)
     if count_key is not None and isinstance(value, list):
         return count_key, len(cast(list[object], value))
-    if isinstance(value, str) and len(value) > _RESPONSE_TRUNCATE_LEN:
-        return key, value[:_RESPONSE_TRUNCATE_LEN]
+    if isinstance(value, str) and len(value) > _NARRATIVE_TRUNCATE_LEN:
+        return key, value[:_NARRATIVE_TRUNCATE_LEN]
     return key, value
 
 
@@ -49,8 +49,8 @@ def _extract_log_safe_fields(result: Mapping[str, object]) -> dict[str, object]:
     ``_summarize_field``, and skips large fields (schema).
 
     Example:
-        _extract_log_safe_fields({"widget_results": [WidgetResult(...)], "response": "hi"})
-        # → {"widget_count": 1, "response": "hi"}
+        _extract_log_safe_fields({"widget_results": [WidgetResult(...)], "narrative": "hi"})
+        # → {"widget_count": 1, "narrative": "hi"}
     """
     out: dict[str, object] = {}
     for key, value in result.items():

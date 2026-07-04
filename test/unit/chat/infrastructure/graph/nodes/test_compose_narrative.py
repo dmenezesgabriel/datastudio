@@ -43,7 +43,7 @@ class TestComposeNarrative:
         model = FakeStructuredChatModel(answer="Revenue is strong across categories.")
         state = _state("overview", [_widget("widget-0", "Revenue", 42)])
         assert ComposeNarrative(model)(state) == {
-            "response": "Revenue is strong across categories."
+            "narrative": "Revenue is strong across categories."
         }
 
     def test_prompt_includes_each_widget_title_and_rows(self) -> None:
@@ -60,7 +60,7 @@ class TestComposeNarrative:
     def test_no_results_returns_failure_message(self) -> None:
         model = FakeStructuredChatModel(answer="unused")
         state = _state("q", [])
-        response = ComposeNarrative(model)(state)["response"]
+        response = ComposeNarrative(model)(state)["narrative"]
         assert "couldn't" in response.lower()
 
 
@@ -73,7 +73,7 @@ class TestComposeNarrativeResilience:
             [_widget("widget-0", "Total revenue", 1000), _widget("widget-1", "Orders", 50)],
         )
         # act
-        response = ComposeNarrative(model)(state)["response"]
+        response = ComposeNarrative(model)(state)["narrative"]
         # assert — a deterministic sentence naming the widgets, not a crash
         assert "Total revenue" in response and "Orders" in response
 

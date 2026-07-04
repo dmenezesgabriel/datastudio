@@ -11,7 +11,7 @@ def _view() -> RenderTree:
 
 
 def _result(response: str = "42") -> Text2SqlResult:
-    return Text2SqlResult(response=response, sql_query="SELECT 1", view=_view())
+    return Text2SqlResult(narrative=response, sql_query="SELECT 1", view=_view())
 
 
 class TestConversationAppendUserMessage:
@@ -36,7 +36,7 @@ class TestConversationAppendAssistantMessage:
         # arrange — view propagation: changing view=result.view to view=None must be caught
         conv = Conversation.new("c-1")
         view = _view()
-        result = Text2SqlResult(response="42", sql_query="SELECT 1", view=view)
+        result = Text2SqlResult(narrative="42", sql_query="SELECT 1", view=view)
         # act
         msg = conv.append_assistant_message(result)
         # assert

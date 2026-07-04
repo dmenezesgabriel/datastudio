@@ -50,7 +50,7 @@ class TestNodeRetryPolicy:
         result = graph.invoke({"question": "How many?", "history": []})  # pyright: ignore[reportUnknownMemberType]
         # assert — retry fired (two calls) and the pipeline completed
         assert engine.list_tables_calls == 2
-        assert result["response"] == "One row."
+        assert result["narrative"] == "One row."
 
     def test_value_error_is_not_retried(self) -> None:
         """A ValueError surfaces on the first attempt (genuine bug, not transient)."""

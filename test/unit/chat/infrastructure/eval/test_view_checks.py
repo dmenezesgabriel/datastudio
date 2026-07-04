@@ -231,7 +231,7 @@ class TestVizRubricCheck:
 
 class TestTextAnswerCheck:
     def _state(self, response: str, widgets: list[WidgetResult]) -> ChatState:
-        return cast(ChatState, {"question": "hi", "response": response, "widget_results": widgets})
+        return cast(ChatState, {"question": "hi", "narrative": response, "widget_results": widgets})
 
     def test_passes_for_a_text_only_answer(self) -> None:
         result = TextAnswerCheck().evaluate(self._state("I can query your data.", []))

@@ -27,7 +27,7 @@ from shared.infrastructure.logging.logger_factory import get_logger
 
 _logger = get_logger(__name__)
 
-_TIMEOUT_RESPONSE = (
+_TIMEOUT_NARRATIVE = (
     "This query is taking longer than expected. Please try again or rephrase your question."
 )
 
@@ -129,7 +129,7 @@ class Text2SqlEngineAdapter:
                 "graph.stream.timeout",
                 extra={"request_id": request_id, "timeout_s": self._timeout_s},
             )
-            yield NarrativeReady(text=_TIMEOUT_RESPONSE)
+            yield NarrativeReady(text=_TIMEOUT_NARRATIVE)
             return
         _logger.info("graph.stream.complete", extra={"request_id": request_id})
 
@@ -152,11 +152,11 @@ def _events_for(node_name: str, update: Mapping[str, object]) -> list[ChatStream
     """Map one node update to zero or more payload events (silent nodes yield none)."""
     if node_name == "build_widget":
         return _widget_events(update)
-    # Both the dashboard summary and the text-only branch write the ``response``
+    # Both the dashboard summary and the text-only branch write the ``narrative``
     # channel; each surfaces as the narrative (a text-only turn has no widgets).
     if node_name in ("compose_narrative", "answer_text"):
-        response = update.get("response")
-        return [NarrativeReady(text=response)] if isinstance(response, str) else []
+        narrative = update.get("narrative")
+        return [NarrativeReady(text=narrative)] if isinstance(narrative, str) else []
     return []
 
 
@@ -185,22 +185,22 @@ def _to_result(state: ChatState) -> Text2SqlResult:
     """Map a completed ChatState to a Text2SqlResult for the sync (CLI) path.
 
     Compiles the aggregated widget view patches into a render tree (used by the CLI,
-    which only prints ``response``); falls back to narrative-only when no widget ran.
+    which only prints ``narrative``); falls back to narrative-only when no widget ran.
     """
     data = cast(dict[str, object], state)
-    response = state["response"]
+    narrative = state["narrative"]
     results = [r for r in _as_list(data.get("widget_results")) if isinstance(r, WidgetResult)]
     sql = "; ".join(r.sql for r in results)
     sql_by_widget = {r.widget_id: r.sql for r in results if r.sql}
     lines = [ln for ln in _as_list(data.get("widget_patch_lines")) if isinstance(ln, str)]
     view = (
-        compile_render_tree(response, lines, sql_by_widget) if lines else narrative_tree(response)
+        compile_render_tree(narrative, lines, sql_by_widget) if lines else narrative_tree(narrative)
     )
-    return Text2SqlResult(response=response, sql_query=sql, view=view)
+    return Text2SqlResult(narrative=narrative, sql_query=sql, view=view)
 
 
 def _timeout_result() -> Text2SqlResult:
     """Build the graceful result returned when a query exceeds the timeout."""
     return Text2SqlResult(
-        response=_TIMEOUT_RESPONSE, sql_query="", view=narrative_tree(_TIMEOUT_RESPONSE)
+        narrative=_TIMEOUT_NARRATIVE, sql_query="", view=narrative_tree(_TIMEOUT_NARRATIVE)
     )

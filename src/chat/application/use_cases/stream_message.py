@@ -70,24 +70,24 @@ class StreamMessage:
             },
         )
         conversation.append_user_message(question)
-        response = ""
+        narrative = ""
         turn_events: list[ChatStreamEvent] = []
         async for event in self._engine.stream(question, history):
             if isinstance(event, NarrativeReady):
-                response = event.text
+                narrative = event.text
             if not isinstance(event, ProgressStep):
                 turn_events.append(event)  # keep the payload; progress is transient chrome
             yield event
-        self._record_assistant_turn(conversation, response, turn_events)
+        self._record_assistant_turn(conversation, narrative, turn_events)
         self._repository.save(conversation)
         self._logger.info("stream_message.complete", extra={"conversation_id": conversation_id})
 
     def _record_assistant_turn(
-        self, conversation: Conversation, response: str, events: list[ChatStreamEvent]
+        self, conversation: Conversation, narrative: str, events: list[ChatStreamEvent]
     ) -> None:
         """Append the assistant turn, persisting the full dashboard so it re-renders on reopen."""
-        if not response:
+        if not narrative:
             return  # stream ended without a summary (abnormal) — nothing to remember
         view = self._view_builder.build(events)
-        result = Text2SqlResult(response=response, sql_query="", view=view)
+        result = Text2SqlResult(narrative=narrative, sql_query="", view=view)
         conversation.append_assistant_message(result)

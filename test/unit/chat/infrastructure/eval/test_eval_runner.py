@@ -32,7 +32,7 @@ def _state_for(question: str, response: str) -> Mapping[str, object]:
                 WidgetResult(widget_id="widget-0", title="A", result=result, sql="SELECT 1")
             ],
             "widget_patch_lines": [],
-            "response": response,
+            "narrative": response,
         },
     )
 
@@ -193,10 +193,10 @@ class TestEvalRunnerReport:
         assert {c.case_id for c in report.cases} == {"c1", "c2"}
 
     def test_case_result_captures_response(self) -> None:
-        """CaseResult.response reflects the value returned by the graph."""
+        """CaseResult.narrative reflects the value returned by the graph."""
         runner = self._runner_with_response("the answer")
         report = runner.run([EvalCase(id="c1", question="q", checks=[])])
-        assert report.cases[0].response == "the answer"
+        assert report.cases[0].narrative == "the answer"
 
     def test_returns_eval_report_instance(self) -> None:
         """Return type is EvalReport."""
@@ -281,7 +281,7 @@ class TestEvalRunnerErrorHandling:
         report = runner.run([EvalCase(id="c1", question="q", checks=[])])
         case = report.cases[0]
         assert case.sql_query == ""
-        assert case.response == ""
+        assert case.narrative == ""
 
     def test_error_case_sql_valid_is_false(self) -> None:
         # kills mutmut_77 (sql_valid=None) and mutmut_94 (sql_valid=True)
@@ -352,7 +352,7 @@ class TestEvalRunnerConcurrency:
         report = runner.run(cases)
         # assert — output order mirrors input order, not completion order
         assert [c.case_id for c in report.cases] == ["c0", "c1", "c2"]
-        assert [c.response for c in report.cases] == ["q0", "q1", "q2"]
+        assert [c.narrative for c in report.cases] == ["q0", "q1", "q2"]
 
 
 class TestEvalRunnerCaseResultFields:
@@ -405,8 +405,8 @@ class TestEvalRunnerCaseResultFields:
         runner.run([EvalCase(id="c1", question="q", checks=[_StateCapture()])])  # type: ignore[list-item]
         assert len(received) == 1
         assert received[0] is not None
-        # state must have "response" key (set by FakeGraph)
-        assert cast(Any, received[0]).get("response") == "ok"
+        # state must have "narrative" key (set by FakeGraph)
+        assert cast(Any, received[0]).get("narrative") == "ok"
 
     def test_case_result_passed_true_when_all_checks_pass(self) -> None:
         # arrange — a check that always passes
@@ -496,7 +496,7 @@ class TestEvalRunnerCaseResultSqlQueryDefault:
             def invoke(self, state: Any, config: Any = None) -> Any:
                 return cast(
                     ChatState,
-                    {"question": "q", "response": "ok", "tables": [], "schema": ""},
+                    {"question": "q", "narrative": "ok", "tables": [], "schema": ""},
                 )
 
         runner = EvalRunner(
@@ -511,7 +511,7 @@ class TestEvalRunnerCaseResultSqlQueryDefault:
 
 
 class TestEvalRunnerCaseResultResponseDefault:
-    """CaseResult.response is "" when graph returns no response key."""
+    """CaseResult.narrative is "" when graph returns no response key."""
 
     def test_response_defaults_to_empty_string_when_missing(self) -> None:
         # kills mutmut_64 (default=None → str(None)="None"),
@@ -527,7 +527,7 @@ class TestEvalRunnerCaseResultResponseDefault:
             model_name="test-model",
         )
         report = runner.run([EvalCase(id="c1", question="q", checks=[])])
-        assert report.cases[0].response == ""
+        assert report.cases[0].narrative == ""
 
 
 class TestEvalRunnerPricing:

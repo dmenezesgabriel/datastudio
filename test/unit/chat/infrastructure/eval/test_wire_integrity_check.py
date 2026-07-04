@@ -47,7 +47,7 @@ def _state(results: list[WidgetResult], views: list[str], response: str = "Answe
     raw: dict[str, Any] = {
         "widget_results": results,
         "widget_patch_lines": views,
-        "response": response,
+        "narrative": response,
     }
     return raw  # type: ignore[return-value]
 

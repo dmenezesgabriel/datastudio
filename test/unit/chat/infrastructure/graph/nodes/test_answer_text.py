@@ -13,18 +13,18 @@ def _state(**fields: Any) -> ChatState:
 class TestAnswerText:
     def test_promotes_drafted_text_answer_to_response(self) -> None:
         out = AnswerText()(_state(text_answer="I can query your data."))
-        assert out == {"response": "I can query your data."}
+        assert out == {"narrative": "I can query your data."}
 
     def test_trims_surrounding_whitespace(self) -> None:
         out = AnswerText()(_state(text_answer="  hello  "))
-        assert out["response"] == "hello"
+        assert out["narrative"] == "hello"
 
     def test_blank_answer_falls_back_to_a_prompt_to_rephrase(self) -> None:
         # arrange — planner routed here but left no content (never expected)
         out = AnswerText()(_state(text_answer="   "))
         # assert — a helpful non-empty reply, not a blank string
-        assert out["response"] and "rephrase" in out["response"].lower()
+        assert out["narrative"] and "rephrase" in out["narrative"].lower()
 
     def test_missing_answer_falls_back(self) -> None:
         out = AnswerText()(_state())
-        assert out["response"] and "rephrase" in out["response"].lower()
+        assert out["narrative"] and "rephrase" in out["narrative"].lower()

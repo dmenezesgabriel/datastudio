@@ -37,7 +37,7 @@ _SYSTEM_PROMPT = (
     "for the CURRENT question and you may reference earlier answers naturally."
 )
 
-_NO_RESULT_RESPONSE = (
+_NO_RESULT_NARRATIVE = (
     "I couldn't build a dashboard for that question — the queries failed to run. "
     "Please try rephrasing the question."
 )
@@ -72,7 +72,7 @@ class ComposeNarrative:
     Example:
         node = ComposeNarrative(chat_model)
         node({"question": "overview", "widget_results": [WidgetResult(...), ...]})
-        # → {"response": "The total is 42 across 5 categories."}
+        # → {"narrative": "The total is 42 across 5 categories."}
     """
 
     def __init__(self, chat_model: BaseChatModel) -> None:
@@ -87,7 +87,7 @@ class ComposeNarrative:
         raw = cast(dict[str, object], state).get("widget_results", [])
         results = [r for r in cast(list[object], raw) if isinstance(r, WidgetResult)]
         if not results:
-            return {"response": _NO_RESULT_RESPONSE}
+            return {"narrative": _NO_RESULT_NARRATIVE}
         messages = [
             SystemMessage(content=_SYSTEM_PROMPT),
             *state["history"],
@@ -95,5 +95,5 @@ class ComposeNarrative:
         ]
         answer = invoke_structured(self._model, messages, "compose_narrative")
         if answer is None:
-            return {"response": _fallback_summary(results)}
-        return {"response": answer.answer}
+            return {"narrative": _fallback_summary(results)}
+        return {"narrative": answer.answer}

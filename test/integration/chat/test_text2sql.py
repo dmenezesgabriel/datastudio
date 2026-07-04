@@ -43,7 +43,7 @@ def ask_question(text2sql_graph: TypedChatGraph) -> str:
     result = text2sql_graph.invoke(
         {"question": "How many taxi trips are in the dataset?", "history": []}
     )
-    return result["response"]
+    return result["narrative"]
 
 
 @then("I receive a non-empty natural language answer")

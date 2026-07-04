@@ -68,7 +68,7 @@ class TestBuildText2SqlGraph:
 
     def test_invoke_returns_overall_narrative(self) -> None:
         result = _make_graph().invoke({"question": "How many?", "history": []})  # pyright: ignore[reportUnknownMemberType]
-        assert result["response"] == "One row."
+        assert result["narrative"] == "One row."
 
     def test_invoke_aggregates_results_from_parallel_widgets(self) -> None:
         # two planned widgets → two build_widget workers → two aggregated results
@@ -101,7 +101,7 @@ class TestTextBranch:
             {"question": "what can you do?", "history": []}
         )
         # assert — the drafted answer is the response, and no widget worker ran
-        assert result["response"] == "I can query and visualize your data."
+        assert result["narrative"] == "I can query and visualize your data."
         assert not result.get("widget_results")
 
 
@@ -144,7 +144,7 @@ class TestFailurePath:
         )
         graph = build_text2sql_graph(chat_model, sql_engine)
         result = graph.invoke({"question": "q", "history": []})  # pyright: ignore[reportUnknownMemberType]
-        assert "couldn't" in str(result["response"]).lower()
+        assert "couldn't" in str(result["narrative"]).lower()
 
 
 class TestLayeringBoundary:

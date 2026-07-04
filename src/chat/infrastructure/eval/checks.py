@@ -38,7 +38,7 @@ from shared.application.ports.sql_engine_port import SqlEnginePort
 
 @dataclass
 class ResponseIncludesCheck:
-    """Passes when state["response"] contains value (case-insensitive).
+    """Passes when state["narrative"] contains value (case-insensitive).
 
     Example:
         check = ResponseIncludesCheck("42")
@@ -49,7 +49,7 @@ class ResponseIncludesCheck:
 
     def evaluate(self, state: ChatState) -> CheckResult:
         """Return passed when response contains self.value (case-insensitive)."""
-        response = cast(dict[str, object], state).get("response") or ""
+        response = cast(dict[str, object], state).get("narrative") or ""
         passed = self.value.lower() in str(response).lower()
         return CheckResult(type="response_includes", value=self.value, passed=passed, reasoning="")
 
@@ -189,7 +189,7 @@ class RubricCheck:
         state_dict = cast(dict[str, object], state)
         human_content = _JUDGE_HUMAN_TEMPLATE.format(
             question=state_dict.get("question", ""),
-            response=state_dict.get("response", ""),
+            response=state_dict.get("narrative", ""),
             rubric=self.rubric,
         )
         verdict: _RubricVerdict = self._chain.invoke(

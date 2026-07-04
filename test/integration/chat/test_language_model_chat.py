@@ -26,7 +26,7 @@ def chat_model_fixture(app_settings: AppSettings):
     return model.get_chat_model()
 
 
-@when('I send the prompt "Say hello in one word"', target_fixture="response")
+@when('I send the prompt "Say hello in one word"', target_fixture="narrative")
 def send_prompt(chat_model):
     return chat_model.invoke([HumanMessage(content="Say hello in one word")])
 

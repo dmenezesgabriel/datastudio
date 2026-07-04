@@ -47,7 +47,7 @@ def _chunks() -> list[object]:
         {"plan_widgets": {"widget_specs": []}},
         _widget_chunk("widget-0", 42),
         _widget_chunk("widget-1", 7),
-        {"compose_narrative": {"response": "Two widgets summarized."}},
+        {"compose_narrative": {"narrative": "Two widgets summarized."}},
     ]
 
 
@@ -131,7 +131,7 @@ class TestStreamSeedsHistory:
 class TestStreamTextBranch:
     def test_answer_text_update_streams_a_single_narrative(self) -> None:
         # the text-only branch: answer_text writes the response, no widgets ran
-        chunks = [{"answer_text": {"response": "I can query your data."}}]
+        chunks = [{"answer_text": {"narrative": "I can query your data."}}]
         events = _collect(_adapter(FakeStreamingChatGraph(chunks)), "what can you do?")
         assert [type(e).__name__ for e in events] == ["NarrativeReady"]
         assert cast(NarrativeReady, events[0]).text == "I can query your data."

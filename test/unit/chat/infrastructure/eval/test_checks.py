@@ -246,7 +246,7 @@ class TestRubricCheckEvaluate:
         # arrange — mutmut_2 sets _chain=None, causing AttributeError on invoke
         model = FakeStructuredChatModel(passed=True, reasoning="Cites an exact number")
         check = RubricCheck(model, rubric="Must cite an exact number.")
-        state = cast(ChatState, {"question": "Revenue?", "response": "Revenue is 42."})
+        state = cast(ChatState, {"question": "Revenue?", "narrative": "Revenue is 42."})
         # act — calls self._chain.invoke(); fails if _chain is None
         result = check.evaluate(state)
         # assert
@@ -258,7 +258,7 @@ class TestRubricCheckEvaluate:
         # arrange — checks all three inputs reach the model's human message
         model = FakeStructuredChatModel(passed=True, reasoning="")
         check = RubricCheck(model, rubric="Must cite an exact number.")
-        state = cast(ChatState, {"question": "Revenue?", "response": "Revenue is 42."})
+        state = cast(ChatState, {"question": "Revenue?", "narrative": "Revenue is 42."})
         # act
         check.evaluate(state)
         # assert — kills mutmut_7 (question=None), mutmut_8 (response=None), mutmut_9 (rubric=None)
@@ -272,7 +272,7 @@ class TestRubricCheckEvaluate:
         # arrange — model returns specific reasoning; check it flows through
         model = FakeStructuredChatModel(passed=False, reasoning="Missing a specific number")
         check = RubricCheck(model, rubric="Must cite a number.")
-        state = cast(ChatState, {"question": "q", "response": "No number here"})
+        state = cast(ChatState, {"question": "q", "narrative": "No number here"})
         # act
         result = check.evaluate(state)
         # assert — kills mutmut_34 (reasoning=None) and mutmut_38 (reasoning omitted)
@@ -283,7 +283,7 @@ class TestRubricCheckEvaluate:
         # arrange — state has no "question" key; default must be ""
         model = FakeStructuredChatModel(passed=True, reasoning="")
         check = RubricCheck(model, rubric="Must state revenue.")
-        state = cast(ChatState, {"response": "Revenue is 42."})  # no "question" key
+        state = cast(ChatState, {"narrative": "Revenue is 42."})  # no "question" key
         # act
         check.evaluate(state)
         # assert — mutmut_19 uses "XXXX"; mutmut_14/16 use None; correct code uses ""
@@ -292,10 +292,10 @@ class TestRubricCheckEvaluate:
         assert "Question: None" not in combined  # kills mutmut_14 (default=None), mutmut_16
 
     def test_evaluate_uses_empty_string_when_response_missing_from_state(self) -> None:
-        # arrange — state has no "response" key; default must be ""
+        # arrange — state has no "narrative" key; default must be ""
         model = FakeStructuredChatModel(passed=True, reasoning="")
         check = RubricCheck(model, rubric="Must state revenue.")
-        state = cast(ChatState, {"question": "Revenue?"})  # no "response" key
+        state = cast(ChatState, {"question": "Revenue?"})  # no "narrative" key
         # act
         check.evaluate(state)
         # assert — mutmut_26 uses "XXXX"; mutmut_21/23 use None; correct code uses ""

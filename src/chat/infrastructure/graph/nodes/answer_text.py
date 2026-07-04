@@ -22,11 +22,11 @@ class AnswerText:
 
     Example:
         AnswerText()({"text_answer": "I can query and visualize your data."})
-        # → {"response": "I can query and visualize your data."}
+        # → {"narrative": "I can query and visualize your data."}
     """
 
     def __call__(self, state: ChatState) -> dict[str, str]:
         """Promote the planner's drafted text answer to the response channel."""
         text = cast(dict[str, object], state).get("text_answer")
         answer = text.strip() if isinstance(text, str) and text.strip() else _EMPTY_ANSWER
-        return {"response": answer}
+        return {"narrative": answer}

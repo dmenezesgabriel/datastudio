@@ -55,7 +55,7 @@ class CaseResult:
     nodes: dict[str, NodeMetrics]
     sql_query: str
     sql_valid: bool
-    response: str
+    narrative: str
     check_results: list[CheckResult]
     passed: bool
     error: str | None
@@ -261,7 +261,7 @@ class EvalRunner:
                 nodes=collector.node_metrics,
                 sql_query="; ".join(r.sql for r in widget_results),
                 sql_valid=bool(widget_results),
-                response=str(state_dict.get("response", "")),
+                narrative=str(state_dict.get("narrative", "")),
                 check_results=check_results,
                 passed=all(r["passed"] for r in check_results),
                 error=None,
@@ -274,7 +274,7 @@ class EvalRunner:
                 nodes=collector.node_metrics,
                 sql_query="",
                 sql_valid=False,
-                response="",
+                narrative="",
                 check_results=[],
                 passed=False,
                 error=str(exc),
@@ -302,6 +302,6 @@ class EvalRunner:
             state = cast(ChatState, raw)
             state_dict = cast(dict[str, object], state)
             check_results.extend(check.evaluate(state) for check in turn.checks)
-            response = str(state_dict.get("response", ""))
+            response = str(state_dict.get("narrative", ""))
             history.extend([HumanMessage(content=turn.question), AIMessage(content=response)])
         return check_results, state_dict

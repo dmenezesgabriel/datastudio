@@ -277,7 +277,7 @@ class TextAnswerCheck:
     def evaluate(self, state: ChatState) -> CheckResult:
         """Return passed when a response is present and no widget was built."""
         results = widget_results(state)
-        response = cast(dict[str, object], state).get("response")
+        response = cast(dict[str, object], state).get("narrative")
         has_text = isinstance(response, str) and bool(response.strip())
         passed = has_text and not results
         if not has_text:
