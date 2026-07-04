@@ -1,5 +1,7 @@
 """Use case: send a user message and stream the assistant's dashboard answer."""
 
+import logging
+
 from chat.application.ports.conversation_repository import ConversationRepository
 from chat.application.ports.text2sql_port import Text2SqlPort
 from chat.application.ports.turn_view_builder import TurnViewBuilder
@@ -11,9 +13,6 @@ from chat.domain.value_objects.stream_event import (
     TypedChatStream,
 )
 from chat.domain.value_objects.text2sql_result import Text2SqlResult
-from shared.infrastructure.logging.logger_factory import get_logger
-
-_logger = get_logger(__name__)
 
 # Short-term memory window: how many prior turns are injected as context each turn.
 # ~5 exchanges — enough to resolve follow-ups while keeping prompt size flat.
@@ -29,7 +28,7 @@ class StreamMessage:
     Dependencies are injected so the use case stays infra-free.
 
     Example:
-        use_case = StreamMessage(repository, engine)
+        use_case = StreamMessage(repository, engine, view_builder, logger)
         async for event in use_case.execute("c-1", "Overview"):
             ...
     """
@@ -39,11 +38,18 @@ class StreamMessage:
         repository: ConversationRepository,
         engine: Text2SqlPort,
         view_builder: TurnViewBuilder,
+        logger: logging.Logger,
     ) -> None:
-        """Wire the conversation repository, the text2sql engine, and the view builder."""
+        """Wire the conversation repository, the text2sql engine, view builder, and logger.
+
+        ``logger`` is injected (not built from an infrastructure factory) so the
+        application layer depends only on the stdlib ``logging`` abstraction — the
+        composition root supplies the configured structured logger.
+        """
         self._repository = repository
         self._engine = engine
         self._view_builder = view_builder
+        self._logger = logger
 
     async def execute(self, conversation_id: str, question: str) -> TypedChatStream:
         """Record the question, stream the answer, then persist both turns.
@@ -55,7 +61,7 @@ class StreamMessage:
         existing = self._repository.get(conversation_id)
         conversation = existing or Conversation.new(conversation_id)
         history = conversation.recent_messages(_MEMORY_WINDOW_MESSAGES)  # prior turns only
-        _logger.info(
+        self._logger.info(
             "stream_message.start",
             extra={
                 "conversation_id": conversation_id,
@@ -74,7 +80,7 @@ class StreamMessage:
             yield event
         self._record_assistant_turn(conversation, response, turn_events)
         self._repository.save(conversation)
-        _logger.info("stream_message.complete", extra={"conversation_id": conversation_id})
+        self._logger.info("stream_message.complete", extra={"conversation_id": conversation_id})
 
     def _record_assistant_turn(
         self, conversation: Conversation, response: str, events: list[ChatStreamEvent]

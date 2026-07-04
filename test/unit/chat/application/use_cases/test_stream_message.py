@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import cast
 
 from chat.application.ports.conversation_repository import ConversationRepository
@@ -21,7 +22,10 @@ def _use_case(
     repository: FakeConversationRepository, engine: FakeStreamingText2SqlEngine
 ) -> StreamMessage:
     return StreamMessage(
-        cast(ConversationRepository, repository), cast(Text2SqlPort, engine), DashboardViewBuilder()
+        cast(ConversationRepository, repository),
+        cast(Text2SqlPort, engine),
+        DashboardViewBuilder(),
+        logging.getLogger("test.stream_message"),
     )
 
 

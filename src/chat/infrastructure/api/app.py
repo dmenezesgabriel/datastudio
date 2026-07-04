@@ -47,7 +47,9 @@ def build_stream_message(
         api_base=settings.openai_base_url,
     )
     engine = Text2SqlEngineAdapter(graph, timeout_s=settings.query_timeout_s)
-    return StreamMessage(repository, engine, DashboardViewBuilder())
+    return StreamMessage(
+        repository, engine, DashboardViewBuilder(), get_logger("chat.stream_message")
+    )
 
 
 def create_app() -> FastAPI:
