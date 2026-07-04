@@ -74,11 +74,11 @@ class SqlReady:
     """The SQL that produced one widget, for its deterministic SQL disclosure.
 
     Example:
-        SqlReady(widget_id="widget-0", sql_query="SELECT count(*) FROM events")
+        SqlReady(widget_id="widget-0", sql="SELECT count(*) FROM events")
     """
 
     widget_id: str
-    sql_query: str
+    sql: str
 
 
 @dataclass(frozen=True)

@@ -18,7 +18,7 @@ class TestGenerateSql:
         # act
         result = GenerateSql(model)(_state())
         # assert
-        assert result == {"sql_query": "SELECT COUNT(*) FROM orders"}
+        assert result == {"sql": "SELECT COUNT(*) FROM orders"}
 
     def test_sends_system_message(self) -> None:
         # arrange

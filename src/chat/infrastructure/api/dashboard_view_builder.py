@@ -68,4 +68,4 @@ def _last_narrative(events: Sequence[ChatStreamEvent]) -> str:
 
 def _sql_by_widget(events: Sequence[ChatStreamEvent]) -> dict[str, str]:
     """Map each widget id to the SQL that produced it, for its frame's disclosure toggle."""
-    return {e.widget_id: e.sql_query for e in events if isinstance(e, SqlReady) and e.sql_query}
+    return {e.widget_id: e.sql for e in events if isinstance(e, SqlReady) and e.sql}

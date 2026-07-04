@@ -108,7 +108,7 @@ class SpecStreamSerializer:
             ]
         if isinstance(event, ViewPatchLine):
             return self._region_init_lines() + [event.line]
-        return self._sql_lines(event.widget_id, event.sql_query)  # SqlReady (union exhausted)
+        return self._sql_lines(event.widget_id, event.sql)  # SqlReady (union exhausted)
 
     def _progress_lines(self, step: ProgressStep) -> list[str]:
         """Add a checklist step under ``/state/progress`` on first sight; replace status after.
@@ -154,7 +154,7 @@ class SpecStreamSerializer:
         lines = self._root_init_lines()
         return lines + [_patch_line("replace", f"/elements/{_NARRATIVE_ID}/props/text", text)]
 
-    def _sql_lines(self, widget_id: str, sql_query: str) -> list[str]:
+    def _sql_lines(self, widget_id: str, sql: str) -> list[str]:
         """Fill the widget frame's ``sql`` prop (skipped when empty).
 
         The frame element was already added with the widget's view patches (they precede
@@ -162,9 +162,9 @@ class SpecStreamSerializer:
         text is replaced in place (see ``_narrative_lines``). An empty query leaves the frame
         with no SQL, and the frontend then shows no toggle.
         """
-        if not sql_query:
+        if not sql:
             return []
-        return [_patch_line("replace", f"/elements/{widget_id}-frame/props/sql", sql_query)]
+        return [_patch_line("replace", f"/elements/{widget_id}-frame/props/sql", sql)]
 
     def _root_init_lines(self) -> list[str]:
         """Emit the root Stack + a leading (empty) narrative element exactly once.

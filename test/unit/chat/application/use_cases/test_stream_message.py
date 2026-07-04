@@ -102,7 +102,7 @@ class TestStreamMessage:
         result = QueryResult(columns=["n"], rows=[(1,)], row_count=1)
         events: list[ChatStreamEvent] = [
             WidgetDataReady(widget_id="w0", result=result),
-            SqlReady(widget_id="w0", sql_query="SELECT 1"),
+            SqlReady(widget_id="w0", sql="SELECT 1"),
         ]
         repository = FakeConversationRepository()
         _drain(_use_case(repository, FakeStreamingText2SqlEngine(events)), "c-1", "q")

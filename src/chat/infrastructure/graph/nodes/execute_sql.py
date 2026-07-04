@@ -15,7 +15,7 @@ class ExecuteSql:
 
     Example:
         node = ExecuteSql(engine)
-        result = node({"sql_query": "SELECT COUNT(*) FROM events"})
+        result = node({"sql": "SELECT COUNT(*) FROM events"})
         # success → {"query_result": QueryResult(...), "sql_error": ""}
         # failure → {"sql_error": "Binder Error: ..."}
     """
@@ -27,7 +27,7 @@ class ExecuteSql:
     def __call__(self, state: ChatState) -> dict[str, object]:
         """Execute the SQL from state, returning query_result on success or sql_error on failure."""
         try:
-            sql = cast(str, cast(dict[str, object], state)["sql_query"])
+            sql = cast(str, cast(dict[str, object], state)["sql"])
             result = self._engine.execute_query(sql)
             return {"query_result": result, "sql_error": ""}
         except Exception as exc:  # noqa: BLE001 — any engine error feeds the repair loop

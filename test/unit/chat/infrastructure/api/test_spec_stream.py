@@ -178,11 +178,11 @@ class TestViewAndSql:
         # The frame is added with the widget's view patches (they precede SqlReady), so the
         # SQL only replaces the frame's prop — mirroring how the narrative text is replaced.
         serializer = SpecStreamSerializer()
-        patches = _patches(serializer, SqlReady(widget_id="widget-1", sql_query="SELECT 1"))
+        patches = _patches(serializer, SqlReady(widget_id="widget-1", sql="SELECT 1"))
         assert patches == [
             {"op": "replace", "path": "/elements/widget-1-frame/props/sql", "value": "SELECT 1"}
         ]
 
     def test_empty_sql_emits_nothing(self) -> None:
         serializer = SpecStreamSerializer()
-        assert serializer.lines_for(SqlReady(widget_id="w", sql_query="")) == []
+        assert serializer.lines_for(SqlReady(widget_id="w", sql="")) == []

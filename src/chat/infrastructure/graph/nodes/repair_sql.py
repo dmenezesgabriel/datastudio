@@ -44,7 +44,7 @@ class RepairSql:
     Example:
         node = RepairSql(chat_model, sql_engine)
         node({"sql_error": "Binder Error: ...", "repair_attempts": 0, ...})
-        # → {"sql_query": "<corrected>", "repair_attempts": 1}
+        # → {"sql": "<corrected>", "repair_attempts": 1}
     """
 
     def __init__(
@@ -70,8 +70,8 @@ class RepairSql:
         attempt = self._current_attempts(state) + 1
         if attempt < self._max_attempts:
             sql = self._repair_once(state, _CANDIDATE_HINTS[0])
-            return {"sql_query": sql, "repair_attempts": attempt}
-        return {"sql_query": self._best_candidate(state), "repair_attempts": attempt}
+            return {"sql": sql, "repair_attempts": attempt}
+        return {"sql": self._best_candidate(state), "repair_attempts": attempt}
 
     def _best_candidate(self, state: ChatState) -> str:
         """Generate candidates one at a time and return the first that executes cleanly.
@@ -112,7 +112,7 @@ class RepairSql:
         human = (
             f"Schema:\n{state_dict.get('schema', '')}\n\n"
             f"Question: {state_dict.get('question', '')}\n\n"
-            f"Previous SQL:\n{state_dict.get('sql_query', '')}\n\n"
+            f"Previous SQL:\n{state_dict.get('sql', '')}\n\n"
             f"Error: {state_dict.get('sql_error', '')}\n\n{hint}"
         )
         return [SystemMessage(content=_SYSTEM_PROMPT), HumanMessage(content=human)]

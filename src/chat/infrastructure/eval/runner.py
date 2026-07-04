@@ -53,7 +53,7 @@ class CaseResult:
     case_id: str
     question: str
     nodes: dict[str, NodeMetrics]
-    sql_query: str
+    sql: str
     sql_valid: bool
     narrative: str
     check_results: list[CheckResult]
@@ -80,7 +80,7 @@ def _case_turns(case: EvalCase) -> list[EvalTurn]:
 def _widget_results(state_dict: dict[str, object]) -> list[WidgetResult]:
     """Every widget's executed result off the aggregated ``widget_results`` channel.
 
-    The orchestrator–workers graph keeps ``sql_query``/``query_result`` local to each
+    The orchestrator–workers graph keeps ``sql``/``query_result`` local to each
     ``build_widget`` worker, so they never surface on the top-level state — the SQL and
     validity a report shows must be read back from the aggregated widget results.
     """
@@ -259,7 +259,7 @@ class EvalRunner:
                 case_id=case.id,
                 question=case.question,
                 nodes=collector.node_metrics,
-                sql_query="; ".join(r.sql for r in widget_results),
+                sql="; ".join(r.sql for r in widget_results),
                 sql_valid=bool(widget_results),
                 narrative=str(state_dict.get("narrative", "")),
                 check_results=check_results,
@@ -272,7 +272,7 @@ class EvalRunner:
                 case_id=case.id,
                 question=case.question,
                 nodes=collector.node_metrics,
-                sql_query="",
+                sql="",
                 sql_valid=False,
                 narrative="",
                 check_results=[],

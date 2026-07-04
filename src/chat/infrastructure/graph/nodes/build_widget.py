@@ -152,7 +152,7 @@ class BuildWidget:
         self, widget: WidgetSpec, result: QueryResult, worker_state: Mapping[str, object]
     ) -> WidgetResult:
         """Assemble the widget's result (rows + SQL) for the /state patch and disclosure."""
-        sql = worker_state.get("sql_query")
+        sql = worker_state.get("sql")
         return WidgetResult(
             widget_id=widget.id,
             title=widget.title,

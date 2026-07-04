@@ -88,7 +88,7 @@ class TestStreamHappyPath:
 
     def test_sql_is_per_widget(self) -> None:
         events = _collect(_adapter(FakeStreamingChatGraph(_chunks())), "q")
-        sql = [(e.widget_id, e.sql_query) for e in events if isinstance(e, SqlReady)]
+        sql = [(e.widget_id, e.sql) for e in events if isinstance(e, SqlReady)]
         assert sql == [("widget-0", "SELECT 42"), ("widget-1", "SELECT 7")]
 
     def test_narrative_is_the_summary(self) -> None:

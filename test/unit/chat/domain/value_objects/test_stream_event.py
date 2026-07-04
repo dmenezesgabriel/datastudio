@@ -46,9 +46,9 @@ class TestStreamEventPayloads:
         assert ViewPatchLine(line=line).line == line
 
     def test_sql_ready_carries_widget_id_and_query(self) -> None:
-        event = SqlReady(widget_id="widget-0", sql_query="SELECT 1")
+        event = SqlReady(widget_id="widget-0", sql="SELECT 1")
         assert event.widget_id == "widget-0"
-        assert event.sql_query == "SELECT 1"
+        assert event.sql == "SELECT 1"
 
     def test_narrative_ready_carries_text(self) -> None:
         assert NarrativeReady(text="Summary.").text == "Summary."

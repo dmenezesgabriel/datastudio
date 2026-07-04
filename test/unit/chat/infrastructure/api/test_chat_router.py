@@ -42,7 +42,7 @@ def _events() -> list[ChatStreamEvent]:
     return [
         WidgetDataReady(widget_id="widget-0", result=result),
         ViewPatchLine(line=chart),
-        SqlReady(widget_id="widget-0", sql_query="SELECT count(*) FROM orders"),
+        SqlReady(widget_id="widget-0", sql="SELECT count(*) FROM orders"),
         NarrativeReady(text="There are 42 orders."),
     ]
 

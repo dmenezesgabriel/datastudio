@@ -62,6 +62,6 @@ def make_events(response: str = "Summary.") -> list[ChatStreamEvent]:
         ViewPatchLine(
             line='{"op":"add","path":"/elements/widget-0-table","value":{"type":"DataTable"}}'
         ),
-        SqlReady(widget_id="widget-0", sql_query="SELECT 1"),
+        SqlReady(widget_id="widget-0", sql="SELECT 1"),
         NarrativeReady(text=response),
     ]

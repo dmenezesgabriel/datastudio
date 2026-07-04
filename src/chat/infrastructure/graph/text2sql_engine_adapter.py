@@ -172,7 +172,7 @@ def _widget_events(update: Mapping[str, object]) -> list[ChatStreamEvent]:
         WidgetDataReady(widget_id=r.widget_id, result=r.result) for r in results
     ]
     events += [ViewPatchLine(line=line) for line in lines]
-    events += [SqlReady(widget_id=r.widget_id, sql_query=r.sql) for r in results if r.sql]
+    events += [SqlReady(widget_id=r.widget_id, sql=r.sql) for r in results if r.sql]
     return events
 
 

@@ -37,7 +37,7 @@ def _dashboard_events() -> list[ChatStreamEvent]:
         ProgressStep(step_id="widget-0", label="Building", status="running"),  # ignored
         WidgetDataReady(widget_id="widget-0", result=result),
         ViewPatchLine(line=_chart_line("widget-0")),
-        SqlReady(widget_id="widget-0", sql_query="SELECT month, COUNT(*) n FROM t GROUP BY 1"),
+        SqlReady(widget_id="widget-0", sql="SELECT month, COUNT(*) n FROM t GROUP BY 1"),
         NarrativeReady(text="Two months."),
     ]
 

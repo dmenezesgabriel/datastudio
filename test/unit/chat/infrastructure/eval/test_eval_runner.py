@@ -17,7 +17,7 @@ from shared.domain.value_objects.query_result import QueryResult
 def _state_for(question: str, response: str) -> Mapping[str, object]:
     """Minimal successful ChatState mirroring the orchestrator–workers output.
 
-    The real graph keeps ``sql_query``/``query_result`` local to each build_widget
+    The real graph keeps ``sql``/``query_result`` local to each build_widget
     worker; only the aggregated ``widget_results`` channel reaches the top-level
     state, so faithful fakes must expose the SQL and rows there.
     """
@@ -272,15 +272,15 @@ class TestEvalRunnerErrorHandling:
         assert case.question == "What?"
 
     def test_error_case_has_empty_string_defaults(self) -> None:
-        # kills mutmut_76 (sql_query=None), mutmut_78 (response=None),
-        # mutmut_93 (sql_query="XXXX"), mutmut_95 (response="XXXX")
+        # kills mutmut_76 (sql=None), mutmut_78 (response=None),
+        # mutmut_93 (sql="XXXX"), mutmut_95 (response="XXXX")
         runner = EvalRunner(
             graph_factory=lambda _: _FakeGraph(raise_on_invoke=RuntimeError("boom")),
             model_name="test-model",
         )
         report = runner.run([EvalCase(id="c1", question="q", checks=[])])
         case = report.cases[0]
-        assert case.sql_query == ""
+        assert case.sql == ""
         assert case.narrative == ""
 
     def test_error_case_sql_valid_is_false(self) -> None:
@@ -356,7 +356,7 @@ class TestEvalRunnerConcurrency:
 
 
 class TestEvalRunnerCaseResultFields:
-    """CaseResult captures sql_query, sql_valid, check_results, tags, and passed."""
+    """CaseResult captures sql, sql_valid, check_results, tags, and passed."""
 
     def _runner(self, response: str = "42") -> EvalRunner:
         return EvalRunner(
@@ -365,12 +365,12 @@ class TestEvalRunnerCaseResultFields:
         )
 
     def test_case_result_captures_sql_query(self) -> None:
-        # arrange — _FakeGraph returns sql_query="SELECT 1"
+        # arrange — _FakeGraph returns sql="SELECT 1"
         runner = self._runner()
         # act
         report = runner.run([EvalCase(id="c1", question="q", checks=[])])
         # assert
-        assert report.cases[0].sql_query == "SELECT 1"
+        assert report.cases[0].sql == "SELECT 1"
 
     def test_case_result_captures_sql_valid_true(self) -> None:
         # arrange — _FakeGraph returns a query_result, so sql_valid should be True
@@ -488,10 +488,10 @@ class TestEvalRunnerCaseResultQuestion:
 
 
 class TestEvalRunnerCaseResultSqlQueryDefault:
-    """CaseResult.sql_query is "" when graph returns no sql_query key."""
+    """CaseResult.sql is "" when graph returns no sql key."""
 
     def test_sql_query_defaults_to_empty_string_when_missing(self) -> None:
-        # arrange — a graph that returns state without sql_query key
+        # arrange — a graph that returns state without sql key
         class _NoSqlGraph:
             def invoke(self, state: Any, config: Any = None) -> Any:
                 return cast(
@@ -507,7 +507,7 @@ class TestEvalRunnerCaseResultSqlQueryDefault:
         # act
         report = runner.run([case])
         # assert — mutmut_52 gives "None" but correct gives ""
-        assert report.cases[0].sql_query == ""
+        assert report.cases[0].sql == ""
 
 
 class TestEvalRunnerCaseResultResponseDefault:
@@ -518,9 +518,7 @@ class TestEvalRunnerCaseResultResponseDefault:
         # mutmut_66 (default omitted → None), mutmut_69 (default="XXXX")
         class _NoResponseGraph:
             def invoke(self, state: Any, config: Any = None) -> Any:
-                return cast(
-                    ChatState, {"question": "q", "sql_query": "", "tables": [], "schema": ""}
-                )
+                return cast(ChatState, {"question": "q", "sql": "", "tables": [], "schema": ""})
 
         runner = EvalRunner(
             graph_factory=lambda _recorder: _NoResponseGraph(),

@@ -22,7 +22,7 @@ def _state(attempts: int = 0) -> ChatState:
         {
             "question": "How many films?",
             "schema": "-- movies\nDistributor VARCHAR",
-            "sql_query": "SELECT foo FROM movies",
+            "sql": "SELECT foo FROM movies",
             "sql_error": "Binder Error: no such column foo",
             "repair_attempts": attempts,
         },
@@ -52,7 +52,7 @@ class TestRepairSqlNonFinalAttempt:
         result = RepairSql(model, engine)(_state(attempts=0))
         # assert
         assert result == {
-            "sql_query": "SELECT COUNT(*) FROM movies",
+            "sql": "SELECT COUNT(*) FROM movies",
             "repair_attempts": 1,
         }
 
@@ -112,14 +112,14 @@ class TestRepairSqlBuildMessagesDefaults:
 
     def test_missing_schema_produces_empty_not_none(self) -> None:
         # kills mutmut_8 (default=None), mutmut_10 (no default), mutmut_13 (default='XXXX')
-        state = cast(ChatState, {"question": "q", "sql_query": "SELECT 1", "sql_error": "err"})
+        state = cast(ChatState, {"question": "q", "sql": "SELECT 1", "sql_error": "err"})
         combined = self._combined(state)
         assert "Schema:\nNone" not in combined
         assert "Schema:\nXXXX" not in combined
 
     def test_missing_question_produces_empty_not_none(self) -> None:
         # kills mutmut_15 (default=None), mutmut_17 (no default), mutmut_20 (default='XXXX')
-        state = cast(ChatState, {"schema": "-- t", "sql_query": "SELECT 1", "sql_error": "err"})
+        state = cast(ChatState, {"schema": "-- t", "sql": "SELECT 1", "sql_error": "err"})
         combined = self._combined(state)
         assert "Question: None" not in combined
         assert "Question: XXXX" not in combined
@@ -133,7 +133,7 @@ class TestRepairSqlBuildMessagesDefaults:
 
     def test_missing_sql_error_produces_empty_not_none(self) -> None:
         # kills mutmut_29 (default=None), mutmut_31 (no default), mutmut_34 (default='XXXX')
-        state = cast(ChatState, {"schema": "-- t", "question": "q", "sql_query": "SELECT 1"})
+        state = cast(ChatState, {"schema": "-- t", "question": "q", "sql": "SELECT 1"})
         combined = self._combined(state)
         assert "Error: None" not in combined
         assert "Error: XXXX" not in combined
@@ -156,7 +156,7 @@ class TestRepairSqlFinalAttempt:
         # act — attempts=1 makes this the final (2nd) attempt
         result = RepairSql(model, engine, candidate_count=2)(_state(attempts=1))
         # assert
-        assert result["sql_query"] == "GOOD SQL"
+        assert result["sql"] == "GOOD SQL"
         assert result["repair_attempts"] == MAX_REPAIR_ATTEMPTS
 
     def test_falls_back_to_first_candidate_when_all_fail(self) -> None:
@@ -166,7 +166,7 @@ class TestRepairSqlFinalAttempt:
         # act
         result = RepairSql(model, engine, candidate_count=2)(_state(attempts=1))
         # assert
-        assert result["sql_query"] == "FIRST"
+        assert result["sql"] == "FIRST"
 
     def test_stops_generating_after_first_successful_candidate(self) -> None:
         # arrange — first candidate executes cleanly; second must never be generated
@@ -199,4 +199,4 @@ class TestRepairSqlFinalAttempt:
         # act — candidate_count=1, attempts=1 (final attempt)
         result = RepairSql(model, engine, candidate_count=1)(_state(attempts=1))
         # assert — fallback must be "" not "XXXX"
-        assert result["sql_query"] == ""
+        assert result["sql"] == ""

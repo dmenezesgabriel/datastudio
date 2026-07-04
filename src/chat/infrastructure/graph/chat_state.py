@@ -15,7 +15,7 @@ class ChatState(TypedDict):
     The flow discovers the schema once, plans 1..N widgets, then fans out one
     parallel ``build_widget`` worker per widget (via ``Send``). The two
     ``Annotated[..., add]`` channels let those concurrent workers append their
-    outputs without clobbering each other; ``widget``/``sql_query``/``query_result``/
+    outputs without clobbering each other; ``widget``/``sql``/``query_result``/
     ``sql_error``/``repair_attempts`` are the per-worker working fields (carried on
     the local state a worker drives, not across the main graph).
 
@@ -36,7 +36,7 @@ class ChatState(TypedDict):
     text_answer: NotRequired[str]  # planner-drafted reply on the text path; promoted by answer_text
     widget_specs: NotRequired[list[WidgetSpec]]  # set by plan_widgets; read by the fan-out edge
     widget: NotRequired[WidgetSpec]  # the single widget a build_widget worker is building
-    sql_query: NotRequired[str]  # per-widget working fields (local to a build_widget worker)
+    sql: NotRequired[str]  # per-widget working fields (local to a build_widget worker)
     sql_error: NotRequired[str]
     repair_attempts: NotRequired[int]
     query_result: NotRequired[QueryResult]
