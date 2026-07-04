@@ -302,6 +302,6 @@ class EvalRunner:
             state = cast(ChatState, raw)
             state_dict = cast(dict[str, object], state)
             check_results.extend(check.evaluate(state) for check in turn.checks)
-            response = str(state_dict.get("narrative", ""))
-            history.extend([HumanMessage(content=turn.question), AIMessage(content=response)])
+            narrative = str(state_dict.get("narrative", ""))
+            history.extend([HumanMessage(content=turn.question), AIMessage(content=narrative)])
         return check_results, state_dict

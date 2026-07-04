@@ -115,8 +115,8 @@ class BuildWidget:
         widget = cast(WidgetSpec, cast(dict[str, object], state)["widget"])
         label = f'Building "{widget.title}"'
         self._reporter.report(ProgressStep(widget.id, label, "running"))
-        local = self._run_pipeline(widget, state)
-        result = local.get("query_result")
+        worker_state = self._run_pipeline(widget, state)
+        result = worker_state.get("query_result")
         if not isinstance(result, QueryResult):
             self._reporter.report(ProgressStep(widget.id, label, "failed"))
             return {"widget_patch_lines": _failure_widget(widget)}
@@ -124,18 +124,18 @@ class BuildWidget:
         self._reporter.report(ProgressStep(widget.id, label, "done"))
         return {
             "widget_patch_lines": views,
-            "widget_results": [self._result(widget, result, local)],
+            "widget_results": [self._result(widget, result, worker_state)],
         }
 
     def _run_pipeline(self, widget: WidgetSpec, state: ChatState) -> dict[str, object]:
         """Run the per-widget SQL generate → execute → repair loop on a local state."""
-        local: dict[str, object] = {
+        worker_state: dict[str, object] = {
             "question": widget.sub_question,
             "schema": state["schema"],
             "tables": cast(dict[str, object], state).get("tables", []),
         }
         return run_sql_with_repair(
-            local,
+            worker_state,
             self._generate_sql,
             self._execute_sql,
             self._repair_sql,
@@ -149,10 +149,10 @@ class BuildWidget:
             return self._view.author(widget.id, widget.title, result)
 
     def _result(
-        self, widget: WidgetSpec, result: QueryResult, local: Mapping[str, object]
+        self, widget: WidgetSpec, result: QueryResult, worker_state: Mapping[str, object]
     ) -> WidgetResult:
         """Assemble the widget's result (rows + SQL) for the /state patch and disclosure."""
-        sql = local.get("sql_query")
+        sql = worker_state.get("sql_query")
         return WidgetResult(
             widget_id=widget.id,
             title=widget.title,

@@ -108,11 +108,11 @@ class RepairSql:
 
     @staticmethod
     def _build_messages(state: ChatState, hint: str) -> list[BaseMessage]:
-        data = cast(dict[str, object], state)
+        state_dict = cast(dict[str, object], state)
         human = (
-            f"Schema:\n{data.get('schema', '')}\n\n"
-            f"Question: {data.get('question', '')}\n\n"
-            f"Previous SQL:\n{data.get('sql_query', '')}\n\n"
-            f"Error: {data.get('sql_error', '')}\n\n{hint}"
+            f"Schema:\n{state_dict.get('schema', '')}\n\n"
+            f"Question: {state_dict.get('question', '')}\n\n"
+            f"Previous SQL:\n{state_dict.get('sql_query', '')}\n\n"
+            f"Error: {state_dict.get('sql_error', '')}\n\n{hint}"
         )
         return [SystemMessage(content=_SYSTEM_PROMPT), HumanMessage(content=human)]

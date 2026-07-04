@@ -47,12 +47,14 @@ def fan_out_widgets(state: ChatState) -> list[Send]:
     Returned from a conditional edge after ``plan_widgets``; each ``Send`` carries the
     single widget plus the shared schema/tables as that worker's input state.
     """
-    data = cast(dict[str, object], state)
+    state_dict = cast(dict[str, object], state)
     specs = [
-        s for s in cast(list[object], data.get("widget_specs", [])) if isinstance(s, WidgetSpec)
+        s
+        for s in cast(list[object], state_dict.get("widget_specs", []))
+        if isinstance(s, WidgetSpec)
     ]
-    schema = data.get("schema", "")
-    tables = data.get("tables", [])
+    schema = state_dict.get("schema", "")
+    tables = state_dict.get("tables", [])
     return [
         Send("build_widget", {"widget": spec, "schema": schema, "tables": tables}) for spec in specs
     ]

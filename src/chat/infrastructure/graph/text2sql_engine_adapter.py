@@ -187,12 +187,12 @@ def _to_result(state: ChatState) -> Text2SqlResult:
     Compiles the aggregated widget view patches into a render tree (used by the CLI,
     which only prints ``narrative``); falls back to narrative-only when no widget ran.
     """
-    data = cast(dict[str, object], state)
+    state_dict = cast(dict[str, object], state)
     narrative = state["narrative"]
-    results = [r for r in _as_list(data.get("widget_results")) if isinstance(r, WidgetResult)]
+    results = [r for r in _as_list(state_dict.get("widget_results")) if isinstance(r, WidgetResult)]
     sql = "; ".join(r.sql for r in results)
     sql_by_widget = {r.widget_id: r.sql for r in results if r.sql}
-    lines = [ln for ln in _as_list(data.get("widget_patch_lines")) if isinstance(ln, str)]
+    lines = [ln for ln in _as_list(state_dict.get("widget_patch_lines")) if isinstance(ln, str)]
     view = (
         compile_render_tree(narrative, lines, sql_by_widget) if lines else narrative_tree(narrative)
     )
