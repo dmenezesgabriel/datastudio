@@ -4,8 +4,8 @@ from collections.abc import Mapping
 from time import perf_counter
 from typing import Protocol
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.eval.metrics import MetricsRecorder
+from chat.infrastructure.graph.chat_state import ChatState
 
 
 class _ChatNode(Protocol):

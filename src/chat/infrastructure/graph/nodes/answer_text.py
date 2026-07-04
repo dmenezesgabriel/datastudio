@@ -10,7 +10,7 @@ producing a narrative-only RenderTree with no widgets.
 
 from typing import cast
 
-from chat.domain.value_objects.chat_state import ChatState
+from chat.infrastructure.graph.chat_state import ChatState
 
 # When the planner routes here it has drafted a reply; this only guards a plan that
 # set answer_kind="text" without content (never expected, but avoids a blank answer).

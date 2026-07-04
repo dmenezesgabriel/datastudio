@@ -14,7 +14,6 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.eval._check_base import (
     Check,
     CheckResult,
@@ -33,6 +32,7 @@ from chat.infrastructure.eval.view_checks import (
     WidgetCountCheck,
 )
 from chat.infrastructure.eval.wire_integrity_check import WireIntegrityCheck
+from chat.infrastructure.graph.chat_state import ChatState
 from shared.application.ports.sql_engine_port import SqlEnginePort
 
 

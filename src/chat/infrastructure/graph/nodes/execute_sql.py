@@ -2,7 +2,7 @@
 
 from typing import cast
 
-from chat.domain.value_objects.chat_state import ChatState
+from chat.infrastructure.graph.chat_state import ChatState
 from shared.application.ports.sql_engine_port import SqlEnginePort
 
 

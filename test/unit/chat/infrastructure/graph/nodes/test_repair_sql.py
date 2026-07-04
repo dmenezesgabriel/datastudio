@@ -1,6 +1,6 @@
 from typing import cast
 
-from chat.domain.value_objects.chat_state import ChatState
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.nodes.repair_sql import (
     _CANDIDATE_HINTS,
     MAX_REPAIR_ATTEMPTS,

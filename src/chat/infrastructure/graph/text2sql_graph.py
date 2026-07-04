@@ -8,8 +8,8 @@ from langgraph.graph import END, START, StateGraph  # pyright: ignore[reportMiss
 from langgraph.types import RetryPolicy, Send
 
 from chat.application.ports.progress_reporter import NullProgressReporter, ProgressReporter
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetSpec
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.nodes.answer_text import AnswerText
 from chat.infrastructure.graph.nodes.build_widget import BuildWidget
 from chat.infrastructure.graph.nodes.compose_narrative import ComposeNarrative

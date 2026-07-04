@@ -6,8 +6,8 @@ import pytest
 from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import BaseMessage
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetResult
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.nodes.compose_narrative import ComposeNarrative
 from shared.domain.value_objects.query_result import QueryResult
 from test.unit.chat.infrastructure.graph.nodes.fake_failing_chat_model import (

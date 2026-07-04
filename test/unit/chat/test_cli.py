@@ -5,7 +5,7 @@ from typing import cast
 
 import pytest
 
-from chat.domain.value_objects.chat_state import ChatState
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.cli import (
     build_arg_parser,
     invoke_graph,

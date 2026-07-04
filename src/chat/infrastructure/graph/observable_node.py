@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from time import perf_counter
 from typing import Protocol, cast
 
-from chat.domain.value_objects.chat_state import ChatState
+from chat.infrastructure.graph.chat_state import ChatState
 from shared.domain.value_objects.query_result import QueryResult
 from shared.infrastructure.logging.logger_factory import get_logger
 

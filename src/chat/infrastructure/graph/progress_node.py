@@ -9,8 +9,8 @@ parallel ``build_widget`` workers report their own per-widget steps.
 from collections.abc import Mapping
 
 from chat.application.ports.progress_reporter import ProgressReporter
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.stream_event import ProgressStep
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.types import TypedChatNode
 
 

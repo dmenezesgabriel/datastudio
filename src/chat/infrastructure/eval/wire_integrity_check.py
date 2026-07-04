@@ -13,7 +13,6 @@ it (catching a view authored against data that never reached the wire).
 import json
 from typing import cast
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.stream_event import (
     ChatStreamEvent,
     NarrativeReady,
@@ -28,6 +27,7 @@ from chat.infrastructure.eval._check_base import (
     view_lines,
     widget_results,
 )
+from chat.infrastructure.graph.chat_state import ChatState
 
 _STATE_BINDING = "$state"
 

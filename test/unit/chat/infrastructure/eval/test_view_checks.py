@@ -1,7 +1,6 @@
 import json
 from typing import cast
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetResult
 from chat.infrastructure.eval.checks import deserialize_check
 from chat.infrastructure.eval.view_checks import (
@@ -11,6 +10,7 @@ from chat.infrastructure.eval.view_checks import (
     VizRubricCheck,
     WidgetCountCheck,
 )
+from chat.infrastructure.graph.chat_state import ChatState
 from shared.domain.value_objects.query_result import QueryResult
 from test.unit.chat.infrastructure.graph.nodes.fake_structured_chat_model import (
     FakeStructuredChatModel,

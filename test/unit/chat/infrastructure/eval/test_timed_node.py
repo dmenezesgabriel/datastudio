@@ -3,9 +3,9 @@
 from collections.abc import Mapping
 from typing import cast
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.eval.metrics import EvalCollector
 from chat.infrastructure.eval.timed_node import TimedNode
+from chat.infrastructure.graph.chat_state import ChatState
 
 
 def _inner(state: ChatState) -> Mapping[str, object]:

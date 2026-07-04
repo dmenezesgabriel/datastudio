@@ -7,10 +7,10 @@ from typing import Any, cast
 
 import pytest
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetResult
 from chat.infrastructure.eval.metrics import MetricsRecorder
 from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner, EvalTurn
+from chat.infrastructure.graph.chat_state import ChatState
 from shared.domain.value_objects.query_result import QueryResult
 
 

@@ -3,7 +3,6 @@ from typing import cast
 
 import pytest
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetResult
 from chat.infrastructure.eval.checks import (
     ExecutionMatchCheck,
@@ -16,6 +15,7 @@ from chat.infrastructure.eval.checks import (
     ViewPresentCheck,
     deserialize_check,
 )
+from chat.infrastructure.graph.chat_state import ChatState
 from shared.domain.value_objects.query_result import QueryResult
 from test.unit.chat.infrastructure.graph.nodes.fake_structured_chat_model import (
     FakeStructuredChatModel,

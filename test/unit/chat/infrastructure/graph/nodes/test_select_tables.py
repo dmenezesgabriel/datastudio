@@ -2,7 +2,7 @@ import pytest
 from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import SystemMessage
 
-from chat.domain.value_objects.chat_state import ChatState
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.nodes.select_tables import SelectTables
 from test.unit.chat.infrastructure.graph.nodes.fake_failing_chat_model import (
     FailingStructuredChatModel,

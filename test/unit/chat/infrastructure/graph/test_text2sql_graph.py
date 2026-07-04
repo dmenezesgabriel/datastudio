@@ -7,9 +7,9 @@ from typing import cast
 from langgraph.graph.state import CompiledStateGraph  # pyright: ignore[reportMissingTypeStubs]
 from langgraph.types import Send
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetSpec
 from chat.infrastructure.graph import text2sql_graph as graph_module
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph, fan_out_widgets
 from chat.infrastructure.graph.types import TypedChatGraph
 from shared.domain.value_objects.query_result import QueryResult

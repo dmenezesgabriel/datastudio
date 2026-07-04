@@ -3,8 +3,8 @@
 import json
 import logging
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetResult, WidgetSpec
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.observable_node import ObservableNode
 from shared.domain.value_objects.query_result import QueryResult
 from shared.infrastructure.logging.json_formatter import JsonFormatter

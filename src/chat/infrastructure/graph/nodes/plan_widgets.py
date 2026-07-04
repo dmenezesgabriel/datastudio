@@ -18,8 +18,8 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetSpec
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.nodes._structured_output import invoke_structured
 
 _MAX_WIDGETS = 5

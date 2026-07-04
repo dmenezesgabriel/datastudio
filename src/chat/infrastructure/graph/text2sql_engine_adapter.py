@@ -7,7 +7,6 @@ from time import perf_counter
 from typing import cast
 from uuid import uuid4
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.message import Message
 from chat.domain.value_objects.stream_event import (
     ChatStreamEvent,
@@ -20,6 +19,7 @@ from chat.domain.value_objects.stream_event import (
 )
 from chat.domain.value_objects.text2sql_result import Text2SqlResult
 from chat.domain.value_objects.widget import WidgetResult
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.history_messages import to_chat_history
 from chat.infrastructure.graph.types import TypedChatGraph
 from chat.infrastructure.graph.view.render_tree_builder import compile_view_tree, narrative_tree

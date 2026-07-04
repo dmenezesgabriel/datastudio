@@ -7,9 +7,9 @@ from typing import Any
 
 import pytest
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetResult
 from chat.infrastructure.eval.wire_integrity_check import WireIntegrityCheck
+from chat.infrastructure.graph.chat_state import ChatState
 from shared.domain.value_objects.query_result import QueryResult
 
 

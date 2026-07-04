@@ -15,9 +15,9 @@ from typing import cast
 from langchain_core.language_models import BaseChatModel
 
 from chat.application.ports.progress_reporter import ProgressReporter
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.stream_event import ProgressStep
 from chat.domain.value_objects.widget import WidgetResult, WidgetSpec
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.nodes.execute_sql import ExecuteSql
 from chat.infrastructure.graph.nodes.generate_sql import GenerateSql
 from chat.infrastructure.graph.nodes.generate_widget_view import (

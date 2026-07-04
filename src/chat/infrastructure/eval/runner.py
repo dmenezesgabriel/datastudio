@@ -9,11 +9,11 @@ from typing import Literal, cast
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetResult
 from chat.infrastructure.eval.checks import Check, CheckResult
 from chat.infrastructure.eval.metrics import EvalCollector, MetricsRecorder, NodeMetrics
 from chat.infrastructure.eval.token_callback import TokenCountingCallback
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.types import TypedChatGraph
 
 

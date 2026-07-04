@@ -6,7 +6,7 @@ from typing import Any, cast
 import pytest
 from langchain_core.exceptions import OutputParserException
 
-from chat.domain.value_objects.chat_state import ChatState
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.nodes.plan_widgets import PlanWidgets
 from test.unit.chat.infrastructure.graph.nodes.fake_failing_chat_model import (
     FailingStructuredChatModel,

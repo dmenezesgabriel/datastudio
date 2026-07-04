@@ -4,8 +4,8 @@ import json
 from typing import cast
 
 from chat.application.ports.progress_reporter import NullProgressReporter
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetSpec
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.nodes.build_widget import BuildWidget
 from chat.infrastructure.graph.plain_text_extractor import PlainTextExtractor
 from shared.domain.value_objects.query_result import QueryResult

@@ -1,6 +1,6 @@
 """LangGraph node that lists available tables from the SQL engine."""
 
-from chat.domain.value_objects.chat_state import ChatState
+from chat.infrastructure.graph.chat_state import ChatState
 from shared.application.ports.sql_engine_port import SqlEnginePort
 
 

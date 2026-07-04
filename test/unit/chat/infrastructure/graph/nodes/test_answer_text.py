@@ -2,7 +2,7 @@
 
 from typing import Any, cast
 
-from chat.domain.value_objects.chat_state import ChatState
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.nodes.answer_text import AnswerText
 
 

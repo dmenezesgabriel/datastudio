@@ -16,7 +16,6 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.infrastructure.eval._check_base import (
     CATALOG_COMPONENTS,
     CheckResult,
@@ -24,6 +23,7 @@ from chat.infrastructure.eval._check_base import (
     view_lines,
     widget_results,
 )
+from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.spec_patch import parse_patch
 from shared.domain.value_objects.query_result import QueryResult
 

@@ -8,8 +8,8 @@ checks can share ``CheckResult`` and the state accessors without an import cycle
 
 from typing import Protocol, TypedDict, cast
 
-from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetResult
+from chat.infrastructure.graph.chat_state import ChatState
 from shared.domain.value_objects.query_result import QueryResult
 
 # The component types the frontend json-render catalogue renders (frontend/src/catalog.ts).
