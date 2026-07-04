@@ -84,8 +84,8 @@ class ComposeNarrative:
 
     def __call__(self, state: ChatState) -> dict[str, str]:
         """Summarize the widget results, or return a failure message when none ran."""
-        raw = cast(dict[str, object], state).get("widget_results", [])
-        results = [r for r in cast(list[object], raw) if isinstance(r, WidgetResult)]
+        channel = cast(dict[str, object], state).get("widget_results", [])
+        results = [r for r in cast(list[object], channel) if isinstance(r, WidgetResult)]
         if not results:
             return {"narrative": _NO_RESULT_NARRATIVE}
         messages = [

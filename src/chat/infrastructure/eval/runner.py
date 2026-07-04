@@ -84,8 +84,8 @@ def _widget_results(state_dict: dict[str, object]) -> list[WidgetResult]:
     ``build_widget`` worker, so they never surface on the top-level state — the SQL and
     validity a report shows must be read back from the aggregated widget results.
     """
-    raw = state_dict.get("widget_results")
-    items = cast(list[object], raw) if isinstance(raw, list) else []
+    channel = state_dict.get("widget_results")
+    items = cast(list[object], channel) if isinstance(channel, list) else []
     return [item for item in items if isinstance(item, WidgetResult)]
 
 
@@ -295,11 +295,11 @@ class EvalRunner:
         state_dict: dict[str, object] = {}
         for turn in _case_turns(case):
             graph = self._graph_factory(collector)
-            raw = graph.invoke(  # pyright: ignore[reportUnknownMemberType]
+            final_state = graph.invoke(  # pyright: ignore[reportUnknownMemberType]
                 cast(ChatState, {"question": turn.question, "history": list(history)}),
                 config={"callbacks": [callback]},
             )
-            state = cast(ChatState, raw)
+            state = cast(ChatState, final_state)
             state_dict = cast(dict[str, object], state)
             check_results.extend(check.evaluate(state) for check in turn.checks)
             narrative = str(state_dict.get("narrative", ""))

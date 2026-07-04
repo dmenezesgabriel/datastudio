@@ -73,7 +73,7 @@ class Text2SqlEngineAdapter:
                 initial_state,
             )
             try:
-                raw = future.result(timeout=self._timeout_s)
+                final_state = future.result(timeout=self._timeout_s)
             except TimeoutError:
                 _logger.warning(
                     "graph.timeout",
@@ -82,7 +82,7 @@ class Text2SqlEngineAdapter:
                 return _timeout_result()
         duration_ms = round((perf_counter() - t0) * 1000)
         _logger.info("graph.complete", extra={"request_id": request_id, "duration_ms": duration_ms})
-        return _to_result(cast(ChatState, raw))
+        return _to_result(cast(ChatState, final_state))
 
     async def stream(self, question: str, history: Sequence[Message]) -> TypedChatStream:
         """Stream the answer as it is produced: progress, then narrative, then view.

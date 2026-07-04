@@ -102,12 +102,12 @@ def _write_path(
         cast(dict[str, object], target)[leaf] = value
 
 
-def _to_element(raw: dict[str, object]) -> RenderElement:
+def _to_element(element_dict: dict[str, object]) -> RenderElement:
     """Coerce a (possibly LLM-authored) element dict into a RenderElement, with defaults."""
-    props = raw.get("props")
-    children = raw.get("children")
+    props = element_dict.get("props")
+    children = element_dict.get("children")
     return RenderElement(
-        type=str(raw.get("type", "Markdown")),
+        type=str(element_dict.get("type", "Markdown")),
         props=cast(dict[str, object], props) if isinstance(props, dict) else {},
         children=[c for c in cast(list[object], children) if isinstance(c, str)]
         if isinstance(children, list)

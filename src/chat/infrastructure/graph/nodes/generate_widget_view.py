@@ -61,8 +61,8 @@ def keep_valid_patch_lines(text: str) -> list[str]:
         keep_valid_patch_lines('{"op":"add","path":"/elements/x","value":1}\nthanks')
     """
     kept: list[str] = []
-    for raw in text.splitlines():
-        line = raw.strip()
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
         if not line:
             continue
         patch = parse_patch(line)

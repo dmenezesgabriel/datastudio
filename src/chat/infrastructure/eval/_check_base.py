@@ -57,15 +57,15 @@ def first_result(state: ChatState) -> QueryResult | None:
 
 def widget_results(state: ChatState) -> list[WidgetResult]:
     """Every widget that produced an executed result, in fan-in order."""
-    raw = cast(dict[str, object], state).get("widget_results")
-    items = cast(list[object], raw) if isinstance(raw, list) else []
+    channel = cast(dict[str, object], state).get("widget_results")
+    items = cast(list[object], channel) if isinstance(channel, list) else []
     return [item for item in items if isinstance(item, WidgetResult)]
 
 
 def patch_lines(state: ChatState) -> list[str]:
     """Every widget's authored SpecStream patch line, aggregated."""
-    raw = cast(dict[str, object], state).get("widget_patch_lines")
-    items = cast(list[object], raw) if isinstance(raw, list) else []
+    channel = cast(dict[str, object], state).get("widget_patch_lines")
+    items = cast(list[object], channel) if isinstance(channel, list) else []
     return [line for line in items if isinstance(line, str)]
 
 
