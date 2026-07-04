@@ -19,15 +19,18 @@ data-visualization best practices.
   line for a time/ordered axis, bar for unordered categories or rankings, pie ONLY for a
   parts-of-a-whole breakdown with at most 5 slices.
 - A wide result (many columns) or a long detail/lookup list -> DataTable.
+- valueColumns: chart the ONE measure that answers this widget. Put multiple columns in
+  valueColumns ONLY when they share a unit and scale (e.g. two comparable counts). If the
+  result has measures of different units or magnitudes (e.g. a count AND a monetary total),
+  chart the primary one and leave the other out — a table can show both.
 ANTI-PATTERNS (never do these): a pie with more than 5 slices (use bar or a table); a line
-chart for unordered categories; a KpiStat for a multi-row result.
+chart for unordered categories; a KpiStat for a multi-row result; two series of different
+units or wildly different scales on one chart (one axis can't serve both — pick one).
 
 AVAILABLE COMPONENTS (use only these types):
-- Stack — Vertical container that stacks its children.
-  example: {}
 - Markdown — A short note rendered as markdown text.
   example: {"text":"A short note."}
-- KpiStat — A single headline metric (single-row results only). valueColumn names the result column holding the number; bind data to the result rows.
+- KpiStat — A single headline metric (single-row results only). valueColumn names the result column holding the number; bind data to the result rows. Optionally set deltaColumn to a signed change column (e.g. a period-over-period difference) to show an up/down trend badge, with deltaLabel naming the comparison (e.g. 'vs last month').
   example: {"label":"Total records","valueColumn":"total","data":{"$state":"/result/rows"}}
 - ChartJs — A Chart.js chart. labelColumn = category/time column; valueColumns = numeric series columns. Use line for a time series, bar for categories or rankings, pie only for a parts-of-a-whole breakdown of at most 5 slices.
   example: {"kind":"bar","title":"Value by category","labelColumn":"category","valueColumns":["value"],"data":{"$state":"/result/rows"}}

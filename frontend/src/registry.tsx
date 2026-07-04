@@ -2,8 +2,16 @@ import { defineRegistry } from "@json-render/react";
 
 import { catalog } from "./catalog";
 import { ChartJsView, type ChartDataset } from "./components/ChartJsView";
-import { DataTable, KpiStat, Markdown, Stack } from "./components/Panels";
-import { formatLabel, formatValue } from "./format";
+import {
+  DataTable,
+  Grid,
+  KpiRow,
+  KpiStat,
+  type KpiDelta,
+  Markdown,
+  Stack,
+} from "./components/Panels";
+import { formatCell, formatLabel, formatValue } from "./format";
 
 // Bind each catalogue component to its React implementation. Data props arrive
 // already resolved from provider state (the $state binding), as an array of row
@@ -22,14 +30,30 @@ function chartDatasets(rows: Row[], valueColumns: string[]): ChartDataset[] {
   }));
 }
 
+// Build the KPI's trend badge from a signed change column. Direction comes from the
+// sign (arrow + status color reinforce each other); a non-numeric cell yields no badge.
+function deltaFrom(row: Row, deltaColumn?: string, deltaLabel?: string): KpiDelta | undefined {
+  if (!deltaColumn) return undefined;
+  const raw = Number(row[deltaColumn]);
+  if (!Number.isFinite(raw)) return undefined;
+  const direction = raw > 0 ? "up" : raw < 0 ? "down" : "flat";
+  const sign = raw > 0 ? "+" : "";
+  const suffix = deltaLabel ? ` ${deltaLabel}` : "";
+  return { direction, text: `${sign}${formatValue(raw)}${suffix}` };
+}
+
 export const { registry } = defineRegistry(catalog, {
   components: {
     Stack: ({ children }) => <Stack>{children}</Stack>,
+    KpiRow: ({ children }) => <KpiRow>{children}</KpiRow>,
+    Grid: ({ children }) => <Grid>{children}</Grid>,
     Markdown: ({ props }) => <Markdown text={props.text} />,
     KpiStat: ({ props }) => {
       const rows = asRows(props.data);
-      const value = rows.length ? formatValue(rows[0][props.valueColumn]) : "";
-      return <KpiStat label={props.label} value={value} />;
+      const row = rows[0];
+      const value = row ? formatValue(row[props.valueColumn]) : "";
+      const delta = row ? deltaFrom(row, props.deltaColumn, props.deltaLabel) : undefined;
+      return <KpiStat label={props.label} value={value} delta={delta} />;
     },
     ChartJs: ({ props }) => {
       const rows = asRows(props.data);
@@ -45,7 +69,7 @@ export const { registry } = defineRegistry(catalog, {
     DataTable: ({ props }) => {
       const result = (props.data ?? {}) as { columns?: string[]; rows?: Row[] };
       const columns = result.columns ?? [];
-      const rows = (result.rows ?? []).map((row) => columns.map((column) => row[column]));
+      const rows = (result.rows ?? []).map((row) => columns.map((column) => formatCell(row[column])));
       return <DataTable columns={columns} rows={rows} />;
     },
   },

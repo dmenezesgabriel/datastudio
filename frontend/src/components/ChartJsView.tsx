@@ -26,11 +26,22 @@ export function ChartJsView({ kind, title, labels, datasets }: ChartJsProps) {
     const chart = new Chart(canvas, {
       type: kind as ChartType,
       data: { labels, datasets: datasets.map((d, i) => styleDataset(d, i, kind)) },
-      options: { responsive: true, plugins: { title: { display: !!title, text: title } } },
+      // maintainAspectRatio:false so the chart fills its sized .chart-box in the dashboard
+      // grid — with the default true, side-by-side canvases overflow their cell and overlap.
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { title: { display: !!title, text: title } },
+      },
     });
     return () => chart.destroy();
   }, [kind, title, labels, datasets]);
-  return <canvas ref={canvasRef} />;
+  // The relative, fixed-height box gives Chart.js a determinate size to resize against.
+  return (
+    <div className="chart-box">
+      <canvas ref={canvasRef} />
+    </div>
+  );
 }
 
 /** Apply a simple colour palette so charts are legible without custom theming. */

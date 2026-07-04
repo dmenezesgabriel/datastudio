@@ -68,8 +68,9 @@ class TestChatRouterStreaming:
         assert state["value"]["rows"] == [{"n": 42}]  # type: ignore[index]
         chart = next(p for p in patches if p["path"] == "/elements/widget-0-chart")
         assert chart["value"]["type"] == "ChartJs"  # type: ignore[index]
-        narrative = next(p for p in patches if p["path"] == "/elements/narrative")
-        assert narrative["value"]["props"]["text"] == "There are 42 orders."  # type: ignore[index]
+        # the narrative element is seeded empty (to lead the F-layout) then its text is set
+        narrative_text = next(p for p in patches if p["path"] == "/elements/narrative/props/text")
+        assert narrative_text["value"] == "There are 42 orders."
 
     def test_no_element_patch_carries_row_data(self) -> None:
         # the rows must reach the client ONLY via /state, never inside an /elements patch

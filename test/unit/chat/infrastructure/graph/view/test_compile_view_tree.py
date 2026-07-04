@@ -9,27 +9,32 @@ def _add_element(element_id: str, element: dict[str, object]) -> str:
     return json.dumps({"op": "add", "path": f"/elements/{element_id}", "value": element})
 
 
-def _append_child(element_id: str) -> str:
-    return json.dumps({"op": "add", "path": "/elements/root/children/-", "value": element_id})
+# Widget lines are already region-namespaced upstream (see namespace_widget_patches),
+# so a chart/table targets the grid region rather than the root directly.
+def _append_to_grid(element_id: str) -> str:
+    return json.dumps({"op": "add", "path": "/elements/grid/children/-", "value": element_id})
 
 
 class TestCompileViewTree:
-    def test_base_has_root_and_narrative(self) -> None:
+    def test_base_is_the_f_layout_skeleton(self) -> None:
         tree = compile_view_tree("42 orders.", [], "")
         assert tree.root == "root"
         assert tree.elements["narrative"].props["text"] == "42 orders."
-        assert tree.elements["root"].children == ["narrative"]
+        # narrative leads, then the (empty) KPI band and grid regions
+        assert tree.elements["root"].children == ["narrative", "kpi-row", "grid"]
+        assert tree.elements["kpi-row"].type == "KpiRow"
+        assert tree.elements["grid"].type == "Grid"
 
-    def test_applies_llm_view_patches(self) -> None:
+    def test_applies_llm_view_patches_into_the_grid(self) -> None:
         # Arrange
         chart = {"type": "ChartJs", "props": {"data": {"$state": "/result/rows"}}, "children": []}
-        lines = [_add_element("chart-1", chart), _append_child("chart-1")]
+        lines = [_add_element("chart-1", chart), _append_to_grid("chart-1")]
         # Act
         tree = compile_view_tree("answer", lines, "")
         # Assert
         assert tree.elements["chart-1"].type == "ChartJs"
         assert tree.elements["chart-1"].props["data"] == {"$state": "/result/rows"}
-        assert tree.elements["root"].children == ["narrative", "chart-1"]
+        assert tree.elements["grid"].children == ["chart-1"]
 
     def test_appends_sql_disclosure_last(self) -> None:
         tree = compile_view_tree("answer", [], "SELECT 1")
@@ -46,5 +51,5 @@ class TestCompileViewTree:
         # Act
         tree = compile_view_tree("answer", lines, "")
         # Assert — base survives, no crash
-        assert tree.elements["root"].children == ["narrative"]
+        assert tree.elements["root"].children == ["narrative", "kpi-row", "grid"]
         assert "ghost" not in tree.elements

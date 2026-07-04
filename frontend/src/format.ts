@@ -32,6 +32,25 @@ function numericOrNull(value: unknown): number | null {
 }
 
 /**
+ * Format a data-table cell. Fractional numbers (measures like a summed total) get
+ * thousands separators and at most two decimals, so a float-precision artifact like
+ * 16008872.119998764 reads "16,008,872.12". Integers are left plain on purpose —
+ * grouping a year (2017) or an id would corrupt it — and non-numbers pass through.
+ *
+ * @example
+ *   formatCell(16008872.119998764) // "16,008,872.12"
+ *   formatCell(2017)               // "2017"  (year — no grouping)
+ *   formatCell("credit_card")      // "credit_card"
+ */
+export function formatCell(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "number" && !Number.isInteger(value)) {
+    return NUMBER_FMT.format(value);
+  }
+  return String(value);
+}
+
+/**
  * Format a chart axis label. A midnight ISO timestamp (DuckDB date_trunc output)
  * renders as its date alone so a monthly axis reads "2017-01-01" instead of the
  * meaningless "0:00:00"; every other value is stringified unchanged.

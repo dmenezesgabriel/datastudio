@@ -34,8 +34,18 @@ data-visualization best practices.
   line for a time/ordered axis, bar for unordered categories or rankings, pie ONLY for a
   parts-of-a-whole breakdown with at most 5 slices.
 - A wide result (many columns) or a long detail/lookup list -> DataTable.
+- valueColumns: chart the ONE measure that answers this widget. Put multiple columns in
+  valueColumns ONLY when they share a unit and scale (e.g. two comparable counts). If the
+  result has measures of different units or magnitudes (e.g. a count AND a monetary total),
+  chart the primary one and leave the other out — a table can show both.
 ANTI-PATTERNS (never do these): a pie with more than 5 slices (use bar or a table); a line
-chart for unordered categories; a KpiStat for a multi-row result.`;
+chart for unordered categories; a KpiStat for a multi-row result; two series of different
+units or wildly different scales on one chart (one axis can't serve both — pick one).`;
+
+// Layout containers are assembled deterministically by the backend into the F-layout
+// (root Stack, KpiRow band, Grid region) — the per-widget author only emits ONE leaf
+// visualization, so they are omitted from the authorable vocabulary below.
+const LAYOUT_CONTAINERS = new Set(["Stack", "KpiRow", "Grid"]);
 
 const componentNames = catalog.componentNames as readonly string[];
 const components = catalog.data.components as Record<
@@ -44,6 +54,7 @@ const components = catalog.data.components as Record<
 >;
 
 const componentLines = componentNames
+  .filter((name) => !LAYOUT_CONTAINERS.has(name))
   .map((name) => {
     const def = components[name] ?? {};
     return `- ${name} — ${def.description ?? ""}\n  example: ${JSON.stringify(def.example ?? {})}`;

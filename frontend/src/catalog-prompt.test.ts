@@ -14,16 +14,31 @@ const PROMPT_PATH = resolve(
   "../../src/chat/infrastructure/graph/prompts/catalog_prompt.generated.txt",
 );
 
+// Layout containers are backend-assembled, not authored per-widget, so gen-catalog-prompt
+// omits them from the authorable vocabulary. Keep this in sync with LAYOUT_CONTAINERS there.
+const LAYOUT_CONTAINERS = new Set(["Stack", "KpiRow", "Grid"]);
+
 test("generated catalog prompt is in sync with the catalog", () => {
   const prompt = readFileSync(PROMPT_PATH, "utf8");
   const names = catalog.componentNames as readonly string[];
   const components = catalog.data.components as Record<string, { example?: unknown }>;
 
   for (const name of names) {
+    if (LAYOUT_CONTAINERS.has(name)) continue;
     expect(prompt, `prompt is missing component ${name} — run npm run gen:prompt`).toContain(name);
     const example = JSON.stringify(components[name]?.example ?? {});
     expect(prompt, `prompt is missing the ${name} example — run npm run gen:prompt`).toContain(
       example,
+    );
+  }
+});
+
+test("layout containers are excluded from the authorable component list", () => {
+  const prompt = readFileSync(PROMPT_PATH, "utf8");
+  const authorable = prompt.slice(prompt.indexOf("AVAILABLE COMPONENTS"));
+  for (const container of LAYOUT_CONTAINERS) {
+    expect(authorable, `${container} must not be offered to the per-widget author`).not.toContain(
+      `- ${container} —`,
     );
   }
 });

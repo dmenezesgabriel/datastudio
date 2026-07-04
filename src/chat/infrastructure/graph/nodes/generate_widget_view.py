@@ -37,6 +37,12 @@ _RESERVED_EXACT = frozenset({"/root", "/elements/root"})
 _RESERVED_PREFIXES = ("/elements/narrative", "/elements/sql")
 _ALLOWED_OPS = frozenset({"add", "replace", "remove"})
 
+# F-layout regions the backend seeds (see spec_stream / render_tree_builder): single-value
+# KpiStat widgets go into the headline band, every other widget into the charts/tables grid.
+_KPI_REGION = "kpi-row"
+_GRID_REGION = "grid"
+_ROOT_CHILDREN = "/elements/root/children/-"
+
 
 def load_catalog_prompt() -> str:
     """Load the catalog-derived system prompt that constrains the view-authoring model."""
@@ -82,22 +88,59 @@ def _rewrite_state(value: object, widget_id: str) -> object:
     return value
 
 
-def namespace_widget_patches(lines: list[str], widget_id: str) -> list[str]:
-    """Prefix element ids/child-refs with the widget id and rebind ``$state`` to it.
+def _root_child_id(lines: list[str]) -> str | None:
+    """The element id the widget appends to the root's children (its top-level element)."""
+    for line in lines:
+        patch = parse_patch(line)
+        if patch is not None and patch.get("path") == _ROOT_CHILDREN:
+            value = patch.get("value")
+            if isinstance(value, str):
+                return value
+    return None
 
-    Keeps parallel widgets from colliding on shared element ids and binds each to its
-    own streamed ``/state/<widget_id>`` data.
+
+def _element_type(lines: list[str], element_id: str) -> str | None:
+    """The ``type`` of the element added at ``/elements/<element_id>``, if any."""
+    target = f"/elements/{element_id}"
+    for line in lines:
+        patch = parse_patch(line)
+        if patch is not None and patch.get("path") == target:
+            value = patch.get("value")
+            kind = cast(dict[str, object], value).get("type") if isinstance(value, dict) else None
+            return kind if isinstance(kind, str) else None
+    return None
+
+
+def _region_for(lines: list[str]) -> str:
+    """Pick the F-layout region for a widget: KPI band for a single KpiStat, else the grid.
+
+    The region is decided per widget (from the element it authored) because parallel
+    workers can't coordinate a shared layout — a single-value KpiStat belongs in the
+    headline band, every chart/table/note in the grid below it.
     """
+    child_id = _root_child_id(lines)
+    primary = _element_type(lines, child_id) if child_id is not None else None
+    return _KPI_REGION if primary == "KpiStat" else _GRID_REGION
+
+
+def namespace_widget_patches(lines: list[str], widget_id: str) -> list[str]:
+    """Namespace a widget's element ids/``$state`` and place it in its F-layout region.
+
+    Prefixes element ids/child-refs with the widget id and rebinds ``$state`` so parallel
+    widgets never collide, then routes the widget's root-child append into the ``kpi-row``
+    band or the ``grid`` region (seeded by the serializer/compiler).
+    """
+    region = _region_for(lines)
     out: list[str] = []
     for line in lines:
         patch = parse_patch(line)
         if patch is None or not isinstance(patch.get("path"), str):
             continue
         path = cast(str, patch["path"])
-        if path == "/elements/root/children/-":
+        if path == _ROOT_CHILDREN:
             child = patch.get("value")
             if isinstance(child, str):
-                out.append(_patch("add", path, f"{widget_id}-{child}"))
+                out.append(_patch("add", f"/elements/{region}/children/-", f"{widget_id}-{child}"))
             continue
         parts = path.split("/")
         if len(parts) < 3 or parts[1] != "elements" or parts[2] == "root":

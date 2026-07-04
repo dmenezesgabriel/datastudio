@@ -18,6 +18,16 @@ export const catalog = defineCatalog(schema, {
       description: "Vertical container that stacks its children.",
       example: {},
     },
+    KpiRow: {
+      props: z.object({}),
+      description: "A band of KpiStat tiles laid across the top of a dashboard (F-layout headline).",
+      example: {},
+    },
+    Grid: {
+      props: z.object({}),
+      description: "A responsive grid region for a dashboard's charts and detail tables.",
+      example: {},
+    },
     Markdown: {
       props: z.object({ text: z.string() }),
       description: "A short note rendered as markdown text.",
@@ -27,11 +37,15 @@ export const catalog = defineCatalog(schema, {
       props: z.object({
         label: z.string(),
         valueColumn: z.string(),
+        deltaColumn: z.string().optional(),
+        deltaLabel: z.string().optional(),
         data: z.unknown(),
       }),
       description:
         "A single headline metric (single-row results only). valueColumn names the result " +
-        "column holding the number; bind data to the result rows.",
+        "column holding the number; bind data to the result rows. Optionally set deltaColumn " +
+        "to a signed change column (e.g. a period-over-period difference) to show an up/down " +
+        "trend badge, with deltaLabel naming the comparison (e.g. 'vs last month').",
       example: { label: "Total records", valueColumn: "total", data: { $state: "/result/rows" } },
     },
     ChartJs: {

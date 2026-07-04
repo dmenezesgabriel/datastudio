@@ -193,6 +193,81 @@ body {
   color: var(--color-failed);
 }
 
+/* --- Dashboard widgets (F-layout) ----------------------------------------- */
+
+/* Headline KPI band: tiles flow across the top and wrap on narrow widths. The grid
+   (not flex) keeps every tile an equal share so the row reads as one banded unit. */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-4);
+}
+
+/* Chart/table region below the KPI band: one column on narrow screens, two when
+   there's room, so a dashboard reads top-to-bottom then left-to-right (F-pattern). */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* Grid children must be allowed to shrink below their content's intrinsic width, or a
+   Chart.js canvas forces the cell wider than its track and cells overlap. */
+.dash-grid > * {
+  min-width: 0;
+}
+
+/* A determinate box for each chart: Chart.js (responsive + maintainAspectRatio:false)
+   fills it, so charts keep a stable height instead of overflowing their grid cell. */
+.chart-box {
+  position: relative;
+  height: 260px;
+  width: 100%;
+}
+
+.kpi-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* The trend badge: an arrow glyph + figure carry direction on their own; the status
+   color only reinforces it (never color-alone). Tokens are theme-aware (see tokens.css). */
+.kpi-stat__delta {
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+.kpi-stat__delta--up {
+  color: var(--color-done);
+}
+.kpi-stat__delta--down {
+  color: var(--color-failed);
+}
+.kpi-stat__delta--flat {
+  color: var(--color-text-muted);
+}
+
+/* A wide result table scrolls horizontally inside its own box, so 8 columns of ids
+   never widen the page (mirrors the .message-list pre rule for SQL blocks). */
+.table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* Visually hidden but read by screen readers (the delta direction word). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* --- Responsive: collapse the sidebar on narrow screens ------------------- */
 
 @media (max-width: 720px) {

@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import { formatLabel, formatValue } from "./format";
+import { formatCell, formatLabel, formatValue } from "./format";
 
 test("formatValue adds thousands separators to integers", () => {
   expect(formatValue(99441)).toBe("99,441");
@@ -32,4 +32,18 @@ test("formatLabel collapses a midnight ISO timestamp to its date", () => {
 test("formatLabel leaves category labels unchanged", () => {
   expect(formatLabel("on_time")).toBe("on_time");
   expect(formatLabel(3)).toBe("3");
+});
+
+test("formatCell cleans a fractional measure's float artifact", () => {
+  expect(formatCell(16008872.119998764)).toBe("16,008,872.12");
+});
+
+test("formatCell leaves integers plain so years and ids are not corrupted", () => {
+  expect(formatCell(2017)).toBe("2017");
+  expect(formatCell(99441)).toBe("99441");
+});
+
+test("formatCell passes strings through and renders null as empty", () => {
+  expect(formatCell("credit_card")).toBe("credit_card");
+  expect(formatCell(null)).toBe("");
 });

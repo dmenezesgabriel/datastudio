@@ -24,23 +24,32 @@ def _patches(serializer: SpecStreamSerializer, *events: object) -> list[dict[str
 
 
 class TestNarrative:
-    def test_initializes_root_and_adds_markdown(self) -> None:
+    def test_seeds_root_with_a_leading_narrative_then_sets_its_text(self) -> None:
+        # The narrative is seeded (empty) at root init so it leads the F-layout; its text
+        # is then set in place — narrative streams last but must render on top.
         serializer = SpecStreamSerializer()
         patches = _patches(serializer, NarrativeReady(text="Summary."))
         assert [p["path"] for p in patches] == [
             "/root",
             "/elements/root",
             "/elements/narrative",
-            "/elements/root/children/-",
+            "/elements/narrative/props/text",
         ]
-        assert patches[2]["value"]["props"]["text"] == "Summary."  # type: ignore[index]
+        # root's first child is the narrative, so it renders at the top
+        assert patches[1]["value"]["children"] == ["narrative"]  # type: ignore[index]
+        assert patches[3] == {
+            "op": "replace",
+            "path": "/elements/narrative/props/text",
+            "value": "Summary.",
+        }
 
-    def test_narrative_is_added_once_then_replaced_in_place(self) -> None:
+    def test_narrative_element_added_once_and_text_replaced_each_time(self) -> None:
         serializer = SpecStreamSerializer()
         patches = _patches(serializer, NarrativeReady(text="Draft."), NarrativeReady(text="Done."))
         replace = [p for p in patches if p["op"] == "replace"]
         assert replace == [
-            {"op": "replace", "path": "/elements/narrative/props/text", "value": "Done."}
+            {"op": "replace", "path": "/elements/narrative/props/text", "value": "Draft."},
+            {"op": "replace", "path": "/elements/narrative/props/text", "value": "Done."},
         ]
         assert sum(1 for p in patches if p["path"] == "/elements/narrative") == 1
 
@@ -141,11 +150,29 @@ class TestWidgetData:
 
 
 class TestViewAndSql:
-    def test_view_patch_line_passes_through(self) -> None:
+    def test_first_view_patch_seeds_regions_then_passes_the_line_through(self) -> None:
         serializer = SpecStreamSerializer()
-        _patches(serializer, NarrativeReady(text="x"))  # root exists
+        _patches(serializer, NarrativeReady(text="x"))  # root + narrative exist
         line = '{"op":"add","path":"/elements/widget-0-chart","value":{"type":"ChartJs"}}'
-        assert serializer.lines_for(ViewPatchLine(line=line)) == [line]
+        out = serializer.lines_for(ViewPatchLine(line=line))
+        # the KPI band + grid regions are seeded (once) ahead of the widget's own line
+        paths = [json.loads(x)["path"] for x in out]
+        assert paths == [
+            "/elements/kpi-row",
+            "/elements/root/children/-",
+            "/elements/grid",
+            "/elements/root/children/-",
+            "/elements/widget-0-chart",
+        ]
+        assert out[-1] == line  # the widget's authored patch is forwarded verbatim
+
+    def test_regions_are_seeded_only_once(self) -> None:
+        serializer = SpecStreamSerializer()
+        _patches(serializer, NarrativeReady(text="x"))
+        first = serializer.lines_for(ViewPatchLine(line='{"op":"add","path":"/elements/a"}'))
+        second = serializer.lines_for(ViewPatchLine(line='{"op":"add","path":"/elements/b"}'))
+        assert any("kpi-row" in ln for ln in first)
+        assert not any("kpi-row" in ln for ln in second)  # no duplicate seeding
 
     def test_sql_ready_emits_per_widget_fenced_markdown(self) -> None:
         serializer = SpecStreamSerializer()

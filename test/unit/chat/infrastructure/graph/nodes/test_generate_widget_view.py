@@ -47,17 +47,30 @@ class TestValidViewPatchLines:
 
 
 class TestNamespaceWidgetPatches:
-    def test_prefixes_element_ids_and_child_refs(self) -> None:
+    def test_prefixes_element_ids_and_routes_a_chart_into_the_grid(self) -> None:
         lines = [
             json.dumps({"op": "add", "path": "/elements/chart", "value": {"type": "ChartJs"}}),
             json.dumps({"op": "add", "path": "/elements/root/children/-", "value": "chart"}),
         ]
         out = [json.loads(line) for line in namespace_widget_patches(lines, "widget-0")]
         assert out[0]["path"] == "/elements/widget-0-chart"
+        # a chart is placed in the grid region, not directly under root
         assert out[1] == {
             "op": "add",
-            "path": "/elements/root/children/-",
+            "path": "/elements/grid/children/-",
             "value": "widget-0-chart",
+        }
+
+    def test_routes_a_kpistat_into_the_headline_band(self) -> None:
+        lines = [
+            json.dumps({"op": "add", "path": "/elements/k", "value": {"type": "KpiStat"}}),
+            json.dumps({"op": "add", "path": "/elements/root/children/-", "value": "k"}),
+        ]
+        out = [json.loads(line) for line in namespace_widget_patches(lines, "widget-3")]
+        assert out[1] == {
+            "op": "add",
+            "path": "/elements/kpi-row/children/-",
+            "value": "widget-3-k",
         }
 
     def test_rewrites_state_binding_to_widget_path(self) -> None:

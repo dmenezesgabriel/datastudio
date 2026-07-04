@@ -31,16 +31,19 @@ def narrative_tree(narrative: str) -> RenderTree:
 def compile_view_tree(narrative: str, view_lines: list[str], sql_query: str) -> RenderTree:
     """Compile LLM-authored SpecStream lines into a RenderTree (sync CLI/eval path).
 
-    Builds the deterministic base (root Stack + narrative), applies each JSON-Patch
-    line, then appends the SQL disclosure — mirroring what the streaming serializer
+    Builds the deterministic F-layout base (root Stack over narrative → KpiRow band →
+    Grid), applies each JSON-Patch line (widgets namespace themselves into the band or
+    the grid), then appends the SQL disclosure — mirroring what the streaming serializer
     emits, so the batch and streaming views stay equivalent.
 
     Example:
         tree = compile_view_tree("42 events.", ['{"op":"add",...}'], "SELECT 1")
     """
     elements: dict[str, dict[str, object]] = {
-        "root": {"type": "Stack", "props": {}, "children": ["narrative"]},
+        "root": {"type": "Stack", "props": {}, "children": ["narrative", "kpi-row", "grid"]},
         "narrative": {"type": "Markdown", "props": {"text": narrative}, "children": []},
+        "kpi-row": {"type": "KpiRow", "props": {}, "children": []},
+        "grid": {"type": "Grid", "props": {}, "children": []},
     }
     for line in view_lines:
         _apply_view_patch(elements, line)

@@ -15,7 +15,9 @@ from shared.domain.value_objects.query_result import QueryResult
 # The component types the frontend json-render catalogue renders (frontend/src/catalog.ts).
 # Single source both the view checks and the wire-integrity check validate element types
 # against, so "in-catalog" means the same thing everywhere.
-CATALOG_COMPONENTS = frozenset({"Stack", "Markdown", "KpiStat", "ChartJs", "DataTable"})
+CATALOG_COMPONENTS = frozenset(
+    {"Stack", "KpiRow", "Grid", "Markdown", "KpiStat", "ChartJs", "DataTable"}
+)
 
 
 class CheckResult(TypedDict):

@@ -29,6 +29,12 @@ from shared.domain.value_objects.query_result import QueryResult
 # text in place (no add/remove flicker).
 _NARRATIVE_ID = "narrative"
 
+# F-layout regions seeded under the root, in reading order after the narrative: the KPI
+# headline band, then the charts/tables grid. Widgets are namespaced into these by the
+# view-authoring node (see generate_widget_view._region_for).
+_KPI_REGION = "kpi-row"
+_GRID_REGION = "grid"
+
 # Cap rows put on the wire so a large detail result can't bloat the stream.
 _MAX_STREAM_ROWS = 500
 
@@ -84,9 +90,9 @@ class SpecStreamSerializer:
     """
 
     def __init__(self) -> None:
-        """Start with an uninitialized spec, no narrative, and no progress steps yet."""
+        """Start with an uninitialized spec, no regions, and no progress steps yet."""
         self._root_initialized = False
-        self._narrative_added = False
+        self._regions_initialized = False
         self._progress_initialized = False
         self._progress_orders: dict[str, int] = {}
 
@@ -101,7 +107,7 @@ class SpecStreamSerializer:
                 _patch_line("add", f"/state/{event.widget_id}", self._state_value(event.result))
             ]
         if isinstance(event, ViewPatchLine):
-            return self._root_init_lines() + [event.line]
+            return self._region_init_lines() + [event.line]
         return self._sql_lines(event.widget_id, event.sql_query)  # SqlReady (union exhausted)
 
     def _progress_lines(self, step: ProgressStep) -> list[str]:
@@ -140,13 +146,13 @@ class SpecStreamSerializer:
         return state_value(result)
 
     def _narrative_lines(self, text: str) -> list[str]:
-        """Add the narrative element on first use; replace its text thereafter."""
-        if self._narrative_added:
-            return [_patch_line("replace", f"/elements/{_NARRATIVE_ID}/props/text", text)]
+        """Replace the narrative text in place.
+
+        The element is seeded (empty) at root init so it leads the F-layout
+        (narrative → KPI band → grid); the text streams last and only replaces here.
+        """
         lines = self._root_init_lines()
-        lines += self._add_element_lines(_NARRATIVE_ID, build_markdown_element(text))
-        self._narrative_added = True
-        return lines
+        return lines + [_patch_line("replace", f"/elements/{_NARRATIVE_ID}/props/text", text)]
 
     def _sql_lines(self, widget_id: str, sql_query: str) -> list[str]:
         """Emit a per-widget SQL-disclosure Markdown element (skipped when empty)."""
@@ -159,15 +165,38 @@ class SpecStreamSerializer:
         return lines
 
     def _root_init_lines(self) -> list[str]:
-        """Emit the root id + empty root Stack exactly once (no-op afterwards)."""
+        """Emit the root Stack + a leading (empty) narrative element exactly once.
+
+        Seeding the narrative here (rather than on the NarrativeReady event, which streams
+        last) pins it to the top so the answer reads narrative → KPI band → grid.
+        """
         if self._root_initialized:
             return []
         self._root_initialized = True
-        root = RenderElement(type="Stack", props={}, children=[])
+        root = RenderElement(type="Stack", props={}, children=[_NARRATIVE_ID])
         return [
             _patch_line("add", "/root", "root"),
             _patch_line("add", "/elements/root", root.model_dump()),
+            _patch_line(
+                "add", f"/elements/{_NARRATIVE_ID}", build_markdown_element("").model_dump()
+            ),
         ]
+
+    def _region_init_lines(self) -> list[str]:
+        """Seed the KPI band + grid regions once, right after the narrative (F-layout order).
+
+        Lazy (only when a widget view arrives) so a text-only answer stays narrative-only
+        with no empty dashboard scaffolding. Widgets append into these via ``$state``-bound
+        child refs the view-authoring node namespaces to ``kpi-row``/``grid``.
+        """
+        lines = self._root_init_lines()
+        if self._regions_initialized:
+            return lines
+        self._regions_initialized = True
+        for region, kind in ((_KPI_REGION, "KpiRow"), (_GRID_REGION, "Grid")):
+            element = RenderElement(type=kind, props={}, children=[])
+            lines += self._add_element_lines(region, element)
+        return lines
 
     def _add_element_lines(self, element_id: str, element: RenderElement) -> list[str]:
         """Add one element and reference it from the root Stack's children."""
