@@ -25,6 +25,7 @@ _EXPECTED_NODES = frozenset(
         "get_schema",
         "plan_widgets",
         "build_widget",
+        "answer_text",
         "compose_narrative",
     }
 )
@@ -34,8 +35,9 @@ _EXPECTED_EDGES = frozenset(
         ("list_tables", "select_tables"),
         ("select_tables", "get_schema"),
         ("get_schema", "plan_widgets"),
-        # plan_widgets → build_widget is a Send fan-out (conditional), not a static edge
+        # plan_widgets → build_widget / answer_text is a conditional route, not a static edge
         ("build_widget", "compose_narrative"),
+        ("answer_text", "__end__"),
         ("compose_narrative", "__end__"),
     }
 )
@@ -76,6 +78,31 @@ class TestBuildText2SqlGraph:
         assert {w.widget_id for w in result["widget_results"]} == {"widget-0", "widget-1"}
         # each widget contributed view patch lines to the shared reducer channel
         assert result["widget_views"]
+
+
+class TestTextBranch:
+    def test_text_kind_answers_without_running_widgets(self) -> None:
+        # arrange — the planner classifies the turn as text (a meta/greeting question)
+        chat_model = FakeStructuredChatModel(
+            tables=["orders"],
+            kind="text",
+            text_answer="I can query and visualize your data.",
+            widgets=[],
+            sql="",
+            answer="unused",
+        )
+        sql_engine = FakeSqlEngine(
+            tables=["orders"],
+            schemas={"orders": "-- orders\nid INT"},
+            query_result=QueryResult(columns=["id"], rows=[(1,)], row_count=1),
+        )
+        # act
+        result = build_text2sql_graph(chat_model, sql_engine).invoke(  # pyright: ignore[reportUnknownMemberType]
+            {"question": "what can you do?", "history": []}
+        )
+        # assert — the drafted answer is the response, and no widget worker ran
+        assert result["response"] == "I can query and visualize your data."
+        assert not result.get("widget_results")
 
 
 class TestFanOut:

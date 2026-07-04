@@ -30,6 +30,10 @@ class ChatState(TypedDict):
     history: list[BaseMessage]
     tables: list[str]
     schema: str
+    # plan_widgets classifies the turn: "text" → a direct answer (answer_text node),
+    # "data" → a 1..N-widget dashboard (fan-out). Absent until plan_widgets has run.
+    answer_kind: NotRequired[str]
+    text_answer: NotRequired[str]  # planner-drafted reply on the text path; promoted by answer_text
     widget_specs: NotRequired[list[WidgetSpec]]  # set by plan_widgets; read by the fan-out edge
     widget: NotRequired[WidgetSpec]  # the single widget a build_widget worker is building
     sql_query: NotRequired[str]  # per-widget working fields (local to a build_widget worker)

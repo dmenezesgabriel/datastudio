@@ -16,8 +16,10 @@ from test.unit.chat.infrastructure.graph.nodes.fake_failing_chat_model import (
 class FakePlanModel:
     """Returns a canned plan and records the messages it answered."""
 
-    def __init__(self, widgets: list[SimpleNamespace]) -> None:
-        self._plan = SimpleNamespace(widgets=widgets)
+    def __init__(
+        self, widgets: list[SimpleNamespace], kind: str = "data", text_answer: str = ""
+    ) -> None:
+        self._plan = SimpleNamespace(widgets=widgets, kind=kind, text_answer=text_answer)
         self.received: list[Any] = []
 
     def with_structured_output(self, schema: Any, **kwargs: Any) -> "FakePlanModel":
@@ -90,6 +92,31 @@ class TestPlanWidgets:
         ]
         assert model.received[1].content == "prior q"
         assert "now" in str(model.received[-1].content)
+
+
+class TestPlanWidgetsTextBranch:
+    def test_text_kind_returns_trimmed_answer_and_no_widgets(self) -> None:
+        # arrange — the planner classifies a meta/greeting question as text
+        model = FakePlanModel([], kind="text", text_answer="  I can query your data.  ")
+        # act
+        out = PlanWidgets(cast(Any, model))(_state(question="what can you do?"))
+        # assert — a direct answer, no widget fan-out
+        assert out["answer_kind"] == "text"
+        assert out["text_answer"] == "I can query your data."
+        assert "widget_specs" not in out
+
+    def test_text_kind_without_answer_falls_back_to_data(self) -> None:
+        # arrange — kind says text but the model gave no content
+        model = FakePlanModel([_intent("KPI", "total")], kind="text", text_answer="   ")
+        # act
+        out = PlanWidgets(cast(Any, model))(_state(question="revenue?"))
+        # assert — degrade to the data path rather than answer with a blank string
+        assert out["answer_kind"] == "data"
+        assert [s.id for s in out["widget_specs"]] == ["widget-0"]
+
+    def test_data_kind_tags_answer_kind(self) -> None:
+        out = _node([_intent("KPI", "total")])(_state())
+        assert out["answer_kind"] == "data"
 
 
 class TestPlanWidgetsResilience:

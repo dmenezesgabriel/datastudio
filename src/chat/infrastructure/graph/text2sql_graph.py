@@ -10,6 +10,7 @@ from langgraph.types import RetryPolicy, Send
 from chat.application.ports.progress_reporter import NullProgressReporter, ProgressReporter
 from chat.domain.value_objects.chat_state import ChatState
 from chat.domain.value_objects.widget import WidgetSpec
+from chat.infrastructure.graph.nodes.answer_text import AnswerText
 from chat.infrastructure.graph.nodes.build_widget import BuildWidget
 from chat.infrastructure.graph.nodes.compose_narrative import ComposeNarrative
 from chat.infrastructure.graph.nodes.generate_widget_view import load_catalog_prompt
@@ -35,6 +36,7 @@ _STEP_LABELS: dict[str, str] = {
     "select_tables": "Choosing the right tables",
     "get_schema": "Reading the schema",
     "plan_widgets": "Planning the dashboard",
+    "answer_text": "Answering",
     "compose_narrative": "Writing the summary",
 }
 
@@ -65,6 +67,17 @@ def fan_out_widgets(state: ChatState) -> list[Send]:
     return [
         Send("build_widget", {"widget": spec, "schema": schema, "tables": tables}) for spec in specs
     ]
+
+
+def route_after_plan(state: ChatState) -> str | list[Send]:
+    """Route out of ``plan_widgets``: a text answer, or the widget fan-out.
+
+    Returned from a conditional edge. A ``"text"`` classification goes to the single
+    ``answer_text`` node; otherwise it fans out one ``build_widget`` worker per widget.
+    """
+    if cast(dict[str, object], state).get("answer_kind") == "text":
+        return "answer_text"
+    return fan_out_widgets(state)
 
 
 def build_text2sql_graph(
@@ -140,6 +153,7 @@ def build_text2sql_nodes(
             create_response_content_extractor(api_base),
             reporter or NullProgressReporter(),
         ),
+        "answer_text": AnswerText(),
         "compose_narrative": ComposeNarrative(fast_model),
     }
 
@@ -153,11 +167,12 @@ _NODE_RETRY_POLICY = RetryPolicy(max_attempts=3)
 def wire_text2sql_graph(nodes: Mapping[str, ChatNode]) -> TypedChatGraph:
     """Wires the named ChatNode callables into a compiled orchestrator–workers graph.
 
-    Discover the schema once, plan 1..N widgets, then fan out one parallel
-    ``build_widget`` worker per widget (via ``Send``); each worker runs its own
-    SQL pipeline and authors its widget bound to ``$state``. The workers' outputs
-    aggregate (reducer channels) and ``compose_narrative`` writes the summary once
-    they all finish. Every node carries a RetryPolicy for transient errors.
+    Discover the schema once, then ``plan_widgets`` classifies the turn. A ``"text"``
+    question routes to ``answer_text`` and ends. Otherwise it plans 1..N widgets and
+    fans out one parallel ``build_widget`` worker per widget (via ``Send``); each
+    worker runs its own SQL pipeline and authors its widget bound to ``$state``. The
+    workers' outputs aggregate (reducer channels) and ``compose_narrative`` writes the
+    summary once they all finish. Every node carries a RetryPolicy for transient errors.
 
     Example:
         graph = wire_text2sql_graph({"list_tables": ListTables(engine), ...})
@@ -170,8 +185,9 @@ def wire_text2sql_graph(nodes: Mapping[str, ChatNode]) -> TypedChatGraph:
     builder.add_edge("select_tables", "get_schema")
     builder.add_edge("get_schema", "plan_widgets")
     builder.add_conditional_edges(  # pyright: ignore[reportUnknownMemberType]
-        "plan_widgets", fan_out_widgets, ["build_widget"]
+        "plan_widgets", route_after_plan, ["build_widget", "answer_text"]
     )
     builder.add_edge("build_widget", "compose_narrative")
+    builder.add_edge("answer_text", END)
     builder.add_edge("compose_narrative", END)
     return builder.compile()  # pyright: ignore[reportUnknownMemberType]

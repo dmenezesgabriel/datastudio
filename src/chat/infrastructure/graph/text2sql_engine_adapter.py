@@ -152,7 +152,9 @@ def _events_for(node_name: str, update: Mapping[str, object]) -> list[ChatStream
     """Map one node update to zero or more payload events (silent nodes yield none)."""
     if node_name == "build_widget":
         return _widget_events(update)
-    if node_name == "compose_narrative":
+    # Both the dashboard summary and the text-only branch write the ``response``
+    # channel; each surfaces as the narrative (a text-only turn has no widgets).
+    if node_name in ("compose_narrative", "answer_text"):
         response = update.get("response")
         return [NarrativeReady(text=response)] if isinstance(response, str) else []
     return []
