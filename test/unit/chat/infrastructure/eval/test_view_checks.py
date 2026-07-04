@@ -6,6 +6,7 @@ from chat.domain.value_objects.widget import WidgetResult
 from chat.infrastructure.eval.checks import deserialize_check
 from chat.infrastructure.eval.view_checks import (
     ChartFitCheck,
+    TextAnswerCheck,
     ViewContainsCheck,
     VizRubricCheck,
     WidgetCountCheck,
@@ -224,6 +225,25 @@ class TestVizRubricCheck:
         assert "rows=12" in combined
 
 
+class TestTextAnswerCheck:
+    def _state(self, response: str, widgets: list[WidgetResult]) -> ChatState:
+        return cast(ChatState, {"question": "hi", "response": response, "widget_results": widgets})
+
+    def test_passes_for_a_text_only_answer(self) -> None:
+        result = TextAnswerCheck().evaluate(self._state("I can query your data.", []))
+        assert result["passed"] is True
+
+    def test_fails_when_a_widget_was_built(self) -> None:
+        widget = _widget("widget-0", _rows(1, ["n"]))
+        result = TextAnswerCheck().evaluate(self._state("42 orders.", [widget]))
+        assert result["passed"] is False
+        assert "widget" in result["reasoning"]
+
+    def test_fails_when_there_is_no_response(self) -> None:
+        result = TextAnswerCheck().evaluate(self._state("   ", []))
+        assert result["passed"] is False
+
+
 class TestDeserializeNewCheckTypes:
     def _deserialize(self, spec: dict[str, str]) -> object:
         return deserialize_check(
@@ -256,3 +276,6 @@ class TestDeserializeNewCheckTypes:
         check = self._deserialize({"type": "viz_rubric", "rubric": "Trend should be a line."})
         assert isinstance(check, VizRubricCheck)
         assert check.rubric == "Trend should be a line."
+
+    def test_builds_text_answer_check(self) -> None:
+        assert isinstance(self._deserialize({"type": "text_answer"}), TextAnswerCheck)

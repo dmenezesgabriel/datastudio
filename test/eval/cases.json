@@ -1445,6 +1445,69 @@
           ]
         }
       ]
+    },
+    {
+      "id": "meta_greeting",
+      "question": "Hi! What is this tool?",
+      "tags": [
+        "text",
+        "meta"
+      ],
+      "checks": [
+        {
+          "type": "text_answer"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should briefly explain, in plain language, that this assistant answers questions about the user's data and can build charts and dashboards. It must not fabricate specific data values or numbers."
+        }
+      ]
+    },
+    {
+      "id": "meta_capabilities",
+      "question": "What kinds of questions can you help me answer?",
+      "tags": [
+        "text",
+        "meta"
+      ],
+      "checks": [
+        {
+          "type": "text_answer"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should describe, in plain language, the kinds of data questions the assistant can answer (metrics, breakdowns, trends, dashboards). It must not invent specific figures from the data."
+        }
+      ]
+    },
+    {
+      "id": "detail_orders_table",
+      "question": "List 20 individual order records as a table, showing several of their columns.",
+      "tags": [
+        "detail",
+        "table"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "DataTable"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "wire_integrity"
+        }
+      ]
     }
   ]
 }

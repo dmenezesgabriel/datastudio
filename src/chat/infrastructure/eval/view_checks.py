@@ -262,6 +262,33 @@ class WidgetCountCheck:
         )
 
 
+class TextAnswerCheck:
+    """Passes when the turn is a text-only answer: a non-empty response and no widgets.
+
+    Asserts the planner routed a conversational/definitional/meta question to the text
+    branch (answer_text) instead of forcing a SQL widget — the "just answer in words"
+    response type.
+
+    Example:
+        check = TextAnswerCheck()
+        result = check.evaluate(state)  # {"type": "text_answer", "passed": True, ...}
+    """
+
+    def evaluate(self, state: ChatState) -> CheckResult:
+        """Return passed when a response is present and no widget was built."""
+        results = widget_results(state)
+        response = cast(dict[str, object], state).get("response")
+        has_text = isinstance(response, str) and bool(response.strip())
+        passed = has_text and not results
+        if not has_text:
+            reasoning = "no text response"
+        elif results:
+            reasoning = f"expected a text-only answer but built {len(results)} widget(s)"
+        else:
+            reasoning = ""
+        return CheckResult(type="text_answer", value="", passed=passed, reasoning=reasoning)
+
+
 _VIZ_JUDGE_SYSTEM_PROMPT = (
     "You are a data-visualization reviewer. Given a question, the chosen visualization "
     "elements, the shape of the underlying data, and a rubric, decide whether the "

@@ -127,6 +127,30 @@ def _by_tag(cases: list[CaseResult]) -> dict[str, dict[str, int]]:
     return breakdown
 
 
+# The checks that grade "did the agent choose the right response shape" (text vs KPI vs
+# chart vs table vs dashboard) — as opposed to structural/data-correctness checks. Their
+# aggregate accuracy is surfaced as a headline metric so response-type selection is
+# visible without slicing per-tag.
+_VIEW_SELECTION_CHECKS = frozenset(
+    {"view_present", "view_contains", "chart_fit", "viz_rubric", "widget_count", "text_answer"}
+)
+
+
+def _view_selection_accuracy(cases: list[CaseResult]) -> dict[str, object]:
+    """Pass/total/accuracy over the response-type-selection checks across all cases."""
+    total = passed = 0
+    for case in cases:
+        for check in case.check_results:
+            if check["type"] in _VIEW_SELECTION_CHECKS:
+                total += 1
+                passed += int(check["passed"])
+    return {
+        "passed": passed,
+        "total": total,
+        "accuracy": round(passed / total, 3) if total else 0.0,
+    }
+
+
 def compute_summary(
     cases: list[CaseResult],
     input_price_per_m: float = 0.0,
@@ -159,6 +183,7 @@ def compute_summary(
         "avg_input_tokens": round(input_tokens / total, 1) if total else 0.0,
         "avg_output_tokens": round(output_tokens / total, 1) if total else 0.0,
         "cost_usd": round(cost, 6),
+        "view_selection": _view_selection_accuracy(cases),
         "by_tag": _by_tag(cases),
     }
 

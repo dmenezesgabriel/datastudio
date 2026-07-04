@@ -1,11 +1,32 @@
+from chat.infrastructure.eval._check_base import CheckResult
 from chat.infrastructure.eval.metrics import NodeMetrics
 from chat.infrastructure.eval.runner import (
     CaseResult,
     _count_passed,
     _percentile,
     _sum_node_token_attr,
+    _view_selection_accuracy,
     compute_summary,
 )
+
+
+def _check(check_type: str, passed: bool) -> CheckResult:
+    return {"type": check_type, "value": "", "passed": passed, "reasoning": ""}
+
+
+def _case_with_checks(checks: list[CheckResult]) -> CaseResult:
+    return CaseResult(
+        case_id="c",
+        question="q",
+        nodes={},
+        sql_query="",
+        sql_valid=True,
+        response="r",
+        check_results=checks,
+        passed=all(c["passed"] for c in checks),
+        error=None,
+        tags=[],
+    )
 
 
 def _case(
@@ -52,6 +73,33 @@ class TestCountPassed:
     def test_returns_zero_for_all_failed(self) -> None:
         cases = [_case("a", False, 0, 0, []), _case("b", False, 0, 0, [])]
         assert _count_passed(cases) == 0
+
+
+class TestViewSelectionAccuracy:
+    def test_aggregates_only_response_type_selection_checks(self) -> None:
+        # arrange — a mix: view-selection checks (counted) + others (ignored)
+        cases = [
+            _case_with_checks(
+                [
+                    _check("view_contains", True),
+                    _check("chart_fit", True),
+                    _check("sql_valid", False),
+                ]
+            ),
+            _case_with_checks([_check("view_present", False), _check("text_answer", True)]),
+        ]
+        # act
+        result = _view_selection_accuracy(cases)
+        # assert — 4 selection checks, 3 passed; sql_valid is not a selection check
+        assert result == {"passed": 3, "total": 4, "accuracy": 0.75}
+
+    def test_zero_accuracy_when_no_selection_checks(self) -> None:
+        result = _view_selection_accuracy([_case_with_checks([_check("sql_valid", True)])])
+        assert result == {"passed": 0, "total": 0, "accuracy": 0.0}
+
+    def test_included_in_compute_summary(self) -> None:
+        summary = compute_summary([_case_with_checks([_check("widget_count", True)])])
+        assert summary["view_selection"] == {"passed": 1, "total": 1, "accuracy": 1.0}
 
 
 class TestPercentile:
