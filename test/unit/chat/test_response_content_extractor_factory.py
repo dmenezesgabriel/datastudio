@@ -1,8 +1,8 @@
-from chat.infrastructure.graph.plain_text_extractor import PlainTextExtractor
-from chat.infrastructure.graph.response_content_extractor_factory import (
+from chat.infrastructure.graph.response_content_extractor import (
+    PlainTextExtractor,
+    ThinkingBlocksExtractor,
     create_response_content_extractor,
 )
-from chat.infrastructure.graph.thinking_blocks_extractor import ThinkingBlocksExtractor
 
 
 class TestCreateResponseContentExtractor:

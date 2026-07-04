@@ -10,7 +10,7 @@ from chat.infrastructure.graph.nodes.generate_widget_view import (
     keep_valid_patch_lines,
     namespace_widget_patches,
 )
-from chat.infrastructure.graph.plain_text_extractor import PlainTextExtractor
+from chat.infrastructure.graph.response_content_extractor import PlainTextExtractor
 from shared.domain.value_objects.query_result import QueryResult
 
 

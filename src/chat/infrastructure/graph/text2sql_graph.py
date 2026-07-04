@@ -20,7 +20,7 @@ from chat.infrastructure.graph.nodes.plan_widgets import PlanWidgets
 from chat.infrastructure.graph.nodes.select_tables import SelectTables
 from chat.infrastructure.graph.observable_node import ObservableNode
 from chat.infrastructure.graph.progress_node import ProgressNode
-from chat.infrastructure.graph.response_content_extractor_factory import (
+from chat.infrastructure.graph.response_content_extractor import (
     create_response_content_extractor,
 )
 from chat.infrastructure.graph.stream_writer_progress_reporter import (

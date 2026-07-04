@@ -1,6 +1,6 @@
 from langchain_core.messages import AIMessage
 
-from chat.infrastructure.graph.thinking_blocks_extractor import ThinkingBlocksExtractor
+from chat.infrastructure.graph.response_content_extractor import ThinkingBlocksExtractor
 
 
 class TestThinkingBlocksExtractor:

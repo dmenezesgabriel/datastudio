@@ -1,6 +1,6 @@
 from langchain_core.messages import AIMessage
 
-from chat.infrastructure.graph.plain_text_extractor import PlainTextExtractor
+from chat.infrastructure.graph.response_content_extractor import PlainTextExtractor
 
 
 class TestPlainTextExtractor:
