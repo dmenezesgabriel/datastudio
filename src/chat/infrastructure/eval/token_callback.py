@@ -7,14 +7,14 @@ from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.outputs import ChatGeneration, LLMResult
 
 from chat.infrastructure.eval.metrics import MetricsRecorder
-from chat.infrastructure.graph.observability import step_from_tags
+from chat.infrastructure.graph.step_tags import step_from_tags
 
 
 class TokenCountingCallback(BaseCallbackHandler):
     """LangChain callback that extracts LLM token usage and records it per step.
 
     Attribution prefers the ``step:<name>`` run tag carried by the call (see
-    ``graph.observability.step_tag``), captured at run start and keyed by run id so it
+    ``graph.step_tags.step_tag``), captured at run start and keyed by run id so it
     survives parallel ``build_widget`` workers. Untagged calls fall back to
     ``MetricsRecorder.current_node`` (set by TimedNode) — unchanged for the nodes that
     already map one-to-one to an LLM call.

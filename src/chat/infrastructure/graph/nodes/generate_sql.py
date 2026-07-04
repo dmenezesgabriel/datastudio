@@ -9,7 +9,7 @@ from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
 from chat.infrastructure.graph.chat_state import ChatState
-from chat.infrastructure.graph.observability import step_tag
+from chat.infrastructure.graph.step_tags import step_tag
 
 _SYSTEM_PROMPT = (
     "You are a SQL expert. Given a DuckDB database schema and a natural language "

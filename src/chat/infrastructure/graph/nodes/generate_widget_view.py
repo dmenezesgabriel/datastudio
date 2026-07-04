@@ -18,11 +18,11 @@ from langchain_core.language_models.base import LanguageModelInput
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.runnables import Runnable
 
-from chat.infrastructure.graph.observability import step_tag
 from chat.infrastructure.graph.response_content_extractor import (
     ResponseContentExtractor,
 )
 from chat.infrastructure.graph.spec_patch import parse_patch
+from chat.infrastructure.graph.step_tags import step_tag
 from shared.domain.value_objects.query_result import QueryResult
 
 # Generated from the frontend json-render catalog by `npm run gen:prompt`, so the

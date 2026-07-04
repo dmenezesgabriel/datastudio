@@ -8,7 +8,7 @@ from langchain_core.outputs import ChatGeneration, LLMResult
 
 from chat.infrastructure.eval.metrics import EvalCollector
 from chat.infrastructure.eval.token_callback import TokenCountingCallback, _extract_tokens
-from chat.infrastructure.graph.observability import step_tag
+from chat.infrastructure.graph.step_tags import step_tag
 
 
 def _result_with_usage(prompt: int, completion: int, cached: int | None = None) -> LLMResult:
