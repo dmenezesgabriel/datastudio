@@ -28,8 +28,8 @@ def narrative_tree(narrative: str) -> RenderTree:
     return RenderTree(root="root", elements=elements)
 
 
-def compile_view_tree(
-    narrative: str, view_lines: list[str], sql_by_widget: dict[str, str]
+def compile_render_tree(
+    narrative: str, patch_lines: list[str], sql_by_widget: dict[str, str]
 ) -> RenderTree:
     """Compile LLM-authored SpecStream lines into a RenderTree (sync CLI/eval path).
 
@@ -39,7 +39,7 @@ def compile_view_tree(
     what the streaming serializer emits, so the batch and streaming views stay equivalent.
 
     Example:
-        tree = compile_view_tree("42 events.", ['{"op":"add",...}'], {"widget-0": "SELECT 1"})
+        tree = compile_render_tree("42 events.", ['{"op":"add",...}'], {"widget-0": "SELECT 1"})
     """
     elements: dict[str, dict[str, object]] = {
         "root": {"type": "Stack", "props": {}, "children": ["narrative", "kpi-row", "grid"]},
@@ -47,7 +47,7 @@ def compile_view_tree(
         "kpi-row": {"type": "KpiRow", "props": {}, "children": []},
         "grid": {"type": "Grid", "props": {}, "children": []},
     }
-    for line in view_lines:
+    for line in patch_lines:
         _apply_view_patch(elements, line)
     _set_frame_sql(elements, sql_by_widget)
     return RenderTree(root="root", elements={k: _to_element(v) for k, v in elements.items()})

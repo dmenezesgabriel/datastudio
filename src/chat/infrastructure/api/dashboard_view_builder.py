@@ -2,7 +2,7 @@
 
 Mirrors what the streaming ``SpecStreamSerializer`` puts on the wire, but as a stored
 snapshot: it compiles the LLM's view patches + narrative + per-widget SQL into the
-element tree (reusing ``compile_view_tree``) and attaches each widget's ``{columns, rows}``
+element tree (reusing ``compile_render_tree``) and attaches each widget's ``{columns, rows}``
 state, so a reopened thread re-renders its charts/tables — not just its text.
 """
 
@@ -18,7 +18,7 @@ from chat.domain.value_objects.stream_event import (
     WidgetDataReady,
 )
 from chat.infrastructure.api.spec_stream import state_value
-from chat.infrastructure.graph.view.render_tree_builder import compile_view_tree, narrative_tree
+from chat.infrastructure.graph.view.render_tree_builder import compile_render_tree, narrative_tree
 
 
 class DashboardViewBuilder(TurnViewBuilder):
@@ -32,14 +32,14 @@ class DashboardViewBuilder(TurnViewBuilder):
     def build(self, events: Sequence[ChatStreamEvent]) -> RenderTree:
         """Assemble the persistable dashboard tree from one answered question's events."""
         narrative = _last_narrative(events)
-        view_lines = _view_patch_lines(events)
+        patch_lines = _view_patch_lines(events)
         sql_by_widget = _sql_by_widget(events)
         state = {
             e.widget_id: state_value(e.result) for e in events if isinstance(e, WidgetDataReady)
         }
-        if not view_lines:
+        if not patch_lines:
             return narrative_tree(narrative)  # narrative-only answer (no dashboard)
-        tree = compile_view_tree(narrative, view_lines, sql_by_widget)
+        tree = compile_render_tree(narrative, patch_lines, sql_by_widget)
         return tree.model_copy(update={"state": state})
 
 

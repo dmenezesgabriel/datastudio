@@ -22,7 +22,7 @@ from chat.domain.value_objects.widget import WidgetResult
 from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.history_messages import to_chat_history
 from chat.infrastructure.graph.types import TypedChatGraph
-from chat.infrastructure.graph.view.render_tree_builder import compile_view_tree, narrative_tree
+from chat.infrastructure.graph.view.render_tree_builder import compile_render_tree, narrative_tree
 from shared.infrastructure.logging.logger_factory import get_logger
 
 _logger = get_logger(__name__)
@@ -193,7 +193,9 @@ def _to_result(state: ChatState) -> Text2SqlResult:
     sql = "; ".join(r.sql for r in results)
     sql_by_widget = {r.widget_id: r.sql for r in results if r.sql}
     lines = [ln for ln in _as_list(data.get("widget_patch_lines")) if isinstance(ln, str)]
-    view = compile_view_tree(response, lines, sql_by_widget) if lines else narrative_tree(response)
+    view = (
+        compile_render_tree(response, lines, sql_by_widget) if lines else narrative_tree(response)
+    )
     return Text2SqlResult(response=response, sql_query=sql, view=view)
 
 

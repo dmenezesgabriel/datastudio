@@ -120,7 +120,7 @@ class BuildWidget:
         if not isinstance(result, QueryResult):
             self._reporter.report(ProgressStep(widget.id, label, "failed"))
             return {"widget_patch_lines": _failure_widget(widget)}
-        views = self._author_view(widget, result)
+        views = self._author_patch_lines(widget, result)
         self._reporter.report(ProgressStep(widget.id, label, "done"))
         return {
             "widget_patch_lines": views,
@@ -143,7 +143,7 @@ class BuildWidget:
             widget.id,
         )
 
-    def _author_view(self, widget: WidgetSpec, result: QueryResult) -> list[str]:
+    def _author_patch_lines(self, widget: WidgetSpec, result: QueryResult) -> list[str]:
         """Author the widget's namespaced view, reporting a "Building chart" sub-step."""
         with _sub_step(self._reporter, widget.id, "view", "Building chart"):
             return self._view.author(widget.id, widget.title, result)

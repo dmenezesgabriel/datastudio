@@ -412,14 +412,14 @@ def _view_line(element_id: str, element: dict[str, object]) -> str:
     return json.dumps({"op": "add", "path": f"/elements/{element_id}", "value": element})
 
 
-def _state_with_view(view_lines: list[str], query_result: QueryResult) -> ChatState:
+def _state_with_view(patch_lines: list[str], query_result: QueryResult) -> ChatState:
     widget = WidgetResult(widget_id="widget-0", title="V", result=query_result, sql="SELECT 1")
     return cast(
         ChatState,
         {
             "question": "Revenue by month",
             "widget_results": [widget],
-            "widget_patch_lines": view_lines,
+            "widget_patch_lines": patch_lines,
         },
     )
 
@@ -490,7 +490,7 @@ class TestViewIntegrityCheck:
         assert result["reasoning"] == ""
 
     def test_passes_vacuously_when_view_lines_but_no_results(self) -> None:
-        # kills mutmut_5 (and → or): when view_lines exist but results absent, must still pass
+        # kills mutmut_5 (and → or): when patch_lines exist but results absent, must still pass
         lines = [_view_line("c", _chart("month", ["revenue"]))]
         state = cast(ChatState, {"widget_patch_lines": lines})  # no widget_results
         result = ViewIntegrityCheck().evaluate(state)
@@ -579,7 +579,7 @@ class TestViewContainsCheck:
     """ViewContainsCheck asserts the LLM-authored view emits the expected element type."""
 
     def test_passes_when_element_type_present(self) -> None:
-        # arrange — view_lines add a ChartJs element
+        # arrange — patch_lines add a ChartJs element
         state = cast(
             ChatState, {"widget_patch_lines": [_view_line("c", _chart("month", ["revenue"]))]}
         )
@@ -600,7 +600,7 @@ class TestViewContainsCheck:
         assert "ChartJs" in result["reasoning"]
 
     def test_fails_when_no_view_present(self) -> None:
-        # arrange — no view_lines in state at all
+        # arrange — no patch_lines in state at all
         state = cast(ChatState, {"question": "q"})
         # act
         result = ViewContainsCheck(element_type="KpiStat").evaluate(state)

@@ -54,11 +54,11 @@ def _is_reserved(path: str) -> bool:
     return path in _RESERVED_EXACT or path.startswith(_RESERVED_PREFIXES)
 
 
-def valid_view_patch_lines(text: str) -> list[str]:
+def keep_valid_patch_lines(text: str) -> list[str]:
     r"""Keep only well-formed, non-reserved JSON-Patch lines from raw model output.
 
     Example:
-        valid_view_patch_lines('{"op":"add","path":"/elements/x","value":1}\nthanks')
+        keep_valid_patch_lines('{"op":"add","path":"/elements/x","value":1}\nthanks')
     """
     kept: list[str] = []
     for raw in text.splitlines():
@@ -253,5 +253,5 @@ class GenerateWidgetView:
             HumanMessage(content=_build_human_content(title, query_result)),
         ]
         text = self._extractor.extract(self._model.invoke(messages))
-        lines = valid_view_patch_lines(text) or _fallback_table_lines()
+        lines = keep_valid_patch_lines(text) or _fallback_table_lines()
         return namespace_widget_patches(lines, widget_id)

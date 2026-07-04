@@ -53,12 +53,12 @@ def _widget(widget_id: str, result: QueryResult) -> WidgetResult:
     return WidgetResult(widget_id=widget_id, title="W", result=result, sql="SELECT 1")
 
 
-def _state(view_lines: list[str], widgets: list[WidgetResult]) -> ChatState:
+def _state(patch_lines: list[str], widgets: list[WidgetResult]) -> ChatState:
     return cast(
         ChatState,
         {
             "question": "How does it look?",
-            "widget_patch_lines": view_lines,
+            "widget_patch_lines": patch_lines,
             "widget_results": widgets,
         },
     )

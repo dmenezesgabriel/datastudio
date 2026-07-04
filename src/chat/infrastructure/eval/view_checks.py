@@ -20,7 +20,7 @@ from chat.infrastructure.eval._check_base import (
     CATALOG_COMPONENTS,
     CheckResult,
     all_results,
-    view_lines,
+    patch_lines,
     widget_results,
 )
 from chat.infrastructure.graph.chat_state import ChatState
@@ -34,10 +34,10 @@ _PIE_KIND = "pie"
 _WIDGET_ID_RE = re.compile(r"^(widget-\d+)")
 
 
-def _added_elements(view_lines: list[str]) -> list[dict[str, object]]:
+def _added_elements(patch_lines: list[str]) -> list[dict[str, object]]:
     """Parse the LLM-authored SpecStream lines into the element value dicts they add."""
     elements: list[dict[str, object]] = []
-    for line in view_lines:
+    for line in patch_lines:
         patch = parse_patch(line)
         value = patch.get("value") if patch is not None else None
         if isinstance(value, dict) and "type" in value:
@@ -45,10 +45,10 @@ def _added_elements(view_lines: list[str]) -> list[dict[str, object]]:
     return elements
 
 
-def _referenced_columns(view_lines: list[str]) -> list[str]:
+def _referenced_columns(patch_lines: list[str]) -> list[str]:
     """Collect every result column the LLM-authored view binds to (by name)."""
     columns: list[str] = []
-    for element in _added_elements(view_lines):
+    for element in _added_elements(patch_lines):
         props = element.get("props")
         if not isinstance(props, dict):
             continue
@@ -68,7 +68,7 @@ class ViewIntegrityCheck:
 
     Guards the generative-UI path: the model authors the visualization, so a hallucinated
     column would bind a chart/KPI to data that isn't there. This asserts "no invented
-    columns" — it passes vacuously when there are no view_lines (the SQL-failure /
+    columns" — it passes vacuously when there are no patch_lines (the SQL-failure /
     narrative-only path), so it never penalises a legitimately minimal view.
 
     Example:
@@ -78,7 +78,7 @@ class ViewIntegrityCheck:
 
     def evaluate(self, state: ChatState) -> CheckResult:
         """Return passed when no column any widget binds to is absent from every result."""
-        lines = view_lines(state)
+        lines = patch_lines(state)
         results = all_results(state)
         if not lines or not results:
             return CheckResult(type="view_integrity", value="", passed=True, reasoning="")
@@ -106,7 +106,7 @@ class ViewPresentCheck:
 
     def evaluate(self, state: ChatState) -> CheckResult:
         """Return passed when ≥1 known viz element is added and no unknown component appears."""
-        lines = view_lines(state)
+        lines = patch_lines(state)
         if not lines:
             return CheckResult(type="view_present", value="", passed=False, reasoning="no view")
         types = [element.get("type") for element in _added_elements(lines)]
@@ -142,7 +142,7 @@ class ViewContainsCheck:
 
     def evaluate(self, state: ChatState) -> CheckResult:
         """Return passed when an added element matches element_type (and chart_kind if set)."""
-        elements = _added_elements(view_lines(state))
+        elements = _added_elements(patch_lines(state))
         passed = any(self._matches(element) for element in elements)
         label = (
             self.element_type
@@ -204,16 +204,16 @@ class ChartFitCheck:
         results_by_widget = {w.widget_id: w.result for w in widget_results(state)}
         if not results_by_widget:
             return CheckResult(type="chart_fit", value="", passed=True, reasoning="")
-        violations = self._violations(view_lines(state), results_by_widget)
+        violations = self._violations(patch_lines(state), results_by_widget)
         reasoning = "; ".join(violations)
         return CheckResult(type="chart_fit", value="", passed=not violations, reasoning=reasoning)
 
     def _violations(
-        self, view_lines: list[str], results_by_widget: dict[str, QueryResult]
+        self, patch_lines: list[str], results_by_widget: dict[str, QueryResult]
     ) -> list[str]:
         """Collect a message per element that breaks a data-shape best practice."""
         violations: list[str] = []
-        for line in view_lines:
+        for line in patch_lines:
             patch = parse_patch(line)
             element = patch.get("value") if patch is not None else None
             if not isinstance(element, dict) or "type" not in element:
@@ -306,10 +306,10 @@ class _VizVerdict(BaseModel):
     reasoning: str
 
 
-def _describe_views(view_lines: list[str]) -> str:
+def _describe_views(patch_lines: list[str]) -> str:
     """One line per authored element: its type and, for a chart, its kind and columns."""
     lines: list[str] = []
-    for element in _added_elements(view_lines):
+    for element in _added_elements(patch_lines):
         kind = _chart_kind(element)
         suffix = f" (kind={kind})" if kind is not None else ""
         lines.append(f"- {element.get('type')}{suffix}")
@@ -348,7 +348,7 @@ class VizRubricCheck:
         state_dict = cast(dict[str, object], state)
         human_content = _VIZ_JUDGE_HUMAN_TEMPLATE.format(
             question=state_dict.get("question", ""),
-            views=_describe_views(view_lines(state)),
+            views=_describe_views(patch_lines(state)),
             data=_describe_results(all_results(state)),
             rubric=self.rubric,
         )

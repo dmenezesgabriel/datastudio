@@ -7,8 +7,8 @@ from langchain_core.messages import AIMessage, BaseMessage
 
 from chat.infrastructure.graph.nodes.generate_widget_view import (
     GenerateWidgetView,
+    keep_valid_patch_lines,
     namespace_widget_patches,
-    valid_view_patch_lines,
 )
 from chat.infrastructure.graph.plain_text_extractor import PlainTextExtractor
 from shared.domain.value_objects.query_result import QueryResult
@@ -40,7 +40,7 @@ class TestValidViewPatchLines:
             '{"op":"replace","path":"/elements/narrative/props/text","value":"x"}\n'
             '{"op":"add","path":"/elements/root/children/-","value":"chart"}'
         )
-        assert valid_view_patch_lines(text) == [
+        assert keep_valid_patch_lines(text) == [
             '{"op":"add","path":"/elements/chart","value":{"type":"ChartJs"}}',
             '{"op":"add","path":"/elements/root/children/-","value":"chart"}',
         ]

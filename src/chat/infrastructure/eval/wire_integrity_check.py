@@ -24,7 +24,7 @@ from chat.infrastructure.api.spec_stream import SpecStreamSerializer
 from chat.infrastructure.eval._check_base import (
     CATALOG_COMPONENTS,
     CheckResult,
-    view_lines,
+    patch_lines,
     widget_results,
 )
 from chat.infrastructure.graph.chat_state import ChatState
@@ -54,7 +54,7 @@ def _events_from_state(state: ChatState) -> list[ChatStreamEvent]:
     results = widget_results(state)
     response = cast(dict[str, object], state).get("response")
     events: list[ChatStreamEvent] = [WidgetDataReady(r.widget_id, r.result) for r in results]
-    events += [ViewPatchLine(line=line) for line in view_lines(state)]
+    events += [ViewPatchLine(line=line) for line in patch_lines(state)]
     if isinstance(response, str) and response:
         events.append(NarrativeReady(text=response))
     events += [SqlReady(r.widget_id, r.sql) for r in results if r.sql]
