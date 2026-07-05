@@ -4,15 +4,15 @@
 
 **Backend**
 ```sh
-PYTHONPATH=src uv run uvicorn chat.infrastructure.api.app:create_app --factory --host 127.0.0.1 --port 8000 --reload
+PYTHONPATH=src uv run uvicorn bootstrap:create_app --factory --host 127.0.0.1 --port 8000 --reload
 ```
 
-**Frontend dev server**
+**Frontend dev server** (talks to the API via Vite's `/api` proxy)
 ```sh
 cd frontend && npm run dev
 ```
 
-**Frontend build** (required for backend to serve the SPA)
+**Frontend build** (the frontend deploys separately; the backend does not serve it)
 ```sh
 cd frontend && npm run build
 ```
