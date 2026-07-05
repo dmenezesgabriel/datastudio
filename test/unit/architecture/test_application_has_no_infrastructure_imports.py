@@ -1,7 +1,7 @@
 """Architectural guard: the application layer never imports infrastructure.
 
 Dependency Inversion: use cases and ports depend on abstractions they own, and
-concretions are injected at the composition root (``api/app.py``). An
+concretions are injected at the composition root (``bootstrap.py``). An
 application module importing from ``infrastructure`` inverts the allowed
 direction and couples the policy to a specific mechanism (a logger factory, a
 graph, a DB driver).

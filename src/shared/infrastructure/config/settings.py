@@ -31,8 +31,6 @@ class AppSettings(BaseSettings):
     format_model_name: str = "openai/glm-5"
     language_model_temperature: float = 0.0
     duckdb_path: str = "./dev_data/datastudio.duckdb"
-    # Directory holding the built Vite frontend; served at / by the API when present.
-    frontend_dist_path: str = "./frontend/dist"
     log_level: Annotated[str, AfterValidator(_normalise_log_level)] = "INFO"
     # Token pricing (USD per million tokens) used to compute eval cost_usd.
     input_token_price_per_million: float = 0.0

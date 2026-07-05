@@ -17,7 +17,7 @@ dependencies = [
 
 [project.scripts]
 datastudio = "chat.infrastructure.graph.cli:main"
-datastudio-api = "chat.infrastructure.api.app:run"
+datastudio-api = "bootstrap:run"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

@@ -1,11 +1,12 @@
-"""FastAPI application factory for the chat web UI."""
+"""HTTP assembly seam for the chat component.
 
-import logging
-from pathlib import Path
+Self-contained wiring for chat's FastAPI surface: ``build_chat_api`` composes the
+object graph from settings, while ``build_chat_routers`` does the pure assembly
+over injected collaborators. The composition root (``bootstrap.py``) mounts these
+routers; keeping the seam here lets chat be deployed alone or alongside others.
+"""
 
-import uvicorn
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
+from fastapi import APIRouter
 from langchain_core.language_models import BaseChatModel
 
 from chat.application.ports.conversation_repository import ConversationRepository
@@ -21,10 +22,34 @@ from chat.infrastructure.persistence.in_memory_conversation_repository import (
 )
 from shared.infrastructure.config.settings import AppSettings
 from shared.infrastructure.logging.logger_factory import get_logger
-from shared.infrastructure.logging.logging_config import configure_logging
 from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
 
-_logger = get_logger(__name__)
+
+def build_chat_routers(
+    stream_message: StreamMessage, repository: ConversationRepository
+) -> list[APIRouter]:
+    """Assemble chat's routers over a shared conversation store (abstractions injected).
+
+    One store feeds both the write-side ``ChatRouter`` (via the use case) and the
+    read-side ``ConversationsRouter`` — otherwise the sidebar sees an empty one.
+
+    Example:
+        routers = build_chat_routers(stream_message, repository)
+        for router in routers:
+            app.include_router(router)
+    """
+    return [ChatRouter(stream_message).router, ConversationsRouter(repository).router]
+
+
+def build_chat_api(settings: AppSettings) -> list[APIRouter]:
+    """Compose chat's HTTP surface from settings; self-contained for standalone deploy.
+
+    Example:
+        for router in build_chat_api(AppSettings()):
+            app.include_router(router)
+    """
+    repository = InMemoryConversationRepository()  # one shared store, by construction
+    return build_chat_routers(build_stream_message(settings, repository), repository)
 
 
 def build_stream_message(
@@ -52,29 +77,6 @@ def build_stream_message(
     )
 
 
-def create_app() -> FastAPI:
-    """Build the FastAPI app: register the chat + conversations APIs, then mount the frontend.
-
-    Example:
-        app = create_app()
-    """
-    settings = AppSettings()  # type: ignore[call-arg]
-    configure_logging(settings.log_level)
-    # LiteLLM emits INFO for every LLM call — reduces noise in our structured stream.
-    logging.getLogger("LiteLLM").setLevel(logging.WARNING)
-    app = FastAPI(title="datastudio chat")
-    repository = InMemoryConversationRepository()  # one store shared by both routers
-    app.include_router(ChatRouter(build_stream_message(settings, repository)).router)
-    app.include_router(ConversationsRouter(repository).router)
-    _mount_frontend(app, settings.frontend_dist_path)
-    return app
-
-
-def run() -> None:
-    """Serve the app with uvicorn (entry point for the datastudio-api script)."""
-    uvicorn.run(create_app(), host="127.0.0.1", port=8000)
-
-
 def _build_chat_model(settings: AppSettings, model_name: str) -> BaseChatModel:
     """Build a chat model from settings for the given model name."""
     return LiteLLMLanguageModel(
@@ -83,11 +85,3 @@ def _build_chat_model(settings: AppSettings, model_name: str) -> BaseChatModel:
         api_key=settings.openai_api_key,
         api_base=settings.openai_base_url,
     ).get_chat_model()
-
-
-def _mount_frontend(app: FastAPI, dist_path: str) -> None:
-    """Serve the built SPA at / when the dist directory exists; otherwise API-only."""
-    if not Path(dist_path).is_dir():
-        _logger.warning("frontend dist not found at %s; serving API only", dist_path)
-        return
-    app.mount("/", StaticFiles(directory=dist_path, html=True))
