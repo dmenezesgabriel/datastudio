@@ -11,7 +11,7 @@ def _state(**fields: Any) -> ChatState:
 
 
 class TestAnswerText:
-    def test_promotes_drafted_text_answer_to_response(self) -> None:
+    def test_promotes_drafted_text_answer_to_narrative(self) -> None:
         out = AnswerText()(_state(text_answer="I can query your data."))
         assert out == {"narrative": "I can query your data."}
 

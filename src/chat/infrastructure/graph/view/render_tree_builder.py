@@ -1,7 +1,7 @@
 """json-render tree helpers for the narrative and the sync (CLI/eval) view path.
 
 The visualization itself is authored by the LLM as a SpecStream (see the
-``generate_view`` node); this module only builds the deterministic narrative
+``generate_widget_view`` node); this module only builds the deterministic narrative
 element and compiles a stream of LLM patches into a ``RenderTree`` for the batch
 path. The emitted component ``type`` names and prop shapes must stay in sync with
 the frontend Zod catalogue (``frontend/src/catalog.ts``).

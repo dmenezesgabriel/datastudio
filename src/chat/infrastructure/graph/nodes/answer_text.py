@@ -2,8 +2,8 @@
 
 The planner (:class:`~chat.infrastructure.graph.nodes.plan_widgets.PlanWidgets`)
 classifies conversational/definitional/meta questions as ``answer_kind == "text"``
-and drafts the reply into ``text_answer``; this node promotes it to the ``response``
-channel. Kept as its own node (rather than letting the planner write ``response``)
+and drafts the reply into ``text_answer``; this node promotes it to the ``narrative``
+channel. Kept as its own node (rather than letting the planner write ``narrative``)
 so the streaming adapter can recognize the node and emit a ``NarrativeReady`` event —
 producing a narrative-only RenderTree with no widgets.
 """
@@ -26,7 +26,7 @@ class AnswerText:
     """
 
     def __call__(self, state: ChatState) -> dict[str, str]:
-        """Promote the planner's drafted text answer to the response channel."""
+        """Promote the planner's drafted text answer to the narrative channel."""
         text = cast(dict[str, object], state).get("text_answer")
         answer = text.strip() if isinstance(text, str) and text.strip() else _EMPTY_ANSWER
         return {"narrative": answer}
