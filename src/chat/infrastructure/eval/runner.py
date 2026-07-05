@@ -9,7 +9,7 @@ from typing import Literal, cast
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 
-from chat.domain.value_objects.widget import WidgetResult
+from chat.infrastructure.eval._check_base import widget_results
 from chat.infrastructure.eval.checks import Check, CheckResult
 from chat.infrastructure.eval.metrics import EvalCollector, MetricsRecorder, NodeMetrics
 from chat.infrastructure.eval.token_callback import TokenCountingCallback
@@ -75,18 +75,6 @@ class EvalReport:
 def _case_turns(case: EvalCase) -> list[EvalTurn]:
     """The case as an ordered turn list: the base question then any follow-ups."""
     return [EvalTurn(case.question, case.checks), *case.follow_ups]
-
-
-def _widget_results(state_dict: dict[str, object]) -> list[WidgetResult]:
-    """Every widget's executed result off the aggregated ``widget_results`` channel.
-
-    The orchestrator–workers graph keeps ``sql``/``query_result`` local to each
-    ``build_widget`` worker, so they never surface on the top-level state — the SQL and
-    validity a report shows must be read back from the aggregated widget results.
-    """
-    channel = state_dict.get("widget_results")
-    items = cast(list[object], channel) if isinstance(channel, list) else []
-    return [item for item in items if isinstance(item, WidgetResult)]
 
 
 def _percentile(values: list[float], pct: float) -> float:
@@ -254,13 +242,13 @@ class EvalRunner:
         callback = TokenCountingCallback(collector)
         try:
             check_results, state_dict = self._run_turns(case, collector, callback)
-            widget_results = _widget_results(state_dict)
+            results = widget_results(cast(ChatState, state_dict))
             return CaseResult(
                 case_id=case.id,
                 question=case.question,
                 nodes=collector.node_metrics,
-                sql="; ".join(r.sql for r in widget_results),
-                sql_valid=bool(widget_results),
+                sql="; ".join(r.sql for r in results),
+                sql_valid=bool(results),
                 narrative=str(state_dict.get("narrative", "")),
                 check_results=check_results,
                 passed=all(r["passed"] for r in check_results),
