@@ -11,7 +11,11 @@ class _FakeStructuredRunnable:
     """Captures invocation messages and returns a preconfigured response."""
 
     def __init__(self, **response_fields: Any) -> None:
-        self._response = SimpleNamespace(**response_fields)
+        # Mirror _WidgetPlan's real defaults (kind="data", text_answer="") so plan doubles
+        # are faithful without every call site restating them; explicit fields still win.
+        # Other nodes read their own fields and ignore these extras.
+        plan_defaults = {"kind": "data", "text_answer": ""}
+        self._response = SimpleNamespace(**{**plan_defaults, **response_fields})
         self.last_messages: list[Any] = []
 
     def with_config(self, *args: Any, **kwargs: Any) -> "_FakeStructuredRunnable":

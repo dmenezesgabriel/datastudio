@@ -118,6 +118,15 @@ class TestPlanWidgetsTextBranch:
         out = _node([_intent("KPI", "total")])(_state())
         assert out["answer_kind"] == "data"
 
+    def test_default_kind_plan_routes_to_widgets(self) -> None:
+        # A plan that carries the default kind ("data") and no text_answer must fan out to
+        # widgets — the classifier reads plan.kind/plan.text_answer directly (no getattr).
+        model = FakePlanModel([_intent("KPI", "total")])  # kind="data", text_answer="" defaults
+        out = PlanWidgets(cast(Any, model))(_state(question="revenue?"))
+        assert out["answer_kind"] == "data"
+        assert [s.id for s in out["widget_specs"]] == ["widget-0"]
+        assert "text_answer" not in out
+
 
 class TestPlanWidgetsResilience:
     def test_malformed_output_falls_back_to_one_widget(self) -> None:

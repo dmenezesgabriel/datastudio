@@ -110,13 +110,8 @@ class PlanWidgets:
 
 
 def _is_text_answer(plan: _WidgetPlan) -> bool:
-    """True when the planner chose a direct text reply with non-empty content.
-
-    ``getattr`` (not ``plan.kind``) tolerates test doubles that predate the ``kind``
-    field: a plan without it defaults to the ``data`` path, never a blank text answer.
-    """
-    is_text = getattr(plan, "kind", "data") == "text"
-    return is_text and bool(getattr(plan, "text_answer", "").strip())
+    """True when the planner chose a direct text reply with non-empty content."""
+    return plan.kind == "text" and bool(plan.text_answer.strip())
 
 
 def _fallback_widget(question: str) -> WidgetSpec:
