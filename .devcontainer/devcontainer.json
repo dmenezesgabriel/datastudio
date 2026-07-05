@@ -82,6 +82,17 @@
         }
     },
     "postCreateCommand": "bash .devcontainer/post-create.sh",
+    "forwardPorts": [8000, 5173],
+    "portsAttributes": {
+        "8000": {
+            "label": "backend (FastAPI)",
+            "onAutoForward": "silent"
+        },
+        "5173": {
+            "label": "frontend (Vite dev)",
+            "onAutoForward": "openBrowserOnce"
+        }
+    },
     "containerEnv": {
         "PYTHONDONTWRITEBYTECODE": "1",
         "PYTHONUNBUFFERED": "1"
