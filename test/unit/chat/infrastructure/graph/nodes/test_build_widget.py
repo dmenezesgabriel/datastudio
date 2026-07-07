@@ -43,7 +43,7 @@ class TestBuildWidget:
         # Arrange
         result = QueryResult(columns=["n"], rows=[(42,)], row_count=1)
         engine = FakeSqlEngine(query_result=result)
-        widget = WidgetSpec(id="widget-1", title="Count", sub_question="how many")
+        widget = WidgetSpec(id="widget-1", title="Count", sub_question="how many", role="analysis")
         # Act
         out = _worker(engine)(_state(widget))
         # Assert — view lines are namespaced to widget-1 and bound to its $state
@@ -64,14 +64,14 @@ class TestBuildWidget:
         engine = FakeSqlEngine(results_by_sql={"SELECT 1": good}, error=ValueError("boom"))
         # FakeStructuredChatModel always returns "SELECT 1"; the first execution of a *different*
         # initial query would fail — here generate + repair both yield SELECT 1 which succeeds.
-        widget = WidgetSpec(id="widget-0", title="t", sub_question="q")
+        widget = WidgetSpec(id="widget-0", title="t", sub_question="q", role="analysis")
         out = _worker(engine)(_state(widget))
         assert len(out["widget_results"]) == 1
 
     def test_persistent_sql_failure_yields_a_note_and_no_result(self) -> None:
         # Arrange — every execution errors, repairs cannot recover
         engine = FakeSqlEngine(error=ValueError("Binder Error"))
-        widget = WidgetSpec(id="widget-2", title="Broken", sub_question="q")
+        widget = WidgetSpec(id="widget-2", title="Broken", sub_question="q", role="metric")
         # Act
         out = _worker(engine)(_state(widget))
         # Assert — a namespaced note element, and no widget_results (nothing to bind/disclose)
@@ -79,3 +79,30 @@ class TestBuildWidget:
         note = json.loads(out["widget_patch_lines"][0])
         assert note["path"].startswith("/elements/widget-2-")
         assert note["value"]["type"] == "Markdown"
+        # even a failed metric widget's note goes to the grid, not among the headline KPIs
+        placement = next(
+            json.loads(line)
+            for line in out["widget_patch_lines"]
+            if json.loads(line)["path"].endswith("/children/-")
+        )
+        assert placement["path"] == "/elements/grid/children/-"
+
+    def test_metric_widget_view_lands_in_the_kpi_band(self) -> None:
+        # Arrange — a metric widget whose worker authors a KpiStat
+        result = QueryResult(columns=["total"], rows=[(42,)], row_count=1)
+        engine = FakeSqlEngine(query_result=result)
+        kpi_view = (
+            '{"op":"add","path":"/elements/k","value":'
+            '{"type":"KpiStat","props":{"valueColumn":"total","data":{"$state":"/result/rows"}}}}\n'
+            '{"op":"add","path":"/elements/root/children/-","value":"k"}'
+        )
+        widget = WidgetSpec(id="widget-0", title="Total", sub_question="total", role="metric")
+        # Act
+        out = _worker(engine, kpi_view)(_state(widget))
+        # Assert — the frame is placed in the kpi-row band (deterministic role → region)
+        placement = next(
+            json.loads(line)
+            for line in out["widget_patch_lines"]
+            if json.loads(line)["path"].endswith("/children/-")
+        )
+        assert placement["path"] == "/elements/kpi-row/children/-"

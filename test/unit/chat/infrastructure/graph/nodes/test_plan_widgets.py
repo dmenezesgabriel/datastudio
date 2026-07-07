@@ -30,8 +30,8 @@ class FakePlanModel:
         return self._plan
 
 
-def _intent(title: str, sub_question: str) -> SimpleNamespace:
-    return SimpleNamespace(title=title, sub_question=sub_question)
+def _intent(title: str, sub_question: str, role: str = "analysis") -> SimpleNamespace:
+    return SimpleNamespace(title=title, sub_question=sub_question, role=role)
 
 
 def _node(widgets: list[SimpleNamespace], **kwargs: Any) -> PlanWidgets:
@@ -58,6 +58,12 @@ class TestPlanWidgets:
         assert [s.title for s in specs] == ["KPI", "Trend", "Table"]
         assert specs[1].sub_question == "by month"
 
+    def test_carries_declared_role_into_specs(self) -> None:
+        # the planner's role (metric vs analysis) drives deterministic KPI-band placement
+        node = _node([_intent("Total", "total", role="metric"), _intent("Trend", "by month")])
+        specs = node(_state())["widget_specs"]
+        assert [s.role for s in specs] == ["metric", "analysis"]
+
     def test_caps_widget_count(self) -> None:
         node = _node([_intent(f"W{i}", f"q{i}") for i in range(8)], max_widgets=3)
         assert len(node(_state())["widget_specs"]) == 3
@@ -68,6 +74,7 @@ class TestPlanWidgets:
         assert len(specs) == 1
         assert specs[0].id == "widget-0"
         assert specs[0].sub_question == "How many orders?"
+        assert specs[0].role == "analysis"  # safe default → grid, renders any shape
 
     def test_prompt_includes_question_and_schema(self) -> None:
         model = FakePlanModel([_intent("KPI", "total")])

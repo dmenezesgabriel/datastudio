@@ -48,7 +48,9 @@ class TestLogSafeExtraction:
     def test_summarizes_planned_widget_specs_as_count(self, caplog: object) -> None:
         # Arrange
         result: dict[str, object] = {
-            "widget_specs": [WidgetSpec(id="widget-0", title="T", sub_question="q")]
+            "widget_specs": [
+                WidgetSpec(id="widget-0", title="T", sub_question="q", role="analysis")
+            ]
         }
         # Act
         with caplog.at_level(logging.INFO):  # type: ignore[attr-defined]

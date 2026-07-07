@@ -23,7 +23,7 @@ def _make_model() -> FakeStructuredChatModel:
         sql="SELECT 1",
         answer="One row.",
         tables=["orders"],
-        widgets=[SimpleNamespace(title="Count", sub_question="how many")],
+        widgets=[SimpleNamespace(title="Count", sub_question="how many", role="analysis")],
     )
 
 

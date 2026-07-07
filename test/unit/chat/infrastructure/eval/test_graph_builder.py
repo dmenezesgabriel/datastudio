@@ -10,7 +10,7 @@ from test.unit.chat.infrastructure.graph.nodes.fake_structured_chat_model import
 )
 from test.unit.shared.infrastructure.sql_engine.fake_sql_engine import FakeSqlEngine
 
-_WIDGETS = [SimpleNamespace(title="Count", sub_question="how many orders")]
+_WIDGETS = [SimpleNamespace(title="Count", sub_question="how many orders", role="analysis")]
 
 
 def _make_engine() -> FakeSqlEngine:

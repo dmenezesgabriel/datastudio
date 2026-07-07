@@ -146,7 +146,7 @@ class BuildWidget:
     def _author_patch_lines(self, widget: WidgetSpec, result: QueryResult) -> list[str]:
         """Author the widget's namespaced view, reporting a "Building chart" sub-step."""
         with _sub_step(self._reporter, widget.id, "view", "Building chart"):
-            return self._view.author(widget.id, widget.title, result)
+            return self._view.author(widget.id, widget.title, widget.role, result)
 
     def _result(
         self, widget: WidgetSpec, result: QueryResult, worker_state: Mapping[str, object]
@@ -172,4 +172,6 @@ def _failure_widget(widget: WidgetSpec) -> list[str]:
         json.dumps({"op": "add", "path": "/elements/note", "value": element}),
         json.dumps({"op": "add", "path": "/elements/root/children/-", "value": "note"}),
     ]
-    return namespace_widget_patches(lines, widget.id)
+    # A failure note goes to the grid regardless of the widget's intended role — an empty
+    # KPI band reads cleaner than a "couldn't build" card sitting among the headline numbers.
+    return namespace_widget_patches(lines, widget.id, "analysis")

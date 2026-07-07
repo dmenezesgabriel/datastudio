@@ -9,14 +9,24 @@ from shared.domain.value_objects.query_result import QueryResult
 
 
 class TestWidgetSpec:
-    def test_carries_id_title_and_sub_question(self) -> None:
-        spec = WidgetSpec(id="widget-0", title="Revenue by month", sub_question="monthly revenue")
+    def test_carries_id_title_sub_question_and_role(self) -> None:
+        spec = WidgetSpec(
+            id="widget-0",
+            title="Revenue by month",
+            sub_question="monthly revenue",
+            role="analysis",
+        )
         assert spec.id == "widget-0"
         assert spec.title == "Revenue by month"
         assert spec.sub_question == "monthly revenue"
+        assert spec.role == "analysis"
+
+    def test_carries_metric_role(self) -> None:
+        spec = WidgetSpec(id="widget-0", title="Total", sub_question="total", role="metric")
+        assert spec.role == "metric"
 
     def test_is_frozen(self) -> None:
-        spec = WidgetSpec(id="widget-0", title="t", sub_question="q")
+        spec = WidgetSpec(id="widget-0", title="t", sub_question="q", role="analysis")
         with pytest.raises(dataclasses.FrozenInstanceError):
             spec.id = "widget-1"  # type: ignore[misc]
 

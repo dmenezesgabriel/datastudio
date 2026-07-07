@@ -43,8 +43,8 @@ _EXPECTED_EDGES = frozenset(
 )
 
 
-def _widget(title: str, sub_question: str) -> SimpleNamespace:
-    return SimpleNamespace(title=title, sub_question=sub_question)
+def _widget(title: str, sub_question: str, role: str = "analysis") -> SimpleNamespace:
+    return SimpleNamespace(title=title, sub_question=sub_question, role=role)
 
 
 def _make_graph(widgets: list[SimpleNamespace] | None = None) -> TypedChatGraph:
@@ -108,8 +108,8 @@ class TestTextBranch:
 class TestFanOut:
     def test_emits_one_send_per_widget_with_shared_context(self) -> None:
         specs = [
-            WidgetSpec(id="widget-0", title="A", sub_question="qa"),
-            WidgetSpec(id="widget-1", title="B", sub_question="qb"),
+            WidgetSpec(id="widget-0", title="A", sub_question="qa", role="metric"),
+            WidgetSpec(id="widget-1", title="B", sub_question="qb", role="analysis"),
         ]
         state = cast(ChatState, {"widget_specs": specs, "schema": "-- s", "tables": ["orders"]})
         sends = fan_out_widgets(state)

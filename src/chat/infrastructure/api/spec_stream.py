@@ -31,7 +31,7 @@ _NARRATIVE_ID = "narrative"
 
 # F-layout regions seeded under the root, in reading order after the narrative: the KPI
 # headline band, then the charts/tables grid. Widgets are namespaced into these by the
-# view-authoring node (see generate_widget_view._region_for).
+# view-authoring node per their planner-declared role (see generate_widget_view._region_for_role).
 _KPI_REGION = "kpi-row"
 _GRID_REGION = "grid"
 

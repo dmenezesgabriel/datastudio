@@ -47,12 +47,12 @@ class TestValidViewPatchLines:
 
 
 class TestNamespaceWidgetPatches:
-    def test_prefixes_element_ids_and_routes_a_chart_into_the_grid(self) -> None:
+    def test_prefixes_element_ids_and_routes_an_analysis_widget_into_the_grid(self) -> None:
         lines = [
             json.dumps({"op": "add", "path": "/elements/chart", "value": {"type": "ChartJs"}}),
             json.dumps({"op": "add", "path": "/elements/root/children/-", "value": "chart"}),
         ]
-        out = [json.loads(line) for line in namespace_widget_patches(lines, "widget-0")]
+        out = [json.loads(line) for line in namespace_widget_patches(lines, "widget-0", "analysis")]
         assert out[0]["path"] == "/elements/widget-0-chart"
         # the leaf is wrapped in a WidgetFrame (carrying its SQL) placed in the grid region
         assert out[1] == {
@@ -70,26 +70,38 @@ class TestNamespaceWidgetPatches:
             "value": "widget-0-frame",
         }
 
-    def test_routes_a_kpistat_into_the_headline_band(self) -> None:
+    def test_routes_a_metric_widget_into_the_headline_band(self) -> None:
         lines = [
             json.dumps({"op": "add", "path": "/elements/k", "value": {"type": "KpiStat"}}),
             json.dumps({"op": "add", "path": "/elements/root/children/-", "value": "k"}),
         ]
-        out = [json.loads(line) for line in namespace_widget_patches(lines, "widget-3")]
-        assert out[1] == {
-            "op": "add",
-            "path": "/elements/widget-3-frame",
-            "value": {
-                "type": "WidgetFrame",
-                "props": {"sql": ""},
-                "children": ["widget-3-k"],
-            },
-        }
+        out = [json.loads(line) for line in namespace_widget_patches(lines, "widget-3", "metric")]
         assert out[2] == {
             "op": "add",
             "path": "/elements/kpi-row/children/-",
             "value": "widget-3-frame",
         }
+
+    def test_region_follows_role_not_the_authored_element(self) -> None:
+        # The fix: placement is driven by the declared role, never sniffed from the element.
+        # A metric widget lands in the KPI band even if the leaf isn't (yet) a KpiStat, and an
+        # analysis widget stays in the grid even when the model authored a KpiStat.
+        kpi_leaf = [
+            json.dumps({"op": "add", "path": "/elements/k", "value": {"type": "KpiStat"}}),
+            json.dumps({"op": "add", "path": "/elements/root/children/-", "value": "k"}),
+        ]
+        table_leaf = [
+            json.dumps({"op": "add", "path": "/elements/t", "value": {"type": "DataTable"}}),
+            json.dumps({"op": "add", "path": "/elements/root/children/-", "value": "t"}),
+        ]
+
+        def region_of(lines: list[str], widget_id: str, role: str) -> str:
+            out = [json.loads(line) for line in namespace_widget_patches(lines, widget_id, role)]
+            placement = next(p for p in out if p["path"].endswith("/children/-"))
+            return placement["path"]
+
+        assert region_of(table_leaf, "widget-0", "metric") == "/elements/kpi-row/children/-"
+        assert region_of(kpi_leaf, "widget-1", "analysis") == "/elements/grid/children/-"
 
     def test_rewrites_state_binding_to_widget_path(self) -> None:
         element = {
@@ -98,14 +110,14 @@ class TestNamespaceWidgetPatches:
             "children": [],
         }
         line = json.dumps({"op": "add", "path": "/elements/c", "value": element})
-        out = json.loads(namespace_widget_patches([line], "widget-2")[0])
+        out = json.loads(namespace_widget_patches([line], "widget-2", "analysis")[0])
         assert out["value"]["props"]["data"] == {"$state": "/widget-2/rows"}
         assert out["value"]["props"]["labelColumn"] == "month"  # untouched
 
     def test_rewrites_bare_result_binding(self) -> None:
         element = {"type": "DataTable", "props": {"data": {"$state": "/result"}}, "children": []}
         line = json.dumps({"op": "add", "path": "/elements/t", "value": element})
-        out = json.loads(namespace_widget_patches([line], "widget-1")[0])
+        out = json.loads(namespace_widget_patches([line], "widget-1", "analysis")[0])
         assert out["value"]["props"]["data"] == {"$state": "/widget-1"}
 
 
@@ -117,7 +129,7 @@ class TestGenerateWidgetView:
             '{"op":"add","path":"/elements/root/children/-","value":"chart"}'
         )
         node = GenerateWidgetView(FakeViewModel(content), "prompt", PlainTextExtractor())  # type: ignore[arg-type]
-        lines = node.author("widget-0", "Revenue", _result())
+        lines = node.author("widget-0", "Revenue", "analysis", _result())
         assert json.loads(lines[0])["path"] == "/elements/widget-0-chart"
         assert json.loads(lines[0])["value"]["props"]["data"] == {"$state": "/widget-0/rows"}
         # the leaf is wrapped in a frame (lines[1]) that is placed in its region (lines[2])
@@ -126,7 +138,7 @@ class TestGenerateWidgetView:
 
     def test_falls_back_to_namespaced_data_table(self) -> None:
         node = GenerateWidgetView(FakeViewModel("sorry"), "prompt", PlainTextExtractor())  # type: ignore[arg-type]
-        lines = [json.loads(line) for line in node.author("widget-3", "T", _result())]
+        lines = [json.loads(line) for line in node.author("widget-3", "T", "analysis", _result())]
         table = next(p for p in lines if p["path"].startswith("/elements/widget-3-"))
         assert table["value"]["type"] == "DataTable"
         assert table["value"]["props"]["data"] == {"$state": "/widget-3"}
@@ -134,8 +146,18 @@ class TestGenerateWidgetView:
     def test_prompt_has_title_and_schema_not_values(self) -> None:
         model = FakeViewModel('{"op":"add","path":"/elements/x","value":{"type":"KpiStat"}}')
         GenerateWidgetView(model, "prompt", PlainTextExtractor()).author(
-            "widget-0", "Revenue title", _result()
+            "widget-0", "Revenue title", "analysis", _result()
         )  # type: ignore[arg-type]
         human = str(model.received[-1].content)
         assert "Revenue title" in human and "month" in human and "number" in human
         assert "Jan" not in human and "100" not in human
+
+    def test_metric_role_prompt_mandates_a_kpistat(self) -> None:
+        # A metric widget is a headline number → the worker is told to author a KpiStat,
+        # so the KPI band the host already reserved is actually filled.
+        model = FakeViewModel('{"op":"add","path":"/elements/x","value":{"type":"KpiStat"}}')
+        GenerateWidgetView(model, "prompt", PlainTextExtractor()).author(
+            "widget-0", "Total revenue", "metric", _result()
+        )  # type: ignore[arg-type]
+        human = str(model.received[-1].content)
+        assert "KpiStat" in human and "valueColumn" in human

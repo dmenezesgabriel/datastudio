@@ -18,6 +18,7 @@ from langchain_core.language_models.base import LanguageModelInput
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.runnables import Runnable
 
+from chat.domain.value_objects.widget import WidgetRole
 from chat.infrastructure.graph.response_content_extractor import (
     ResponseContentExtractor,
 )
@@ -37,8 +38,9 @@ _RESERVED_EXACT = frozenset({"/root", "/elements/root"})
 _RESERVED_PREFIXES = ("/elements/narrative", "/elements/sql")
 _ALLOWED_OPS = frozenset({"add", "replace", "remove"})
 
-# F-layout regions the backend seeds (see spec_stream / render_tree_builder): single-value
-# KpiStat widgets go into the headline band, every other widget into the charts/tables grid.
+# F-layout regions the backend seeds (see spec_stream / render_tree_builder): a widget's
+# region is decided by its planner-declared role, not by the element the model authors —
+# "metric" widgets go into the headline KPI band, everything else into the charts/tables grid.
 _KPI_REGION = "kpi-row"
 _GRID_REGION = "grid"
 _ROOT_CHILDREN = "/elements/root/children/-"
@@ -88,49 +90,24 @@ def _rewrite_state(value: object, widget_id: str) -> object:
     return value
 
 
-def _root_child_id(lines: list[str]) -> str | None:
-    """The element id the widget appends to the root's children (its top-level element)."""
-    for line in lines:
-        patch = parse_patch(line)
-        if patch is not None and patch.get("path") == _ROOT_CHILDREN:
-            value = patch.get("value")
-            if isinstance(value, str):
-                return value
-    return None
+def _region_for_role(role: WidgetRole) -> str:
+    """Map a widget's planner-declared role to its F-layout region.
 
-
-def _element_type(lines: list[str], element_id: str) -> str | None:
-    """The ``type`` of the element added at ``/elements/<element_id>``, if any."""
-    target = f"/elements/{element_id}"
-    for line in lines:
-        patch = parse_patch(line)
-        if patch is not None and patch.get("path") == target:
-            value = patch.get("value")
-            kind = cast(dict[str, object], value).get("type") if isinstance(value, dict) else None
-            return kind if isinstance(kind, str) else None
-    return None
-
-
-def _region_for(lines: list[str]) -> str:
-    """Pick the F-layout region for a widget: KPI band for a single KpiStat, else the grid.
-
-    The region is decided per widget (from the element it authored) because parallel
-    workers can't coordinate a shared layout — a single-value KpiStat belongs in the
-    headline band, every chart/table/note in the grid below it.
+    Deterministic and independent of what the worker authored: a ``metric`` belongs in the
+    headline KPI band, every ``analysis`` widget in the grid below it. This is the host's
+    layout authority — the model only fills a component into the region we assign.
     """
-    child_id = _root_child_id(lines)
-    primary = _element_type(lines, child_id) if child_id is not None else None
-    return _KPI_REGION if primary == "KpiStat" else _GRID_REGION
+    return _KPI_REGION if role == "metric" else _GRID_REGION
 
 
-def namespace_widget_patches(lines: list[str], widget_id: str) -> list[str]:
+def namespace_widget_patches(lines: list[str], widget_id: str, role: WidgetRole) -> list[str]:
     """Namespace a widget's element ids/``$state`` and place it in its F-layout region.
 
     Prefixes element ids/child-refs with the widget id and rebinds ``$state`` so parallel
     widgets never collide, then routes the widget's root-child append into the ``kpi-row``
-    band or the ``grid`` region (seeded by the serializer/compiler).
+    band or the ``grid`` region (seeded by the serializer/compiler) per its declared role.
     """
-    region = _region_for(lines)
+    region = _region_for_role(role)
     out: list[str] = []
     for line in lines:
         patch = parse_patch(line)
@@ -208,17 +185,34 @@ def _describe_schema(query_result: QueryResult) -> str:
     )
 
 
-def _build_human_content(title: str, query_result: QueryResult) -> str:
-    """Build the widget-authoring prompt: title + schema, never the rows themselves."""
+def _element_guidance(role: WidgetRole) -> str:
+    """The element the worker must author, constrained by the widget's declared role.
+
+    A ``metric`` widget is a headline number → a KpiStat is mandated (the host already
+    placed it in the KPI band). An ``analysis`` widget picks chart-vs-table by data shape —
+    the worker alone sees the result, so it keeps that judgement.
+    """
+    if role == "metric":
+        return (
+            "Author a KpiStat showing this one headline number: set valueColumn to the metric "
+            "column and label it. The result is a single row."
+        )
+    return (
+        "Author ONE visualization element (ChartJs or DataTable) that best presents this "
+        "widget, choosing by the data shape above: a category or time column with a numeric "
+        "series -> ChartJs (line for a time/ordered axis, bar for categories, pie only for a "
+        "parts-of-a-whole breakdown of at most 5 rows); many columns or a long detail list "
+        "-> DataTable."
+    )
+
+
+def _build_human_content(title: str, role: WidgetRole, query_result: QueryResult) -> str:
+    """Build the widget-authoring prompt: title + schema + role, never the rows themselves."""
     return (
         f"Widget: {title}\n\n"
         f"Result schema (column: type), {query_result.row_count} rows — values withheld:\n"
         f"{_describe_schema(query_result)}\n\n"
-        "Author ONE visualization element (KpiStat, ChartJs, or DataTable) that best presents "
-        "this widget, choosing by the data shape above: a single row -> KpiStat; a category "
-        "or time column with a numeric series -> ChartJs (line for a time/ordered axis, bar "
-        "for categories, pie only for a parts-of-a-whole breakdown of at most 5 rows); "
-        "many columns or a long detail list -> DataTable. "
+        f"{_element_guidance(role)} "
         'Append it to "/elements/root/children/-". Bind its data prop to '
         f'{{"$state":"{_DATA_ROOT}/rows"}} (or {{"$state":"{_DATA_ROOT}"}} for a table) and '
         "reference columns by name. Emit one JSON patch per line and nothing else."
@@ -230,7 +224,7 @@ class GenerateWidgetView:
 
     Example:
         view = GenerateWidgetView(model, system_prompt, extractor)
-        lines = view.author("widget-0", "Amount by category", query_result)
+        lines = view.author("widget-0", "Amount by category", "analysis", query_result)
     """
 
     def __init__(
@@ -246,12 +240,14 @@ class GenerateWidgetView:
         self._system_prompt = system_prompt
         self._extractor = content_extractor
 
-    def author(self, widget_id: str, title: str, query_result: QueryResult) -> list[str]:
-        """Author and namespace one widget's SpecStream patch lines."""
+    def author(
+        self, widget_id: str, title: str, role: WidgetRole, query_result: QueryResult
+    ) -> list[str]:
+        """Author and namespace one widget's SpecStream patch lines, placed by its role."""
         messages = [
             SystemMessage(content=self._system_prompt),
-            HumanMessage(content=_build_human_content(title, query_result)),
+            HumanMessage(content=_build_human_content(title, role, query_result)),
         ]
         text = self._extractor.extract(self._model.invoke(messages))
         lines = keep_valid_patch_lines(text) or _fallback_table_lines()
-        return namespace_widget_patches(lines, widget_id)
+        return namespace_widget_patches(lines, widget_id, role)

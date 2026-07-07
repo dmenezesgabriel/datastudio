@@ -34,19 +34,28 @@ _SYSTEM_PROMPT = (
     "ONLY when running SQL would add nothing.\n"
     "- 'data' — the question is about the data. Plan 1..N dashboard widgets, each ONE "
     "sub-question answerable by a single SQL query and shown as one chart, KPI, or table.\n"
+    "Every widget declares a ROLE that fixes where it sits in the dashboard:\n"
+    "- 'metric' — ONE headline number (a single scalar: a total, count, average, rate). Its "
+    "sub_question must be answerable by a SINGLE-ROW query returning that one value. Shown as "
+    "a KPI card in the top band. NEVER bundle several metrics into one widget — emit one "
+    "'metric' widget per number.\n"
+    "- 'analysis' — a trend over time, a breakdown by category, a ranking/'top N', or a "
+    "detail list. Its query returns multiple rows. Shown as a chart or table in the grid "
+    "below the KPI band.\n"
     "For 'data', choose BREADTH by the question's intent, not by keywords:\n"
-    "- ONE widget for a single focused ask — a metric, ranking, 'top N', lookup, or one "
-    "breakdown. Use a single sub_question that mirrors the user's question directly.\n"
+    "- ONE widget for a single focused ask. A lone metric -> one 'metric' widget; a ranking, "
+    "'top N', lookup, or breakdown -> one 'analysis' widget. The sub_question mirrors the "
+    "user's question directly.\n"
     "- A DASHBOARD of 3-5 widgets when the question is broad, open-ended, exploratory, or a "
     "health check ('how are sales doing?', 'give me the picture', 'tell me about <subject>', "
     "or a bare table/subject name). Business users want an overview even when they don't say "
-    "'dashboard' — serve it. Compose most-important-first: lead with the headline single-value "
-    "KPI, then the primary trend or breakdown, then supporting breakdowns or a detail list — "
-    "each a distinct, non-overlapping sub_question.\n"
+    "'dashboard' — serve it. Lead with 2-4 separate 'metric' widgets (each a single headline "
+    "number), then the 'analysis' widgets — the primary trend or breakdown, then supporting "
+    "breakdowns or a detail list — each a distinct, non-overlapping sub_question.\n"
     "- When unsure, prefer a small dashboard (2-3 widgets) for a vague question and a single "
     "widget for a precise one.\n"
-    "- Give each widget a short title and a precise, self-contained sub_question. Never "
-    "propose data the schema does not support.\n"
+    "- Give each widget a short title, its role, and a precise, self-contained sub_question. "
+    "Never propose data the schema does not support.\n"
     "- Earlier conversation turns, when present, are context for follow-ups (e.g. 'break "
     "it down by month'): resolve references against them, but plan for the CURRENT question."
 )
@@ -55,6 +64,7 @@ _SYSTEM_PROMPT = (
 class _WidgetIntent(BaseModel):
     title: str
     sub_question: str
+    role: Literal["metric", "analysis"] = "analysis"
 
 
 class _WidgetPlan(BaseModel):
@@ -104,7 +114,12 @@ class PlanWidgets:
         if not intents:
             return [_fallback_widget(question)]
         return [
-            WidgetSpec(id=f"widget-{index}", title=intent.title, sub_question=intent.sub_question)
+            WidgetSpec(
+                id=f"widget-{index}",
+                title=intent.title,
+                sub_question=intent.sub_question,
+                role=intent.role,
+            )
             for index, intent in enumerate(intents)
         ]
 
@@ -115,5 +130,9 @@ def _is_text_answer(plan: _WidgetPlan) -> bool:
 
 
 def _fallback_widget(question: str) -> WidgetSpec:
-    """A single widget answering the original question, when the model plans nothing."""
-    return WidgetSpec(id="widget-0", title="Answer", sub_question=question)
+    """A single widget answering the original question, when the model plans nothing.
+
+    Defaults to the ``analysis`` role (→ grid): without a plan we can't assume the answer
+    is a single headline number, and the grid renders a chart or table for any shape.
+    """
+    return WidgetSpec(id="widget-0", title="Answer", sub_question=question, role="analysis")
