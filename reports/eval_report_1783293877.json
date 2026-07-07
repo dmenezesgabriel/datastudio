@@ -1,0 +1,351 @@
+{
+  "run_at": "2026-07-05T23:24:37.846133+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "pass_rate": 1.0,
+    "avg_latency_s": 21.619,
+    "p95_latency_s": 27.242,
+    "total_input_tokens": 7523,
+    "total_output_tokens": 2279,
+    "total_cached_input_tokens": 4600,
+    "cache_read_rate": 0.611,
+    "avg_input_tokens": 2507.7,
+    "avg_output_tokens": 759.7,
+    "cost_usd": 0.0,
+    "view_selection": {
+      "passed": 8,
+      "total": 8,
+      "accuracy": 1.0
+    },
+    "by_tag": {
+      "dashboard": {
+        "total": 1,
+        "passed": 1
+      },
+      "kpi": {
+        "total": 1,
+        "passed": 1
+      },
+      "placement": {
+        "total": 1,
+        "passed": 1
+      },
+      "hard": {
+        "total": 1,
+        "passed": 1
+      },
+      "paraphrase": {
+        "total": 1,
+        "passed": 1
+      },
+      "robustness": {
+        "total": 2,
+        "passed": 2
+      },
+      "aggregation": {
+        "total": 1,
+        "passed": 1
+      },
+      "easy": {
+        "total": 1,
+        "passed": 1
+      },
+      "edge": {
+        "total": 1,
+        "passed": 1
+      },
+      "out_of_scope": {
+        "total": 1,
+        "passed": 1
+      },
+      "no_hallucination": {
+        "total": 1,
+        "passed": 1
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "olist_multi_kpi_headline",
+      "question": "Give me the headline numbers for the marketplace: the total number of orders, the total payment revenue, and the average order value.",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.02822808298515156,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 7.2730325540178455,
+          "input_tokens": 158,
+          "output_tokens": 149,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.10441077902214602,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 5.748389639018569,
+          "input_tokens": 696,
+          "output_tokens": 262,
+          "cached_input_tokens": 566
+        },
+        "build_widget": {
+          "latency_s": 10.728999010985717,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 940,
+          "output_tokens": 381,
+          "cached_input_tokens": 611
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 2447,
+          "output_tokens": 496,
+          "cached_input_tokens": 1428
+        },
+        "compose_narrative": {
+          "latency_s": 3.359404043003451,
+          "input_tokens": 385,
+          "output_tokens": 182,
+          "cached_input_tokens": 274
+        }
+      },
+      "sql": "SELECT COUNT(*) AS total_orders FROM olist_orders; SELECT SUM(payment_value) AS total_payment_revenue FROM olist_order_payments; SELECT SUM(payment_value) / COUNT(DISTINCT order_id) AS avg_order_value FROM olist_order_payments WHERE payment_value IS NOT NULL AND order_id IS NOT NULL;",
+      "sql_valid": true,
+      "narrative": "The marketplace has generated 16,008,872.12 in total payment revenue across 99,441 orders, yielding an average order value of 160.99. This positions the platform as a mid-scale operation with a healthy per-order spend, suggesting a product mix that skews toward moderately priced items rather than low-ticket volume.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_count",
+          "value": "3",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "3",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Each of the three headline numbers (total orders, total revenue, average order value) must be its own single-value KPI card at the top \u2014 never bundled together into one table.",
+          "passed": true,
+          "reasoning": "The chosen views consist of three KpiStat cards (each wrapped in a WidgetFrame), which perfectly aligns with the rubric requiring each of the three headline numbers to be its own single-value KPI card. The data shape also supports this, as each metric is a separate single-row, single-column dataset."
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM olist_orders",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "dashboard",
+        "kpi",
+        "placement",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "olist_total_gmv_paraphrase_1",
+      "question": "What's the platform's total sales value across all items sold?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.019005988026037812,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 5.753313694964163,
+          "input_tokens": 145,
+          "output_tokens": 70,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.0573812120128423,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.5162200499908067,
+          "input_tokens": 619,
+          "output_tokens": 89,
+          "cached_input_tokens": 566
+        },
+        "build_widget": {
+          "latency_s": 4.129695925978012,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 253,
+          "output_tokens": 22,
+          "cached_input_tokens": 198
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 815,
+          "output_tokens": 204,
+          "cached_input_tokens": 0
+        },
+        "compose_narrative": {
+          "latency_s": 12.382775124977343,
+          "input_tokens": 317,
+          "output_tokens": 154,
+          "cached_input_tokens": 0
+        }
+      },
+      "sql": "SELECT SUM(price) AS total_price FROM olist_order_items",
+      "sql_valid": true,
+      "narrative": "The platform's total sales value across all items sold is 13,591,643.70. This figure represents the cumulative transaction value captured in the dashboard and serves as the top-line measure of gross sales activity on the platform.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(SUM(price),1) FROM olist_order_items",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "paraphrase",
+        "robustness",
+        "aggregation",
+        "easy"
+      ]
+    },
+    {
+      "case_id": "out_of_scope_customer_age",
+      "question": "What is the average age of our customers?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.022611416992731392,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 6.764638660999481,
+          "input_tokens": 141,
+          "output_tokens": 114,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.07599927502451465,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.8915473420056514,
+          "input_tokens": 607,
+          "output_tokens": 156,
+          "cached_input_tokens": 567
+        },
+        "answer_text": {
+          "latency_s": 5.13298436999321e-06,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        }
+      },
+      "sql": "",
+      "sql_valid": false,
+      "narrative": "I can't calculate the average age of your customers because the available customer data (olist_customers) doesn't include any birth date, age, or date-of-birth field. It only contains customer IDs, location, city, state, and zip code prefix. If you have a separate dataset with customer birth dates or ages, please share it and I'll be happy to compute the average.",
+      "check_results": [
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The dataset has no customer age or birth-date information. The answer must make clear that this cannot be computed from the available data, and must NOT fabricate an age or any specific number.",
+          "passed": true,
+          "reasoning": "The response clearly states that the average age cannot be calculated from the available data because it lacks age or birth-date information. It does not fabricate any numbers or ages, fully satisfying the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "edge",
+        "out_of_scope",
+        "robustness",
+        "no_hallucination"
+      ]
+    }
+  ]
+}

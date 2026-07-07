@@ -1,0 +1,857 @@
+{
+  "run_at": "2026-07-02T03:09:32.130741+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 9,
+    "passed": 0,
+    "failed": 9,
+    "pass_rate": 0.0,
+    "avg_latency_s": 15.256,
+    "p95_latency_s": 22.284,
+    "total_input_tokens": 21076,
+    "total_output_tokens": 8846,
+    "avg_output_tokens": 982.9,
+    "cost_usd": 0.0,
+    "by_tag": {
+      "aggregation": {
+        "total": 4,
+        "passed": 0
+      },
+      "filter": {
+        "total": 1,
+        "passed": 0
+      },
+      "easy": {
+        "total": 3,
+        "passed": 0
+      },
+      "group_by": {
+        "total": 3,
+        "passed": 0
+      },
+      "date": {
+        "total": 4,
+        "passed": 0
+      },
+      "chart": {
+        "total": 5,
+        "passed": 0
+      },
+      "medium": {
+        "total": 4,
+        "passed": 0
+      },
+      "join": {
+        "total": 1,
+        "passed": 0
+      },
+      "time_series": {
+        "total": 2,
+        "passed": 0
+      },
+      "kpi": {
+        "total": 1,
+        "passed": 0
+      },
+      "hard": {
+        "total": 2,
+        "passed": 0
+      },
+      "dashboard": {
+        "total": 1,
+        "passed": 0
+      },
+      "overview": {
+        "total": 1,
+        "passed": 0
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "movies_warner_bros_volume",
+      "question": "How many films has Warner Bros. released in the dataset?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.014661976019851863,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.68370832700748,
+          "input_tokens": 124,
+          "output_tokens": 108
+        },
+        "get_schema": {
+          "latency_s": 0.019733288005227223,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.31967113801511,
+          "input_tokens": 383,
+          "output_tokens": 137
+        },
+        "build_widget": {
+          "latency_s": 4.977271065989044,
+          "input_tokens": 1099,
+          "output_tokens": 293
+        },
+        "compose_narrative": {
+          "latency_s": 2.2538654640084133,
+          "input_tokens": 221,
+          "output_tokens": 130
+        }
+      },
+      "sql_query": "SELECT COUNT(*) AS film_count\nFROM movies\nWHERE Distributor LIKE 'Warner Bros%';",
+      "sql_valid": true,
+      "response": "Warner Bros. has released 318 films in the dataset.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM movies WHERE Distributor = 'Warner Bros.'",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should clearly state the number of films and attribute it to Warner Bros.",
+          "passed": true,
+          "reasoning": "The response clearly states the number of films (318) and attributes it to Warner Bros., satisfying the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": false,
+          "reasoning": "no KpiStat element in view"
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "filter",
+        "easy"
+      ]
+    },
+    {
+      "case_id": "taxi_total_trips",
+      "question": "What is the total number of taxi trips recorded in the dataset?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.01560045700171031,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.919706971006235,
+          "input_tokens": 125,
+          "output_tokens": 105
+        },
+        "get_schema": {
+          "latency_s": 0.030999045993667096,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 1.9097223930002656,
+          "input_tokens": 361,
+          "output_tokens": 41
+        },
+        "build_widget": {
+          "latency_s": 3.585493188991677,
+          "input_tokens": 1077,
+          "output_tokens": 171
+        },
+        "compose_narrative": {
+          "latency_s": 2.445911560993409,
+          "input_tokens": 225,
+          "output_tokens": 143
+        }
+      },
+      "sql_query": "SELECT COUNT(*) AS total_trips FROM nyc_taxi",
+      "sql_valid": true,
+      "response": "The total number of taxi trips recorded in the dataset is 7,475,949.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM nyc_taxi",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": false,
+          "reasoning": "no KpiStat element in view"
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "easy"
+      ]
+    },
+    {
+      "case_id": "olist_avg_review_score",
+      "question": "What is the platform's average customer satisfaction score based on order reviews?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.012738702993374318,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.4045813769917004,
+          "input_tokens": 126,
+          "output_tokens": 34
+        },
+        "get_schema": {
+          "latency_s": 0.05329222200089134,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.198578573996201,
+          "input_tokens": 284,
+          "output_tokens": 90
+        },
+        "build_widget": {
+          "latency_s": 5.629530967009487,
+          "input_tokens": 1000,
+          "output_tokens": 136
+        },
+        "compose_narrative": {
+          "latency_s": 4.831631794018904,
+          "input_tokens": 231,
+          "output_tokens": 385
+        }
+      },
+      "sql_query": "SELECT AVG(review_score) AS avg_review_score FROM olist_order_reviews WHERE review_score IS NOT NULL;",
+      "sql_valid": true,
+      "response": "The platform's average customer satisfaction score based on order reviews is 4.08642062404257.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(AVG(review_score),2) FROM olist_order_reviews",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a numeric score out of 5 representing average customer satisfaction across all reviews.",
+          "passed": true,
+          "reasoning": "The response provides a numeric score (4.08642062404257) which falls within the 0-5 range, representing the average customer satisfaction across all reviews as requested by the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": false,
+          "reasoning": "no KpiStat element in view"
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "easy"
+      ]
+    },
+    {
+      "case_id": "seattle_monthly_avg_high",
+      "question": "What is the average maximum temperature in Seattle for each month of the year?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.016670869023073465,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.7122932889906224,
+          "input_tokens": 127,
+          "output_tokens": 102
+        },
+        "get_schema": {
+          "latency_s": 0.01943098200717941,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.7447109530039597,
+          "input_tokens": 283,
+          "output_tokens": 102
+        },
+        "build_widget": {
+          "latency_s": 4.494529033021536,
+          "input_tokens": 1007,
+          "output_tokens": 223
+        },
+        "compose_narrative": {
+          "latency_s": 5.43567136398633,
+          "input_tokens": 412,
+          "output_tokens": 590
+        }
+      },
+      "sql_query": "SELECT date_part('month', date) AS month, AVG(temp_max) AS avg_temp_max FROM seattle_weather GROUP BY month ORDER BY month;",
+      "sql_valid": true,
+      "response": "The average maximum temperature in Seattle peaks in August at 26.11209677419356, while the lowest average maximum occurs in December at 8.194354838709678. Temperatures gradually rise from January's 8.22903225806452 to the summer high before declining through the remainder of the year.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT date_part('month', date) AS month, ROUND(AVG(temp_max),1) AS avg_high FROM seattle_weather GROUP BY 1 ORDER BY 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "ChartJs:line",
+          "passed": false,
+          "reasoning": "no ChartJs:line element in view"
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Average maximum temperature by month is an ordered time series across the year; it should be a line chart, not a bar chart, pie chart, or KPI.",
+          "passed": false,
+          "reasoning": "The data represents an ordered time series of average maximum temperature across 12 months. According to the rubric and data-visualization best practices, this should be visualized as a line chart to show the trend over the year. A DataTable does not effectively convey the temporal pattern and trend."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "group_by",
+        "date",
+        "chart",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_monthly_gmv_trend",
+      "question": "How has monthly gross merchandise value (total item price) evolved over time across the marketplace?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.014409486000658944,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.934867142001167,
+          "input_tokens": 130,
+          "output_tokens": 99
+        },
+        "get_schema": {
+          "latency_s": 0.08725522700115107,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.833773548976751,
+          "input_tokens": 346,
+          "output_tokens": 92
+        },
+        "build_widget": {
+          "latency_s": 5.839018849015702,
+          "input_tokens": 1088,
+          "output_tokens": 316
+        },
+        "compose_narrative": {
+          "latency_s": 3.375190247024875,
+          "input_tokens": 856,
+          "output_tokens": 194
+        }
+      },
+      "sql_query": "SELECT date_trunc('month', o.order_purchase_timestamp) AS purchase_month, SUM(i.price) AS total_price FROM olist_order_items i JOIN olist_orders o ON i.order_id = o.order_id GROUP BY date_trunc('month', o.order_purchase_timestamp) ORDER BY purchase_month;",
+      "sql_valid": true,
+      "response": "Monthly GMV grew from just 267.36 in September 2016 to a peak of 1,010,271.37 in November 2017, reflecting rapid marketplace expansion through 2017. GMV remained elevated through most of 2018, hovering between roughly 844,178.71 and 996,647.75, before dropping sharply to 145.00 in September 2018.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "ChartJs:line",
+          "passed": false,
+          "reasoning": "no ChartJs:line element in view"
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Monthly gross merchandise value over time is an ordered time series; it must be a line chart, not a bar chart, pie chart, or KPI.",
+          "passed": false,
+          "reasoning": "The data is an ordered monthly time series of 24 rows, and the question asks about evolution over time. The rubric explicitly requires a line chart for this pattern. A DataTable does not effectively show trends over time and fails the rubric."
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should describe how monthly gross merchandise value changed over time (e.g. an overall upward trend).",
+          "passed": true,
+          "reasoning": "The response clearly describes how the monthly gross merchandise value changed over time, noting the rapid growth from September 2016 to November 2017, the elevated levels through most of 2018, and the sharp drop in September 2018. This satisfies the rubric's requirement to describe the evolution of GMV over time."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "join",
+        "date",
+        "time_series",
+        "chart",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_orders_by_installments",
+      "question": "How many orders were paid across each number of payment installments?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.01628318801522255,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.3266989029943943,
+          "input_tokens": 125,
+          "output_tokens": 84
+        },
+        "get_schema": {
+          "latency_s": 0.038362963998224586,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.4652005559764802,
+          "input_tokens": 287,
+          "output_tokens": 154
+        },
+        "build_widget": {
+          "latency_s": 7.820499395020306,
+          "input_tokens": 1010,
+          "output_tokens": 375
+        },
+        "compose_narrative": {
+          "latency_s": 3.905941964010708,
+          "input_tokens": 407,
+          "output_tokens": 306
+        }
+      },
+      "sql_query": "SELECT payment_installments, COUNT(DISTINCT order_id) AS order_count FROM olist_order_payments GROUP BY payment_installments ORDER BY payment_installments",
+      "sql_valid": true,
+      "response": "The vast majority of orders, 49,060, were paid in a single installment. Payments split into 2 and 3 installments were the next most common, accounting for 12,389 and 10,443 orders respectively. The remaining installment counts each had fewer than 10,000 orders, with only 2 orders paid in 0 installments and 18 orders paid in 24 installments.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT payment_installments AS installments, COUNT(DISTINCT order_id) AS orders FROM olist_order_payments GROUP BY 1 ORDER BY 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Order counts by installment number are a distribution over an ordered discrete axis; present them as a bar chart (a line chart is acceptable), never a pie chart or a single KPI.",
+          "passed": false,
+          "reasoning": "The data represents a distribution of order counts over an ordered discrete axis (payment installments). The rubric explicitly requires a bar chart (or line chart) to best convey this distribution. A DataTable does not visually represent the distribution and fails to meet the rubric's requirements."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "group_by",
+        "chart",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_median_delivery_days",
+      "question": "What is the median order-to-customer delivery time, in days, for delivered orders?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.02129363000858575,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.8104565780085977,
+          "input_tokens": 130,
+          "output_tokens": 78
+        },
+        "get_schema": {
+          "latency_s": 0.052910517988493666,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.3005606649967376,
+          "input_tokens": 308,
+          "output_tokens": 128
+        },
+        "build_widget": {
+          "latency_s": 6.551745939999819,
+          "input_tokens": 1040,
+          "output_tokens": 355
+        },
+        "compose_narrative": {
+          "latency_s": 3.2763934889808297,
+          "input_tokens": 231,
+          "output_tokens": 139
+        }
+      },
+      "sql_query": "SELECT median(date_diff('day', order_purchase_timestamp, order_delivered_customer_date)) AS median_delivery_days\nFROM olist_orders\nWHERE order_status = 'delivered'\n  AND order_purchase_timestamp IS NOT NULL\n  AND order_delivered_customer_date IS NOT NULL;",
+      "sql_valid": true,
+      "response": "The median order-to-customer delivery time for delivered orders is 10.0 days.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(MEDIAN(date_diff('day', order_purchase_timestamp, order_delivered_customer_date)),1) AS median_days FROM olist_orders WHERE order_delivered_customer_date IS NOT NULL",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state the median delivery time as a number of days.",
+          "passed": true,
+          "reasoning": "The response explicitly states the median delivery time as 10.0 days, which satisfies the rubric requirement of stating the median delivery time as a number of days."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": false,
+          "reasoning": "no KpiStat element in view"
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "date",
+        "kpi",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "taxi_tip_by_hour",
+      "question": "For credit-card taxi trips, how does the average tip amount vary by hour of the day?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.014177685981849208,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.8418793010059744,
+          "input_tokens": 131,
+          "output_tokens": 131
+        },
+        "get_schema": {
+          "latency_s": 0.03013037401251495,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.143113104015356,
+          "input_tokens": 367,
+          "output_tokens": 181
+        },
+        "build_widget": {
+          "latency_s": 7.508555029984564,
+          "input_tokens": 1112,
+          "output_tokens": 632
+        },
+        "compose_narrative": {
+          "latency_s": 5.0831564129912294,
+          "input_tokens": 659,
+          "output_tokens": 508
+        }
+      },
+      "sql_query": "SELECT date_part('hour', tpep_pickup_datetime) AS pickup_hour, AVG(tip_amount) AS avg_tip_amount FROM nyc_taxi WHERE payment_type = 1 AND tip_amount IS NOT NULL GROUP BY pickup_hour ORDER BY pickup_hour;",
+      "sql_valid": true,
+      "response": "For credit-card taxi trips, the average tip amount peaks at 5:00 AM with an average of 3.81, followed closely by 4:00 AM at 3.57. The lowest average tips occur during the morning commute, dipping to 2.74 at 7:00 AM and 2.79 at 8:00 AM.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT date_part('hour', tpep_pickup_datetime) AS hour, ROUND(AVG(tip_amount),2) AS avg_tip FROM nyc_taxi WHERE payment_type=1 GROUP BY 1 ORDER BY 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Average tip by hour of day is an ordered series across 24 hours; a line chart is best and a bar chart is acceptable, but never a pie chart or a single KPI.",
+          "passed": false,
+          "reasoning": "The question asks how average tip varies across 24 ordered hours, which is a trend/pattern question best answered visually. The rubric specifies a line chart is best and a bar chart is acceptable. A DataTable forces the reader to manually scan 24 rows to infer the hourly pattern, which fails to communicate the variation effectively. A line chart (or at minimum a bar chart) should have been chosen."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "group_by",
+        "date",
+        "time_series",
+        "chart",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "olist_marketplace_exec_dashboard",
+      "question": "Build an executive overview dashboard for the marketplace: total gross merchandise value, the total number of orders, the average order value, and the monthly GMV trend.",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.015885792003246024,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.88726631301688,
+          "input_tokens": 144,
+          "output_tokens": 215
+        },
+        "get_schema": {
+          "latency_s": 0.0718473499873653,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.7155985569988843,
+          "input_tokens": 366,
+          "output_tokens": 296
+        },
+        "build_widget": {
+          "latency_s": 6.736697763000848,
+          "input_tokens": 4276,
+          "output_tokens": 1025
+        },
+        "compose_narrative": {
+          "latency_s": 6.8565134670061525,
+          "input_tokens": 978,
+          "output_tokens": 748
+        }
+      },
+      "sql_query": "SELECT SUM(payment_value) AS total_gmv FROM olist_order_payments;; SELECT COUNT(*) AS total_orders FROM olist_orders; SELECT SUM(payment_value) / COUNT(DISTINCT order_id) AS average_order_value FROM olist_order_payments; SELECT date_trunc('month', o.order_purchase_timestamp) AS purchase_month, SUM(p.payment_value) AS gmv FROM olist_orders o JOIN olist_order_payments p ON o.order_id = p.order_id WHERE p.payment_value IS NOT NULL GROUP BY 1 ORDER BY 1;",
+      "sql_valid": true,
+      "response": "The marketplace generated a total gross merchandise value of 16,008,872.12 across 99,441 orders, yielding an average order value of 160.99. Monthly GMV grew steadily from its inception in September 2016, reaching a peak of 1,194,882.80 in November 2017, before declining sharply to 589.67 by October 2018.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_count",
+          "value": "3",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "This is an executive overview dashboard. The headline metrics (total GMV, total orders, average order value) should each be a single-value KPI, and the monthly GMV trend should be a line chart. No pie chart with more than 5 slices and no KPI bound to a multi-row result.",
+          "passed": false,
+          "reasoning": "The chosen views do not follow the rubric. The first three metrics (total GMV, total orders, average order value) are single-row results and should be single-value KPIs, but they are presented as DataTables. The fourth metric (monthly GMV trend) is a 25-row time series and should be a line chart, but it is also presented as a DataTable."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "dashboard",
+        "overview",
+        "chart",
+        "hard"
+      ]
+    }
+  ]
+}

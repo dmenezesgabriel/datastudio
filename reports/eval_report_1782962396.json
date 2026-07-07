@@ -1,0 +1,498 @@
+{
+  "run_at": "2026-07-02T03:19:56.093496+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 5,
+    "passed": 5,
+    "failed": 0,
+    "pass_rate": 1.0,
+    "avg_latency_s": 24.171,
+    "p95_latency_s": 31.899,
+    "total_input_tokens": 11934,
+    "total_output_tokens": 6912,
+    "avg_output_tokens": 1382.4,
+    "cost_usd": 0.0,
+    "by_tag": {
+      "group_by": {
+        "total": 3,
+        "passed": 3
+      },
+      "chart": {
+        "total": 5,
+        "passed": 5
+      },
+      "medium": {
+        "total": 2,
+        "passed": 2
+      },
+      "join": {
+        "total": 3,
+        "passed": 3
+      },
+      "ranking": {
+        "total": 2,
+        "passed": 2
+      },
+      "hard": {
+        "total": 3,
+        "passed": 3
+      },
+      "conditional_aggregation": {
+        "total": 1,
+        "passed": 1
+      },
+      "date": {
+        "total": 1,
+        "passed": 1
+      },
+      "comparison": {
+        "total": 1,
+        "passed": 1
+      },
+      "dashboard": {
+        "total": 1,
+        "passed": 1
+      },
+      "overview": {
+        "total": 1,
+        "passed": 1
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "taxi_trips_by_payment_type",
+      "question": "How many taxi trips were taken with each payment type code?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.020664851006586105,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.608901473984588,
+          "input_tokens": 124,
+          "output_tokens": 114
+        },
+        "get_schema": {
+          "latency_s": 0.024134309001965448,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.8275770640175324,
+          "input_tokens": 360,
+          "output_tokens": 88
+        },
+        "build_widget": {
+          "latency_s": 7.474133926996728,
+          "input_tokens": 1082,
+          "output_tokens": 489
+        },
+        "compose_narrative": {
+          "latency_s": 5.2518710359872784,
+          "input_tokens": 268,
+          "output_tokens": 308
+        }
+      },
+      "sql_query": "SELECT payment_type, COUNT(*) AS trip_count FROM nyc_taxi GROUP BY payment_type ORDER BY payment_type",
+      "sql_valid": true,
+      "response": "Payment type code 1 accounted for the highest number of taxi trips with 5,353,975, followed by payment type code 2 with 2,027,441 trips. Payment type codes 0, 3, and 4 had significantly fewer trips, recording 42,456, 38,284, and 13,793 trips respectively.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT payment_type, COUNT(*) AS trips FROM nyc_taxi GROUP BY payment_type ORDER BY trips DESC",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Trip counts per payment type should be a bar chart or a table; a pie chart is acceptable only if it has at most 5 slices. Never use a single KPI for this multi-row breakdown.",
+          "passed": true,
+          "reasoning": "The chosen visualization is a bar chart, which is explicitly recommended by the rubric for displaying trip counts per payment type. The data has 5 rows, which is well-suited for a bar chart."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "group_by",
+        "chart",
+        "medium"
+      ]
+    },
+    {
+      "case_id": "olist_top5_categories_revenue",
+      "question": "Which five product categories, by their English name, generated the most revenue, and how much did each generate?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.014228920976165682,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.9271859229775146,
+          "input_tokens": 134,
+          "output_tokens": 166
+        },
+        "get_schema": {
+          "latency_s": 0.0852745329902973,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 6.980069410987198,
+          "input_tokens": 366,
+          "output_tokens": 263
+        },
+        "build_widget": {
+          "latency_s": 8.771383212995715,
+          "input_tokens": 1102,
+          "output_tokens": 305
+        },
+        "compose_narrative": {
+          "latency_s": 12.121224524977151,
+          "input_tokens": 320,
+          "output_tokens": 822
+        }
+      },
+      "sql_query": "SELECT t.product_category_name_english AS category, SUM(i.price + i.freight_value) AS total_revenue FROM olist_order_items i JOIN olist_products p ON i.product_id = p.product_id JOIN olist_category_translation t ON p.product_category_name = t.product_category_name GROUP BY t.product_category_name_english ORDER BY total_revenue DESC LIMIT 5;",
+      "sql_valid": true,
+      "response": "The top five product categories by revenue are health_beauty with 1,441,248.07, watches_gifts with 1,305,541.61, and bed_bath_table with 1,241,681.72. Rounding out the top five are sports_leisure generating 1,156,656.48 and computers_accessories with 1,059,272.40.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "health_beauty",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A top-5 revenue ranking should be a bar chart or a table; a pie chart is acceptable only with at most 5 slices, and never a single KPI.",
+          "passed": true,
+          "reasoning": "The chosen view is a bar chart, which the rubric explicitly states is appropriate for a top-5 revenue ranking. The data shape (two columns: category and total_revenue, 5 rows) is perfectly suited for a bar chart."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "join",
+        "group_by",
+        "ranking",
+        "chart",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "olist_revenue_by_state",
+      "question": "Which Brazilian states drive the most revenue, and how much revenue does each contribute?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.00914468799601309,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.502655275980942,
+          "input_tokens": 128,
+          "output_tokens": 224
+        },
+        "get_schema": {
+          "latency_s": 0.11032683600205928,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.081670706975274,
+          "input_tokens": 378,
+          "output_tokens": 125
+        },
+        "build_widget": {
+          "latency_s": 8.617228921997594,
+          "input_tokens": 1107,
+          "output_tokens": 311
+        },
+        "compose_narrative": {
+          "latency_s": 11.964579917024821,
+          "input_tokens": 594,
+          "output_tokens": 687
+        }
+      },
+      "sql_query": "SELECT c.customer_state, SUM(p.payment_value) AS total_revenue FROM olist_customers c JOIN olist_orders o ON c.customer_id = o.customer_id JOIN olist_order_payments p ON o.order_id = p.order_id WHERE p.payment_value IS NOT NULL GROUP BY c.customer_state ORDER BY total_revenue DESC;",
+      "sql_valid": true,
+      "response": "S\u00e3o Paulo (SP) drives the most revenue by a wide margin, contributing 5,998,226.96. Rio de Janeiro (RJ) and Minas Gerais (MG) follow as the next highest contributors with 2,144,379.69 and 1,872,257.26, respectively. The remaining states each contribute less than 900,000.00, with the lowest revenue coming from Roraima (RR) at 10,064.62.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "SP",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Revenue across 27 states should be a bar chart or a table (a horizontal ranking), never a pie chart or a single KPI.",
+          "passed": true,
+          "reasoning": "The chosen view is a bar chart, which is explicitly allowed by the rubric for comparing revenue across 27 states. It effectively shows the ranking and magnitude of revenue per state, unlike a pie chart or KPI."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "join",
+        "group_by",
+        "ranking",
+        "chart",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "olist_delivery_delay_vs_satisfaction",
+      "question": "Do late deliveries hurt customer satisfaction? Show the average review score for on-time deliveries and for late deliveries as two separate rows.",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.012493635003920645,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.0254872050136328,
+          "input_tokens": 137,
+          "output_tokens": 136
+        },
+        "get_schema": {
+          "latency_s": 0.09215106000192463,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.214046437002253,
+          "input_tokens": 354,
+          "output_tokens": 157
+        },
+        "build_widget": {
+          "latency_s": 6.299157645989908,
+          "input_tokens": 1113,
+          "output_tokens": 321
+        },
+        "compose_narrative": {
+          "latency_s": 9.932168138009729,
+          "input_tokens": 274,
+          "output_tokens": 639
+        }
+      },
+      "sql_query": "SELECT\n    CASE\n        WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date THEN 'on_time'\n        WHEN o.order_delivered_customer_date > o.order_estimated_delivery_date THEN 'late'\n    END AS delivery_status,\n    AVG(r.review_score) AS avg_review_score\nFROM olist_orders o\nJOIN olist_order_reviews r ON o.order_id = r.order_id\nWHERE o.order_delivered_customer_date IS NOT NULL\n  AND o.order_estimated_delivery_date IS NOT NULL\n  AND r.review_score IS NOT NULL\nGROUP BY delivery_status\nORDER BY delivery_status;",
+      "sql_valid": true,
+      "response": "Late deliveries are associated with a lower average review score of 2.566549798727438, compared to 4.293577567732184 for on-time deliveries. This indicates that late deliveries do hurt customer satisfaction.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT CASE WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date THEN 'on_time' ELSE 'late' END AS delivery, ROUND(AVG(r.review_score),2) AS avg_score FROM olist_orders o JOIN olist_order_reviews r ON o.order_id=r.order_id WHERE o.order_delivered_customer_date IS NOT NULL GROUP BY 1 ORDER BY 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should compare on-time versus late deliveries and make clear that late deliveries receive substantially lower review scores.",
+          "passed": true,
+          "reasoning": "The response compares the average review scores for on-time deliveries (4.293577567732184) and late deliveries (2.566549798727438). It clearly states that late deliveries are associated with a substantially lower review score and explicitly concludes that late deliveries hurt customer satisfaction. This fully satisfies the rubric's requirement to compare on-time versus late deliveries and make clear that late deliveries receive substantially lower review scores."
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A two-group comparison (on-time vs late average review score) should be a bar chart or a table, not a single KPI.",
+          "passed": true,
+          "reasoning": "The chosen visualization is a bar chart, which aligns perfectly with the rubric. The rubric states that a two-group comparison like this should be a bar chart or a table, not a single KPI. The data shape (2 rows, 2 columns) is well-suited for a bar chart comparing the average review scores across the two delivery statuses."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "join",
+        "conditional_aggregation",
+        "date",
+        "comparison",
+        "chart",
+        "hard"
+      ]
+    },
+    {
+      "case_id": "taxi_overview_dashboard",
+      "question": "Give me an overview dashboard of the taxi trips: the total number of trips, the total revenue, and the number of trips per payment type.",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.016410312993684784,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.2487223369826097,
+          "input_tokens": 141,
+          "output_tokens": 87
+        },
+        "get_schema": {
+          "latency_s": 0.03248846100177616,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.368882095004665,
+          "input_tokens": 377,
+          "output_tokens": 186
+        },
+        "build_widget": {
+          "latency_s": 6.336634075007169,
+          "input_tokens": 3235,
+          "output_tokens": 819
+        },
+        "compose_narrative": {
+          "latency_s": 7.883468890999211,
+          "input_tokens": 340,
+          "output_tokens": 665
+        }
+      },
+      "sql_query": "SELECT COUNT(*) AS total_trips FROM nyc_taxi;; SELECT SUM(total_amount) AS total_revenue FROM nyc_taxi;; SELECT payment_type, COUNT(*) AS trip_count\nFROM nyc_taxi\nGROUP BY payment_type\nORDER BY payment_type;",
+      "sql_valid": true,
+      "response": "The taxi trip dashboard shows a total of 7,475,949 trips generating 145,047,454.13 in total revenue. Payment type 1 accounted for the majority of trips with 5,353,975, followed by payment type 2 with 2,027,441 trips. The remaining trips were distributed across payment types 0 (42,456), 3 (38,284), and 4 (13,793).",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_count",
+          "value": "2",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "This is an overview dashboard. Headline totals (total trips, total revenue) should each be a single-value KPI, and the trips-per-payment-type breakdown should be a bar chart, a table, or a pie chart of at most 5 slices. No pie chart with more than 5 slices, and no KPI bound to a multi-row result.",
+          "passed": true,
+          "reasoning": "The dashboard matches the rubric. The two headline totals (total_trips and total_revenue) are each rendered as a KpiStat bound to a single-row, single-column result, satisfying the requirement that KPIs not be bound to multi-row data. The trips-per-payment-type breakdown is rendered as a bar chart over 5 rows, which is an allowed breakdown view type and does not violate the pie-slice limit. All chosen view types and chart kinds are appropriate for the underlying data shape."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "dashboard",
+        "overview",
+        "chart",
+        "medium"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,136 @@
+{
+  "run_at": "2026-07-07T10:18:01.046699+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "pass_rate": 1.0,
+    "avg_latency_s": 30.666,
+    "p95_latency_s": 30.666,
+    "total_input_tokens": 2464,
+    "total_output_tokens": 708,
+    "total_cached_input_tokens": 2024,
+    "cache_read_rate": 0.821,
+    "avg_input_tokens": 2464.0,
+    "avg_output_tokens": 708.0,
+    "cost_usd": 0.0,
+    "view_selection": {
+      "passed": 3,
+      "total": 3,
+      "accuracy": 1.0
+    },
+    "by_tag": {
+      "group_by": {
+        "total": 1,
+        "passed": 1
+      },
+      "chart": {
+        "total": 1,
+        "passed": 1
+      },
+      "medium": {
+        "total": 1,
+        "passed": 1
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "movies_genre_distribution",
+      "question": "How many films are there in each major genre?",
+      "nodes": {
+        "list_tables": {
+          "latency_s": 0.017932768969330937,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 6.187342364981305,
+          "input_tokens": 142,
+          "output_tokens": 160,
+          "cached_input_tokens": 132
+        },
+        "get_schema": {
+          "latency_s": 0.02310453198151663,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.035761329985689,
+          "input_tokens": 711,
+          "output_tokens": 83,
+          "cached_input_tokens": 568
+        },
+        "build_widget": {
+          "latency_s": 11.400416156975552,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 341,
+          "output_tokens": 39,
+          "cached_input_tokens": 236
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 869,
+          "output_tokens": 168,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 9.001437687955331,
+          "input_tokens": 401,
+          "output_tokens": 258,
+          "cached_input_tokens": 379
+        }
+      },
+      "sql": "SELECT \"Major Genre\", COUNT(*) AS film_count FROM movies GROUP BY \"Major Genre\" ORDER BY film_count DESC;",
+      "sql_valid": true,
+      "narrative": "Drama leads all major genres with 789 films, followed by Comedy at 675 and Action at 420, making these three the dominant categories in the dataset. A notable 275 films have no assigned major genre, which is the fourth-largest group and exceeds every remaining category. The remaining genres trail off sharply, from Thriller/Suspense (239) down to Concert/Performance with just 5 films, indicating a long tail of niche categories.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "There are about a dozen genres \u2014 present this as a bar chart or a table; a pie would have far too many slices, and a single KPI cannot show a distribution.",
+          "passed": true,
+          "reasoning": "The data is a distribution of film counts across 13 genres. The rubric explicitly recommends a bar chart or table for about a dozen categories, and warns against pies and single KPIs. The chosen view is a bar chart, which is the ideal way to compare counts across many categorical genres."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "group_by",
+        "chart",
+        "medium"
+      ]
+    }
+  ]
+}
