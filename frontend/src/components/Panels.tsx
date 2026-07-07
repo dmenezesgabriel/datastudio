@@ -1,4 +1,4 @@
-import { Children, type ReactNode } from "react";
+import { Children, type ReactNode, useMemo } from "react";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 
@@ -23,7 +23,11 @@ export function Grid({ children }: { children?: ReactNode }) {
 
 /** The natural-language answer, rendered as sanitized markdown (headings, bold, lists). */
 export function Markdown({ text }: { text: string }) {
-  const html = DOMPurify.sanitize(marked.parse(text, { async: false }));
+  // Parsing + sanitizing is pure in `text`; memo so unrelated re-renders don't repeat it.
+  const html = useMemo(
+    () => DOMPurify.sanitize(marked.parse(text, { async: false })),
+    [text],
+  );
   return (
     <div className="markdown" dangerouslySetInnerHTML={{ __html: html }} />
   );

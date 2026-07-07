@@ -1,8 +1,13 @@
+import { memo } from "react";
+
 import type { ThreadSummary } from "../types";
 
 // The left navigation: a "New chat" action above the list of conversations. Selecting a
 // thread reopens it; the active thread is highlighted (recognition over recall).
-export function Sidebar({
+//
+// memo so the thread list doesn't re-render on every streaming patch — with stable
+// threads/activeId/callbacks it only re-renders when the conversation list actually changes.
+export const Sidebar = memo(function Sidebar({
   threads,
   activeId,
   onNewChat,
@@ -54,4 +59,4 @@ export function Sidebar({
       )}
     </nav>
   );
-}
+});

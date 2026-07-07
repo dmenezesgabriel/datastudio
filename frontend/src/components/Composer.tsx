@@ -1,22 +1,31 @@
-import { type KeyboardEvent } from "react";
+import { type KeyboardEvent, memo, useState } from "react";
 
 // The bottom-docked message composer. A textarea (grows with content, submits on Enter,
 // newline on Shift+Enter) plus a send button — the familiar Claude/ChatGPT affordance.
-export function Composer({
-  value,
-  onChange,
+//
+// The draft lives here, not in App: keystrokes must not re-render the transcript (each
+// would otherwise rebuild every dashboard/chart). App only learns the text on submit.
+// memo (with a stable onSubmit) keeps it off the per-streaming-patch re-render path too.
+export const Composer = memo(function Composer({
   onSubmit,
   disabled,
 }: {
-  value: string;
-  onChange: (next: string) => void;
-  onSubmit: () => void;
+  onSubmit: (prompt: string) => void;
   disabled: boolean;
 }) {
+  const [value, setValue] = useState("");
+
+  function submit() {
+    const trimmed = value.trim();
+    if (!trimmed || disabled) return;
+    onSubmit(trimmed);
+    setValue("");
+  }
+
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      onSubmit();
+      submit();
     }
   }
 
@@ -26,14 +35,14 @@ export function Composer({
         className="composer__form max-w-content mx-auto flex gap-2 items-end"
         onSubmit={(event) => {
           event.preventDefault();
-          onSubmit();
+          submit();
         }}
       >
         <textarea
           className="composer__input flex-1 text-base bg-raised border-strong rounded-md p-3"
           rows={1}
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) => setValue(event.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask a question about your data…"
         />
@@ -47,4 +56,4 @@ export function Composer({
       </form>
     </div>
   );
-}
+});

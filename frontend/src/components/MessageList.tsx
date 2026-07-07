@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { JSONUIProvider, Renderer } from "@json-render/react";
 import type { Spec } from "@json-render/react";
 
@@ -9,9 +9,11 @@ import type { ProgressSteps, SpecWithState, Turn } from "../types";
 // The scrollable transcript: settled turns, then the in-progress turn while streaming.
 // Rendering of each turn's dashboard is delegated to TurnView (unchanged behaviour).
 export function MessageList({
+  conversationId,
   turns,
   streaming,
 }: {
+  conversationId: string;
   turns: Turn[];
   streaming: { prompt: string; spec: Spec | null } | null;
 }) {
@@ -30,8 +32,10 @@ export function MessageList({
     <div className="message-list flex-1 overflow-y-auto py-6 px-4">
       <div className="message-list__inner max-w-content mx-auto flex flex-col gap-6 min-w-0">
         {turns.map((turn, index) => (
+          // Keyed by conversation so switching threads remounts each turn (and its per-turn
+          // JSONUIProvider) instead of reusing a same-index instance across conversations.
           <TurnView
-            key={index}
+            key={`${conversationId}:${index}`}
             prompt={turn.prompt}
             spec={turn.spec}
             loading={false}
@@ -55,7 +59,10 @@ export function MessageList({
 
 // One turn's dashboard. Each turn gets its OWN JSONUIProvider because widget $state
 // bindings are scoped per spec — sharing one store across turns would cross-bind data.
-function TurnView({
+//
+// memo so a settled turn (stable props) doesn't re-render — and rebuild its charts —
+// every time a *later* turn streams a patch into the parent.
+const TurnView = memo(function TurnView({
   prompt,
   spec,
   loading,
@@ -76,7 +83,7 @@ function TurnView({
   return (
     <section>
       {/* The question is this turn's heading (labels the dashboard below it), not a paragraph. */}
-      <h2 className="m-0 mb-3 font-semibold text-lg">{prompt}</h2>
+      <h2 className="turn__prompt font-semibold text-lg">{prompt}</h2>
       <ProgressChecklist steps={progress} />
       <JSONUIProvider registry={registry} initialState={stateModel}>
         {/* loading lets the renderer show partial trees gracefully while patches arrive */}
@@ -84,4 +91,4 @@ function TurnView({
       </JSONUIProvider>
     </section>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useUIStream } from "@json-render/react";
 
 import { Sidebar } from "./components/Sidebar";
@@ -17,7 +17,6 @@ export function App() {
   const [turnsByConv, setTurnsByConv] = useState<Record<string, Turn[]>>({
     [firstId]: [],
   });
-  const [question, setQuestion] = useState("");
   const { threads, refresh, loadTurns } = useConversations();
 
   // Refs so useUIStream's onComplete (bound once) records against the live thread/prompt.
@@ -25,7 +24,7 @@ export function App() {
   activeIdRef.current = activeId;
   const livePrompt = useRef("");
 
-  const { spec, isStreaming, error, send } = useUIStream({
+  const { spec, isStreaming, error, send, clear } = useUIStream({
     api: "/api/chat",
     onComplete: (finished) => {
       const id = activeIdRef.current;
@@ -40,31 +39,46 @@ export function App() {
     },
   });
 
-  function ask() {
-    const trimmed = question.trim();
-    if (!trimmed || isStreaming) return;
-    livePrompt.current = trimmed;
-    setQuestion("");
-    void send(trimmed, { conversation_id: activeId });
-  }
+  // Stable identities so the memoized Composer/Sidebar don't re-render on every streaming
+  // patch (App re-renders per patch as `spec` grows; these callbacks must not churn with it).
+  const ask = useCallback(
+    (prompt: string) => {
+      if (isStreaming) return;
+      livePrompt.current = prompt;
+      void send(prompt, { conversation_id: activeId });
+    },
+    [isStreaming, send, activeId],
+  );
 
-  function newChat() {
+  const newChat = useCallback(() => {
     if (isStreaming) return;
+    clear(); // drop any error/spec left over from the previous thread's stream
     const id = newConversationId();
     setTurnsByConv((prev) => ({ ...prev, [id]: [] }));
     setActiveId(id);
-  }
+  }, [isStreaming, clear]);
 
-  async function selectThread(id: string) {
-    if (isStreaming || id === activeId) return;
-    setActiveId(id);
-    if (turnsByConv[id]) return; // already cached this session
-    const loaded = await loadTurns(id);
-    setTurnsByConv((prev) => ({ ...prev, [id]: prev[id] ?? loaded }));
-  }
+  const selectThread = useCallback(
+    async (id: string) => {
+      if (isStreaming) return;
+      if (id === activeId && turnsByConv[id]) return; // already open and loaded — nothing to do
+      clear(); // the error banner belongs to the thread that produced it, not the one we open
+      setActiveId(id);
+      if (turnsByConv[id]) return; // already cached this session
+      const loaded = await loadTurns(id);
+      // Only cache a successful load; a failed one (null) stays uncached so re-clicking retries.
+      if (loaded) setTurnsByConv((prev) => ({ ...prev, [id]: prev[id] ?? loaded }));
+    },
+    [isStreaming, activeId, turnsByConv, clear, loadTurns],
+  );
 
   const activeTurns = turnsByConv[activeId] ?? [];
-  const threadList = mergeActiveThread(threads, activeId, activeTurns);
+  // Memoized so the array identity is stable across streaming patches — otherwise a fresh
+  // list every render (mergeActiveThread prepends the unsaved active thread) defeats memo(Sidebar).
+  const threadList = useMemo(
+    () => mergeActiveThread(threads, activeId, activeTurns),
+    [threads, activeId, activeTurns],
+  );
 
   return (
     <div className="app-shell">
@@ -76,6 +90,7 @@ export function App() {
       />
       <main className="main">
         <MessageList
+          conversationId={activeId}
           turns={activeTurns}
           streaming={isStreaming ? { prompt: livePrompt.current, spec } : null}
         />
@@ -84,12 +99,7 @@ export function App() {
             {error.message}
           </p>
         )}
-        <Composer
-          value={question}
-          onChange={setQuestion}
-          onSubmit={ask}
-          disabled={isStreaming}
-        />
+        <Composer onSubmit={ask} disabled={isStreaming} />
       </main>
     </div>
   );
