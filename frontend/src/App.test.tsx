@@ -252,3 +252,75 @@ test("reopening a past thread from the sidebar loads its transcript", async () =
   expect(screen.getByText("Sampa")).toBeTruthy();
   expect(screen.getByText("42")).toBeTruthy();
 });
+
+// A minimal persisted transcript (just a narrative) for the loading/error tests below.
+const PAST_DETAIL = {
+  turns: [
+    {
+      prompt: "Old question",
+      spec: {
+        root: "root",
+        elements: {
+          root: { type: "Stack", props: {}, children: ["narrative"] },
+          narrative: { type: "Markdown", props: { text: "Past answer." }, children: [] },
+        },
+        state: {},
+      },
+    },
+  ],
+};
+
+const PAST_LIST = { conversations: [{ conversation_id: "past-1", title: "Old question" }] };
+
+test("a failed thread load is not cached as empty — re-clicking retries", async () => {
+  // Arrange — the detail endpoint fails the first time, succeeds the second.
+  let detailCalls = 0;
+  const fetchMock = vi.fn((url: string) => {
+    if (url === "/api/conversations") return Promise.resolve(jsonResponse(PAST_LIST));
+    if (url === "/api/conversations/past-1") {
+      detailCalls += 1;
+      if (detailCalls === 1) return Promise.resolve({ ok: false, status: 500 } as Response);
+      return Promise.resolve(jsonResponse(PAST_DETAIL));
+    }
+    return Promise.resolve(streamResponse([]));
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  render(<App />);
+
+  // Act — open the thread (first load fails), then re-click the same thread.
+  const threadButton = await screen.findByRole("button", { name: "Old question" });
+  fireEvent.click(threadButton);
+  await waitFor(() => expect(detailCalls).toBe(1));
+  expect(screen.queryByText("Past answer.")).toBeNull(); // failed load shows nothing…
+
+  fireEvent.click(threadButton); // …and re-clicking retries rather than being a no-op
+
+  // Assert — the retry loads the transcript (a swallowed [] would have cached empty forever).
+  await waitFor(() => expect(screen.getByText("Past answer.")).toBeTruthy());
+  expect(detailCalls).toBe(2);
+});
+
+test("switching threads clears a stream error from the previous thread", async () => {
+  // Arrange — the chat stream fails; the past thread loads fine.
+  const fetchMock = vi.fn((url: string) => {
+    if (url === "/api/conversations") return Promise.resolve(jsonResponse(PAST_LIST));
+    if (url === "/api/conversations/past-1") return Promise.resolve(jsonResponse(PAST_DETAIL));
+    return Promise.resolve({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ message: "boom" }),
+    } as unknown as Response);
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  render(<App />);
+
+  // Act — a failing prompt surfaces the error banner…
+  fireEvent.change(screen.getByPlaceholderText(/Ask a question/i), { target: { value: "will fail" } });
+  fireEvent.click(screen.getByRole("button", { name: /ask/i }));
+  await waitFor(() => expect(screen.getByText("boom")).toBeTruthy());
+
+  // …then switching to another thread clears it (the error belonged to the previous thread).
+  fireEvent.click(await screen.findByRole("button", { name: "Old question" }));
+  await waitFor(() => expect(screen.getByText("Past answer.")).toBeTruthy());
+  expect(screen.queryByText("boom")).toBeNull();
+});

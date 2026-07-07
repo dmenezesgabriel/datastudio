@@ -27,14 +27,16 @@ export function useConversations() {
     void refresh();
   }, [refresh]);
 
-  const loadTurns = useCallback(async (conversationId: string): Promise<Turn[]> => {
+  // null signals a failed load (vs. an empty-but-valid transcript `[]`), so the caller can
+  // avoid caching a transient failure as "this conversation is empty" and retry next time.
+  const loadTurns = useCallback(async (conversationId: string): Promise<Turn[] | null> => {
     try {
       const response = await fetch(`/api/conversations/${conversationId}`);
-      if (!response.ok) return [];
+      if (!response.ok) return null;
       const payload = (await response.json()) as DetailPayload;
       return payload.turns.map((turn) => ({ prompt: turn.prompt, spec: turn.spec }));
     } catch {
-      return [];
+      return null;
     }
   }, []);
 
