@@ -55,6 +55,16 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ]
     },
@@ -81,6 +91,16 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ]
     },
@@ -140,6 +160,16 @@
         },
         {
           "type": "view_present"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ]
     },
@@ -162,6 +192,13 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "A single 'which is the most common' answer is one value: present it as a KPI or a one-row table, never as a chart or pie."
         }
       ]
     },
@@ -188,6 +225,16 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ]
     },
@@ -215,6 +262,16 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ]
     },
@@ -237,6 +294,16 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ]
     },
@@ -264,6 +331,16 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ]
     },
@@ -292,6 +369,16 @@
         },
         {
           "type": "view_present"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ]
     },
@@ -319,6 +406,13 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "A single top-category answer is one value: a KPI or a one-row table, never a chart or pie."
         }
       ]
     },
@@ -349,6 +443,16 @@
         },
         {
           "type": "wire_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ]
     },
@@ -375,6 +479,16 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ]
     },
@@ -436,6 +550,16 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ]
     },
@@ -462,6 +586,16 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ]
     },
@@ -488,6 +622,16 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ]
     },
@@ -514,6 +658,13 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "A single top-state answer is one value: a KPI or a one-row table, never a chart or pie."
         }
       ]
     },
@@ -541,6 +692,16 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ]
     },
@@ -999,6 +1160,16 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ],
       "follow_ups": [
@@ -1018,6 +1189,16 @@
             },
             {
               "type": "view_integrity"
+            },
+            {
+              "type": "view_contains",
+              "element_type": "KpiStat"
+            },
+            {
+              "type": "chart_fit"
+            },
+            {
+              "type": "kpi_band_populated"
             }
           ]
         }
@@ -1216,6 +1397,13 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "Three fare percentiles in one row should be shown as KPI stats or a small table, never a chart or pie."
         }
       ]
     },
@@ -1277,6 +1465,16 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ]
     },
@@ -1337,6 +1535,13 @@
         },
         {
           "type": "view_present"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "A per-state top-category listing is a detail table (one row per state), never a pie or a single KPI."
         }
       ]
     },
@@ -1360,6 +1565,16 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ],
       "follow_ups": [
@@ -1425,6 +1640,16 @@
         },
         {
           "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
         }
       ],
       "follow_ups": [
@@ -1441,6 +1666,16 @@
             {
               "type": "rubric",
               "rubric": "The answer should give the average IMDB rating for Comedy films (about 5.85), understanding 'how about for Comedy' as the same metric for a different genre."
+            },
+            {
+              "type": "view_contains",
+              "element_type": "KpiStat"
+            },
+            {
+              "type": "chart_fit"
+            },
+            {
+              "type": "kpi_band_populated"
             }
           ]
         }
@@ -1506,6 +1741,668 @@
         },
         {
           "type": "wire_integrity"
+        }
+      ]
+    },
+    {
+      "id": "olist_multi_kpi_headline",
+      "question": "Give me the headline numbers for the marketplace: the total number of orders, the total payment revenue, and the average order value.",
+      "tags": [
+        "dashboard",
+        "kpi",
+        "placement",
+        "hard"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "widget_count",
+          "min_widgets": 3
+        },
+        {
+          "type": "kpi_band_populated",
+          "min_kpis": 3
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "wire_integrity"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "Each of the three headline numbers (total orders, total revenue, average order value) must be its own single-value KPI card at the top — never bundled together into one table."
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT COUNT(*) FROM olist_orders"
+        }
+      ]
+    },
+    {
+      "id": "olist_kpis_with_drilldown_dashboard",
+      "question": "Show an orders overview: the total number of orders and the cancellation rate as headline KPIs, plus a breakdown table of orders by their status.",
+      "tags": [
+        "dashboard",
+        "overview",
+        "drilldown",
+        "table",
+        "hard"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "widget_count",
+          "min_widgets": 3
+        },
+        {
+          "type": "kpi_band_populated",
+          "min_kpis": 2
+        },
+        {
+          "type": "view_contains",
+          "element_type": "DataTable"
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "wire_integrity"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "The headline totals (order count, cancellation rate) belong at the top as KPI cards; the orders-by-status breakdown belongs below as a table or bar chart, never as a KPI."
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT order_status, COUNT(*) AS orders FROM olist_orders GROUP BY 1 ORDER BY orders DESC"
+        }
+      ]
+    },
+    {
+      "id": "taxi_kpis_and_trend_dashboard",
+      "question": "Build a taxi overview dashboard: total trips and total revenue as KPIs, and a line chart of the number of trips by hour of the day.",
+      "tags": [
+        "dashboard",
+        "overview",
+        "chart",
+        "time_series",
+        "hard"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "widget_count",
+          "min_widgets": 3
+        },
+        {
+          "type": "kpi_band_populated",
+          "min_kpis": 2
+        },
+        {
+          "type": "view_contains",
+          "element_type": "ChartJs",
+          "chart_kind": "line"
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "wire_integrity"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "Total trips and total revenue must be KPI cards at the top; trips by hour is an ordered series and must be a line chart, not a pie or a KPI."
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT COUNT(*) FROM nyc_taxi"
+        }
+      ]
+    },
+    {
+      "id": "olist_total_gmv_paraphrase_1",
+      "question": "What's the platform's total sales value across all items sold?",
+      "tags": [
+        "paraphrase",
+        "robustness",
+        "aggregation",
+        "easy"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(SUM(price),1) FROM olist_order_items"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
+        }
+      ]
+    },
+    {
+      "id": "olist_total_gmv_paraphrase_2",
+      "question": "Add up the price of every item across all orders — what's the grand total?",
+      "tags": [
+        "paraphrase",
+        "robustness",
+        "aggregation",
+        "easy"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(SUM(price),1) FROM olist_order_items"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
+        }
+      ]
+    },
+    {
+      "id": "olist_on_time_paraphrase_1",
+      "question": "How reliable are our delivery promises — what share of delivered orders arrived on or before the estimated date?",
+      "tags": [
+        "paraphrase",
+        "robustness",
+        "percentage",
+        "date",
+        "medium"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_delivered_customer_date <= order_estimated_delivery_date)/COUNT(*),2) FROM olist_orders WHERE order_status='delivered' AND order_delivered_customer_date IS NOT NULL"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
+        }
+      ]
+    },
+    {
+      "id": "olist_on_time_paraphrase_2",
+      "question": "Of the orders we delivered, what percentage were not late?",
+      "tags": [
+        "paraphrase",
+        "robustness",
+        "percentage",
+        "date",
+        "medium"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_delivered_customer_date <= order_estimated_delivery_date)/COUNT(*),2) FROM olist_orders WHERE order_status='delivered' AND order_delivered_customer_date IS NOT NULL"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
+        }
+      ]
+    },
+    {
+      "id": "olist_avg_review_paraphrase_1",
+      "question": "Overall, how satisfied are our customers based on their review scores?",
+      "tags": [
+        "paraphrase",
+        "robustness",
+        "aggregation",
+        "easy"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(AVG(review_score),2) FROM olist_order_reviews"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
+        }
+      ]
+    },
+    {
+      "id": "olist_top5_categories_paraphrase_1",
+      "question": "What are our five best-selling product categories by revenue, and how much did each bring in?",
+      "tags": [
+        "paraphrase",
+        "robustness",
+        "ranking",
+        "chart",
+        "hard"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "result_set",
+          "expected_value": "health_beauty"
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "A top-5 revenue ranking should be a bar chart or a table; a pie is acceptable only with at most 5 slices, and never a single KPI."
+        }
+      ]
+    },
+    {
+      "id": "olist_monthly_gmv_paraphrase_1",
+      "question": "Plot how our monthly sales revenue has changed over time.",
+      "tags": [
+        "paraphrase",
+        "robustness",
+        "time_series",
+        "chart",
+        "medium"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "ChartJs",
+          "chart_kind": "line"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "Monthly revenue over time is an ordered series — it must be a line chart."
+        }
+      ]
+    },
+    {
+      "id": "olist_zero_orders_future",
+      "question": "How many orders were placed in the year 2099?",
+      "tags": [
+        "edge",
+        "empty_result",
+        "robustness",
+        "filter",
+        "date"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT COUNT(*) FROM olist_orders WHERE date_part('year', order_purchase_timestamp)=2099"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state that there were zero (no) orders in 2099. It must not invent a nonzero count."
+        }
+      ]
+    },
+    {
+      "id": "weather_empty_filter",
+      "question": "How many days in Seattle had snow with a maximum temperature above 40 degrees Celsius?",
+      "tags": [
+        "edge",
+        "empty_result",
+        "robustness",
+        "filter"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT COUNT(*) FROM seattle_weather WHERE weather='snow' AND temp_max>40"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should state that there were zero such days; it must not fabricate a count."
+        }
+      ]
+    },
+    {
+      "id": "out_of_scope_customer_age",
+      "question": "What is the average age of our customers?",
+      "tags": [
+        "edge",
+        "out_of_scope",
+        "robustness",
+        "no_hallucination"
+      ],
+      "checks": [
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The dataset has no customer age or birth-date information. The answer must make clear that this cannot be computed from the available data, and must NOT fabricate an age or any specific number."
+        }
+      ]
+    },
+    {
+      "id": "ambiguous_best_products",
+      "question": "What are our best-selling product categories?",
+      "tags": [
+        "ambiguity",
+        "robustness",
+        "ranking",
+        "chart"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "A ranking of product categories should be a bar chart or a table, never a single KPI or an oversized pie."
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should resolve the ambiguity by stating how 'best-selling' was measured (e.g. by number of items sold or by revenue) and then rank the categories accordingly."
+        }
+      ]
+    },
+    {
+      "id": "olist_payment_type_share",
+      "question": "What share of payment transactions used each payment type?",
+      "tags": [
+        "group_by",
+        "distribution",
+        "chart",
+        "medium"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT payment_type, ROUND(100.0*COUNT(*)/SUM(COUNT(*)) OVER(),2) AS pct FROM olist_order_payments GROUP BY 1 ORDER BY pct DESC"
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "There are five payment types — a pie chart of at most 5 slices is acceptable, as is a bar chart or a table, but never a single KPI."
+        }
+      ]
+    },
+    {
+      "id": "movies_genre_distribution",
+      "question": "How many films are there in each major genre?",
+      "tags": [
+        "group_by",
+        "chart",
+        "medium"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "view_present"
+        },
+        {
+          "type": "view_integrity"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "viz_rubric",
+          "rubric": "There are about a dozen genres — present this as a bar chart or a table; a pie would have far too many slices, and a single KPI cannot show a distribution."
+        }
+      ]
+    },
+    {
+      "id": "olist_drilldown_multiturn",
+      "question": "What is the total gross merchandise value across all orders?",
+      "tags": [
+        "multi-turn",
+        "memory",
+        "refinement",
+        "drilldown",
+        "hard"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT ROUND(SUM(price),1) FROM olist_order_items"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
+        }
+      ],
+      "follow_ups": [
+        {
+          "question": "Break it down by customer state.",
+          "checks": [
+            {
+              "type": "sql_valid"
+            },
+            {
+              "type": "view_present"
+            },
+            {
+              "type": "view_integrity"
+            },
+            {
+              "type": "chart_fit"
+            },
+            {
+              "type": "viz_rubric",
+              "rubric": "GMV by state is a ranking across many states — a bar chart or a table, never a pie or a single KPI."
+            }
+          ]
+        },
+        {
+          "question": "Now show only the top 3 states.",
+          "checks": [
+            {
+              "type": "sql_valid"
+            },
+            {
+              "type": "view_present"
+            },
+            {
+              "type": "chart_fit"
+            },
+            {
+              "type": "rubric",
+              "rubric": "The answer should show only the three highest-GMV states, understanding 'top 3' as a refinement of the previous state breakdown."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "taxi_metric_then_dashboard",
+      "question": "What is the total revenue from all taxi trips?",
+      "tags": [
+        "multi-turn",
+        "memory",
+        "dashboard",
+        "escalation",
+        "hard"
+      ],
+      "checks": [
+        {
+          "type": "sql_valid"
+        },
+        {
+          "type": "execution_match",
+          "gold_sql": "SELECT SUM(total_amount) FROM nyc_taxi"
+        },
+        {
+          "type": "view_contains",
+          "element_type": "KpiStat"
+        },
+        {
+          "type": "chart_fit"
+        },
+        {
+          "type": "kpi_band_populated"
+        }
+      ],
+      "follow_ups": [
+        {
+          "question": "Now give me a full overview dashboard of the taxi business.",
+          "checks": [
+            {
+              "type": "sql_valid"
+            },
+            {
+              "type": "widget_count",
+              "min_widgets": 2
+            },
+            {
+              "type": "kpi_band_populated"
+            },
+            {
+              "type": "view_present"
+            },
+            {
+              "type": "view_integrity"
+            },
+            {
+              "type": "chart_fit"
+            },
+            {
+              "type": "wire_integrity"
+            },
+            {
+              "type": "viz_rubric",
+              "rubric": "An overview dashboard should lead with single-value KPI cards for the headline totals, then charts/tables for breakdowns; no pie with more than 5 slices and no KPI bound to a multi-row result."
+            }
+          ]
         }
       ]
     }
