@@ -19,8 +19,10 @@ class FakeSqlEngine:
         self._error = error
         self.last_sql: str | None = None
         self.executed_sql: list[str] = []
+        self.list_tables_calls = 0
 
     def list_tables(self) -> list[str]:
+        self.list_tables_calls += 1
         return self._tables
 
     def get_table_schema(self, table_name: str) -> str:

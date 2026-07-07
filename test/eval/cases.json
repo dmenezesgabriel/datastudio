@@ -1699,6 +1699,23 @@
       ]
     },
     {
+      "id": "chitchat_greeting",
+      "question": "Hey there!",
+      "tags": [
+        "text",
+        "chitchat"
+      ],
+      "checks": [
+        {
+          "type": "text_answer"
+        },
+        {
+          "type": "rubric",
+          "rubric": "The answer should be a brief, friendly greeting that invites the user to ask about their data. It must not run a query, invent data values, or return a chart or table."
+        }
+      ]
+    },
+    {
       "id": "meta_capabilities",
       "question": "What kinds of questions can you help me answer?",
       "tags": [

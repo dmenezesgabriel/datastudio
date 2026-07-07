@@ -20,6 +20,7 @@ from test.unit.shared.infrastructure.sql_engine.fake_sql_engine import FakeSqlEn
 
 _EXPECTED_NODES = frozenset(
     {
+        "route_intent",
         "list_tables",
         "select_tables",
         "get_schema",
@@ -31,7 +32,8 @@ _EXPECTED_NODES = frozenset(
 )
 _EXPECTED_EDGES = frozenset(
     {
-        ("__start__", "list_tables"),
+        ("__start__", "route_intent"),
+        # route_intent → list_tables / answer_text is a conditional route, not a static edge
         ("list_tables", "select_tables"),
         ("select_tables", "get_schema"),
         ("get_schema", "plan_widgets"),
@@ -78,6 +80,34 @@ class TestBuildText2SqlGraph:
         assert {w.widget_id for w in result["widget_results"]} == {"widget-0", "widget-1"}
         # each widget contributed view patch lines to the shared reducer channel
         assert result["widget_patch_lines"]
+
+
+class TestChitchatGate:
+    def test_chitchat_short_circuits_before_any_schema_discovery(self) -> None:
+        # arrange — route_intent classifies the turn as chitchat and drafts a reply
+        chat_model = FakeStructuredChatModel(
+            tables=["orders"],
+            kind="chitchat",
+            reply="Hi! Ask me about your data.",
+            widgets=[],
+            sql="",
+            answer="unused",
+        )
+        sql_engine = FakeSqlEngine(
+            tables=["orders"],
+            schemas={"orders": "-- orders\nid INT"},
+            query_result=QueryResult(columns=["id"], rows=[(1,)], row_count=1),
+        )
+        # act
+        result = build_text2sql_graph(chat_model, sql_engine).invoke(  # pyright: ignore[reportUnknownMemberType]
+            {"question": "hello", "history": []}
+        )
+        # assert — the gate's reply is the response, and the data pipeline never ran:
+        # no table listing (so no select_tables/get_schema/plan_widgets) and no SQL/widgets
+        assert result["narrative"] == "Hi! Ask me about your data."
+        assert not result.get("widget_results")
+        assert sql_engine.list_tables_calls == 0
+        assert sql_engine.executed_sql == []
 
 
 class TestTextBranch:
@@ -131,6 +161,10 @@ class TestGraphTopology:
 
     def test_plan_widgets_has_conditional_fan_out(self) -> None:
         assert _make_graph().builder.branches.get("plan_widgets")
+
+    def test_route_intent_is_the_entry_and_branches(self) -> None:
+        # the gate runs first (START → route_intent) and conditionally routes the turn
+        assert _make_graph().builder.branches.get("route_intent")
 
 
 class TestFailurePath:

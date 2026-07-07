@@ -17,6 +17,7 @@ from chat.infrastructure.graph.nodes.generate_widget_view import load_catalog_pr
 from chat.infrastructure.graph.nodes.get_schema import GetSchema
 from chat.infrastructure.graph.nodes.list_tables import ListTables
 from chat.infrastructure.graph.nodes.plan_widgets import PlanWidgets
+from chat.infrastructure.graph.nodes.route_intent import RouteIntent
 from chat.infrastructure.graph.nodes.select_tables import SelectTables
 from chat.infrastructure.graph.observable_node import ObservableNode
 from chat.infrastructure.graph.progress_node import ProgressNode
@@ -32,6 +33,7 @@ from shared.application.ports.sql_engine_port import SqlEnginePort
 # User-facing checklist copy for each sequential pipeline node (the parallel
 # build_widget workers report their own per-widget steps). Data-agnostic by design.
 _STEP_LABELS: dict[str, str] = {
+    "route_intent": "Understanding your question",
     "list_tables": "Looking at your data",
     "select_tables": "Choosing the right tables",
     "get_schema": "Reading the schema",
@@ -58,6 +60,18 @@ def fan_out_widgets(state: ChatState) -> list[Send]:
     return [
         Send("build_widget", {"widget": spec, "schema": schema, "tables": tables}) for spec in specs
     ]
+
+
+def route_after_intent(state: ChatState) -> str:
+    """Route out of ``route_intent``: a direct chitchat reply, or into the data pipeline.
+
+    Returned from a conditional edge. When the gate short-circuited it set
+    ``answer_kind == "text"``, so the turn goes straight to ``answer_text``; otherwise it
+    enters schema discovery at ``list_tables``.
+    """
+    if cast(dict[str, object], state).get("answer_kind") == "text":
+        return "answer_text"
+    return "list_tables"
 
 
 def route_after_plan(state: ChatState) -> str | list[Send]:
@@ -132,6 +146,7 @@ def build_text2sql_nodes(
     """
     fast_model = format_chat_model or chat_model
     return {
+        "route_intent": RouteIntent(fast_model),
         "list_tables": ListTables(sql_engine),
         "select_tables": SelectTables(fast_model),
         "get_schema": GetSchema(sql_engine),
@@ -158,20 +173,25 @@ _NODE_RETRY_POLICY = RetryPolicy(max_attempts=3)
 def wire_text2sql_graph(nodes: Mapping[str, TypedChatNode]) -> TypedChatGraph:
     """Wires the named TypedChatNode callables into a compiled orchestrator–workers graph.
 
-    Discover the schema once, then ``plan_widgets`` classifies the turn. A ``"text"``
-    question routes to ``answer_text`` and ends. Otherwise it plans 1..N widgets and
-    fans out one parallel ``build_widget`` worker per widget (via ``Send``); each
-    worker runs its own SQL pipeline and authors its widget bound to ``$state``. The
-    workers' outputs aggregate (reducer channels) and ``compose_narrative`` writes the
-    summary once they all finish. Every node carries a RetryPolicy for transient errors.
+    ``route_intent`` gates the turn first: confident chitchat short-circuits straight to
+    ``answer_text`` (no DB, no schema). Otherwise the pipeline discovers the schema once,
+    then ``plan_widgets`` classifies the turn. A ``"text"`` question routes to
+    ``answer_text`` and ends. Otherwise it plans 1..N widgets and fans out one parallel
+    ``build_widget`` worker per widget (via ``Send``); each worker runs its own SQL
+    pipeline and authors its widget bound to ``$state``. The workers' outputs aggregate
+    (reducer channels) and ``compose_narrative`` writes the summary once they all finish.
+    Every node carries a RetryPolicy for transient errors.
 
     Example:
-        graph = wire_text2sql_graph({"list_tables": ListTables(engine), ...})
+        graph = wire_text2sql_graph({"route_intent": RouteIntent(model), ...})
     """
     builder: StateGraph[ChatState, None, ChatState, ChatState] = StateGraph(ChatState)
     for name, node in nodes.items():
         builder.add_node(name, node, retry_policy=_NODE_RETRY_POLICY)  # pyright: ignore[reportUnknownMemberType]
-    builder.add_edge(START, "list_tables")
+    builder.add_edge(START, "route_intent")
+    builder.add_conditional_edges(  # pyright: ignore[reportUnknownMemberType]
+        "route_intent", route_after_intent, ["answer_text", "list_tables"]
+    )
     builder.add_edge("list_tables", "select_tables")
     builder.add_edge("select_tables", "get_schema")
     builder.add_edge("get_schema", "plan_widgets")
