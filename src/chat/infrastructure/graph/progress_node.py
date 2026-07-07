@@ -1,9 +1,9 @@
-"""Proxy node that brackets a graph node with running/done progress steps.
+"""Proxy node that brackets a graph node with running/done/failed progress steps.
 
 Mirrors the ``ObservableNode`` proxy pattern: wraps a ``TypedChatNode`` so the checklist gets a
-``running`` step when the node starts and a ``done`` step when it returns, without the
-node knowing about progress. Applied only to the sequential pipeline nodes — the
-parallel ``build_widget`` workers report their own per-widget steps.
+``running`` step when the node starts and a ``done`` step when it returns — or a ``failed``
+step if it raises — without the node knowing about progress. Applied only to the sequential
+pipeline nodes — the parallel ``build_widget`` workers report their own per-widget steps.
 """
 
 from collections.abc import Mapping
@@ -15,7 +15,7 @@ from chat.infrastructure.graph.types import TypedChatNode
 
 
 class ProgressNode:
-    """Wraps a node to report its step as running on entry and done on exit.
+    """Wraps a node to report its step running on entry and done on exit (failed if it raises).
 
     Example:
         node = ProgressNode("get_schema", "Reading the schema", reporter, GetSchema(engine))
@@ -36,8 +36,14 @@ class ProgressNode:
         self._inner = inner
 
     def __call__(self, state: ChatState) -> Mapping[str, object]:
-        """Report running, delegate to the inner node, then report done."""
+        """Report running, delegate, then report done — or failed if the node raises."""
         self._reporter.report(ProgressStep(self._step_id, self._label, "running"))
-        result = self._inner(state)
+        try:
+            result = self._inner(state)
+        except Exception:
+            # Surface the failure on the checklist (mirrors build_widget), then re-raise so
+            # LangGraph's RetryPolicy still governs whether the run recovers or aborts.
+            self._reporter.report(ProgressStep(self._step_id, self._label, "failed"))
+            raise
         self._reporter.report(ProgressStep(self._step_id, self._label, "done"))
         return result
