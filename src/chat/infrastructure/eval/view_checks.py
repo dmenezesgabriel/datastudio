@@ -289,6 +289,86 @@ class TextAnswerCheck:
         return CheckResult(type="text_answer", value="", passed=passed, reasoning=reasoning)
 
 
+# The headline band the host seeds for "metric" widgets (see generate_widget_view /
+# spec_stream). A widget's region is now decided by its planner-declared role, so this
+# check asserts that mapping actually put a KpiStat here rather than in the grid.
+_KPI_REGION = "kpi-row"
+
+
+def _elements_by_id(patch_lines: list[str]) -> dict[str, dict[str, object]]:
+    """Map every added element id to its value dict (``/elements/<id>`` add patches)."""
+    elements: dict[str, dict[str, object]] = {}
+    for line in patch_lines:
+        patch = parse_patch(line)
+        if patch is None:
+            continue
+        path, value = patch.get("path"), patch.get("value")
+        if isinstance(path, str) and path.startswith("/elements/") and isinstance(value, dict):
+            if "type" in value:
+                elements[path.removeprefix("/elements/")] = cast(dict[str, object], value)
+    return elements
+
+
+def _region_frame_ids(patch_lines: list[str], region: str) -> list[str]:
+    """The frame ids appended into a region's children (``/elements/<region>/children/-``)."""
+    target = f"/elements/{region}/children/-"
+    ids: list[str] = []
+    for line in patch_lines:
+        patch = parse_patch(line)
+        if patch is not None and patch.get("path") == target:
+            value = patch.get("value")
+            if isinstance(value, str):
+                ids.append(value)
+    return ids
+
+
+def _wraps_kpistat(frame_id: str, elements: dict[str, dict[str, object]]) -> bool:
+    """True when the frame's wrapped leaf element is a KpiStat."""
+    frame = elements.get(frame_id)
+    children = frame.get("children") if frame is not None else None
+    if not isinstance(children, list):
+        return False
+    return any(
+        isinstance(child, str) and elements.get(child, {}).get("type") == "KpiStat"
+        for child in cast(list[object], children)
+    )
+
+
+@dataclass
+class KpiBandPopulatedCheck:
+    """Passes when the top KPI band holds at least ``min_kpis`` KpiStat cards.
+
+    Closes the placement gap behind the "KPIs shown as a table at the bottom" bug: the
+    headline metrics must render as KpiStat cards in the ``kpi-row`` band, not as a DataTable
+    in the grid. ``min_kpis`` lets a dashboard assert several distinct headline cards (e.g.
+    total GMV, total orders, average order value → ``min_kpis=3``).
+
+    Attach this only where a KPI is expected; it deliberately does NOT pass vacuously on a
+    metric-less answer, so a planner that bundles several metrics into one non-KpiStat widget
+    (the original bug) still fails rather than slipping through as "no metric planned".
+
+    Example:
+        check = KpiBandPopulatedCheck(min_kpis=3)
+        result = check.evaluate(state)  # {"type": "kpi_band_populated", "passed": True, ...}
+    """
+
+    min_kpis: int = 1
+
+    def evaluate(self, state: ChatState) -> CheckResult:
+        """Return passed when ≥ min_kpis KpiStat cards sit in the kpi-row band."""
+        lines = patch_lines(state)
+        elements = _elements_by_id(lines)
+        frames = _region_frame_ids(lines, _KPI_REGION)
+        count = sum(1 for frame_id in frames if _wraps_kpistat(frame_id, elements))
+        passed = count >= self.min_kpis
+        reasoning = (
+            "" if passed else f"kpi-row band holds {count} KpiStat(s), expected ≥{self.min_kpis}"
+        )
+        return CheckResult(
+            type="kpi_band_populated", value=str(self.min_kpis), passed=passed, reasoning=reasoning
+        )
+
+
 _VIZ_JUDGE_SYSTEM_PROMPT = (
     "You are a data-visualization reviewer. Given a question, the chosen visualization "
     "elements, the shape of the underlying data, and a rubric, decide whether the "

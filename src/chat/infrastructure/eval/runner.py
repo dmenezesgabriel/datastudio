@@ -120,7 +120,15 @@ def _by_tag(cases: list[CaseResult]) -> dict[str, dict[str, int]]:
 # aggregate accuracy is surfaced as a headline metric so response-type selection is
 # visible without slicing per-tag.
 _VIEW_SELECTION_CHECKS = frozenset(
-    {"view_present", "view_contains", "chart_fit", "viz_rubric", "widget_count", "text_answer"}
+    {
+        "view_present",
+        "view_contains",
+        "chart_fit",
+        "kpi_band_populated",
+        "viz_rubric",
+        "widget_count",
+        "text_answer",
+    }
 )
 
 

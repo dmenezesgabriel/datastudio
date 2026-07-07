@@ -5,12 +5,14 @@ from chat.domain.value_objects.widget import WidgetResult
 from chat.infrastructure.eval.checks import deserialize_check
 from chat.infrastructure.eval.view_checks import (
     ChartFitCheck,
+    KpiBandPopulatedCheck,
     TextAnswerCheck,
     ViewContainsCheck,
     VizRubricCheck,
     WidgetCountCheck,
 )
 from chat.infrastructure.graph.chat_state import ChatState
+from chat.infrastructure.graph.nodes.generate_widget_view import namespace_widget_patches
 from shared.domain.value_objects.query_result import QueryResult
 from test.unit.chat.infrastructure.graph.nodes.fake_structured_chat_model import (
     FakeStructuredChatModel,
@@ -271,6 +273,16 @@ class TestDeserializeNewCheckTypes:
     def test_builds_chart_fit_check(self) -> None:
         assert isinstance(self._deserialize({"type": "chart_fit"}), ChartFitCheck)
 
+    def test_builds_kpi_band_populated_check(self) -> None:
+        check = self._deserialize({"type": "kpi_band_populated"})
+        assert isinstance(check, KpiBandPopulatedCheck)
+        assert check.min_kpis == 1
+
+    def test_builds_kpi_band_populated_check_with_min_kpis(self) -> None:
+        check = self._deserialize({"type": "kpi_band_populated", "min_kpis": "3"})
+        assert isinstance(check, KpiBandPopulatedCheck)
+        assert check.min_kpis == 3
+
     def test_builds_widget_count_check(self) -> None:
         check = self._deserialize({"type": "widget_count", "min_widgets": "2"})
         assert isinstance(check, WidgetCountCheck)
@@ -283,3 +295,70 @@ class TestDeserializeNewCheckTypes:
 
     def test_builds_text_answer_check(self) -> None:
         assert isinstance(self._deserialize({"type": "text_answer"}), TextAnswerCheck)
+
+
+class TestKpiBandPopulatedCheck:
+    """The placement guardrail behind the 'KPIs shown as a table at the bottom' bug."""
+
+    def _placed(self, widget_id: str, role: str, element: dict[str, object]) -> list[str]:
+        """A widget's namespaced + region-placed patch lines, as build_widget produces them."""
+        raw = [
+            _view_line("e", element),
+            json.dumps({"op": "add", "path": "/elements/root/children/-", "value": "e"}),
+        ]
+        return namespace_widget_patches(raw, widget_id, role)
+
+    def _state(self, patch_lines: list[str]) -> ChatState:
+        return cast(
+            ChatState,
+            {
+                "question": "give me a dashboard",
+                "widget_patch_lines": patch_lines,
+                "widget_results": [],
+            },
+        )
+
+    def test_passes_when_a_kpistat_is_in_the_band(self) -> None:
+        # arrange — a metric widget whose worker authored a KpiStat (role → kpi-row band)
+        lines = self._placed("widget-0", "metric", _kpi())
+        # act
+        result = KpiBandPopulatedCheck().evaluate(self._state(lines))
+        # assert
+        assert result["passed"] is True
+
+    def test_fails_when_the_band_holds_a_non_kpistat(self) -> None:
+        # arrange — the reported bug: KPIs authored as a table; role still routes it to the
+        # band, so the band holds a non-KpiStat and the check must fault
+        table = {"type": "DataTable", "props": {"data": {"$state": "/result"}}, "children": []}
+        lines = self._placed("widget-0", "metric", table)
+        # act
+        result = KpiBandPopulatedCheck().evaluate(self._state(lines))
+        # assert
+        assert result["passed"] is False
+        assert "kpi-row" in result["reasoning"]
+
+    def test_fails_when_band_is_empty(self) -> None:
+        # act — nothing reached the band at all
+        result = KpiBandPopulatedCheck().evaluate(self._state([]))
+        # assert
+        assert result["passed"] is False
+
+    def test_fails_when_answer_has_no_kpi(self) -> None:
+        # arrange — an analysis chart in the grid, no KPI: attaching the check asserts a KPI
+        # is expected, so a KPI-less answer must fail (no vacuous pass to mask the bug)
+        lines = self._placed("widget-0", "analysis", _chart("line"))
+        # act
+        result = KpiBandPopulatedCheck().evaluate(self._state(lines))
+        # assert
+        assert result["passed"] is False
+
+    def test_counts_multiple_kpis_against_min_kpis(self) -> None:
+        # arrange — two metric widgets, each a KpiStat card in the band
+        lines = self._placed("widget-0", "metric", _kpi()) + self._placed(
+            "widget-1", "metric", _kpi()
+        )
+        # act / assert — two cards satisfy min_kpis=2 but not min_kpis=3
+        assert KpiBandPopulatedCheck(min_kpis=2).evaluate(self._state(lines))["passed"] is True
+        deficit = KpiBandPopulatedCheck(min_kpis=3).evaluate(self._state(lines))
+        assert deficit["passed"] is False
+        assert "expected ≥3" in deficit["reasoning"]

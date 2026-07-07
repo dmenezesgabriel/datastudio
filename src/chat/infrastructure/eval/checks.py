@@ -24,6 +24,7 @@ from chat.infrastructure.eval._check_base import (
 from chat.infrastructure.eval._result_matching import result_sets_match, value_matches
 from chat.infrastructure.eval.view_checks import (
     ChartFitCheck,
+    KpiBandPopulatedCheck,
     TextAnswerCheck,
     ViewContainsCheck,
     ViewIntegrityCheck,
@@ -235,6 +236,7 @@ def deserialize_check(
             element_type=spec["element_type"], chart_kind=spec.get("chart_kind")
         ),
         "chart_fit": ChartFitCheck,
+        "kpi_band_populated": lambda: KpiBandPopulatedCheck(min_kpis=int(spec.get("min_kpis", 1))),
         "text_answer": TextAnswerCheck,
         "widget_count": lambda: WidgetCountCheck(min_widgets=int(spec["min_widgets"])),
         "viz_rubric": lambda: VizRubricCheck(model=judge_model, rubric=spec["rubric"]),
