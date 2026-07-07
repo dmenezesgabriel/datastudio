@@ -21,7 +21,10 @@ const ISO_MIDNIGHT = /^(\d{4}-\d{2}-\d{2})T00:00:00(?:\.0+)?(?:Z|[+-]\d{2}:?\d{2
  */
 export function formatValue(value: unknown): string {
   if (value === null || value === undefined) return "";
-  const num = typeof value === "number" ? value : numericOrNull(value);
+  // A non-finite number (NaN from a divide-by-zero ratio, Infinity from an aggregate over
+  // zero rows) has no meaningful figure — render blank rather than the literal "NaN"/"∞".
+  if (typeof value === "number") return Number.isFinite(value) ? NUMBER_FMT.format(value) : "";
+  const num = numericOrNull(value);
   return num === null ? String(value) : NUMBER_FMT.format(num);
 }
 
@@ -44,8 +47,9 @@ function numericOrNull(value: unknown): number | null {
  */
 export function formatCell(value: unknown): string {
   if (value === null || value === undefined) return "";
-  if (typeof value === "number" && !Number.isInteger(value)) {
-    return NUMBER_FMT.format(value);
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) return ""; // NaN/Infinity have no cell representation
+    return Number.isInteger(value) ? String(value) : NUMBER_FMT.format(value);
   }
   return String(value);
 }
@@ -60,6 +64,7 @@ export function formatCell(value: unknown): string {
  *   formatLabel("credit_card")         // "credit_card"
  */
 export function formatLabel(value: unknown): string {
+  if (value === null || value === undefined) return ""; // a null category is a blank axis tick, not "null"
   if (typeof value === "string") {
     const midnight = value.match(ISO_MIDNIGHT);
     if (midnight) return midnight[1];

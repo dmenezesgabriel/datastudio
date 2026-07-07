@@ -24,6 +24,13 @@ test("formatValue renders null/undefined as empty string", () => {
   expect(formatValue(undefined)).toBe("");
 });
 
+test("formatValue renders a non-finite number as empty, not 'NaN'/'∞'", () => {
+  // A divide-by-zero KPI ratio or an aggregate over zero rows arrives as NaN/Infinity.
+  expect(formatValue(NaN)).toBe("");
+  expect(formatValue(Infinity)).toBe("");
+  expect(formatValue(-Infinity)).toBe("");
+});
+
 test("formatLabel collapses a midnight ISO timestamp to its date", () => {
   // A monthly axis used to show "0:00:00"; it should show the date.
   expect(formatLabel("2017-01-01T00:00:00")).toBe("2017-01-01");
@@ -32,6 +39,11 @@ test("formatLabel collapses a midnight ISO timestamp to its date", () => {
 test("formatLabel leaves category labels unchanged", () => {
   expect(formatLabel("on_time")).toBe("on_time");
   expect(formatLabel(3)).toBe("3");
+});
+
+test("formatLabel renders a null/undefined category as an empty tick, not 'null'", () => {
+  expect(formatLabel(null)).toBe("");
+  expect(formatLabel(undefined)).toBe("");
 });
 
 test("formatCell cleans a fractional measure's float artifact", () => {
@@ -46,4 +58,9 @@ test("formatCell leaves integers plain so years and ids are not corrupted", () =
 test("formatCell passes strings through and renders null as empty", () => {
   expect(formatCell("credit_card")).toBe("credit_card");
   expect(formatCell(null)).toBe("");
+});
+
+test("formatCell renders a non-finite number as empty, not 'NaN'/'∞'", () => {
+  expect(formatCell(NaN)).toBe("");
+  expect(formatCell(Infinity)).toBe("");
 });

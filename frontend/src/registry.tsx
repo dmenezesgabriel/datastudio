@@ -27,8 +27,16 @@ function asRows(data: unknown): Row[] {
 function chartDatasets(rows: Row[], valueColumns: string[]): ChartDataset[] {
   return valueColumns.map((column) => ({
     label: column,
-    data: rows.map((row) => Number(row[column])),
+    data: rows.map((row) => toChartNumber(row[column])),
   }));
+}
+
+// A chart point is a finite number or a gap. A missing/empty cell or a non-numeric value
+// becomes null (Chart.js renders it as a break in the series) rather than a spurious 0/NaN.
+function toChartNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
 }
 
 // Build the KPI's trend badge from a signed change column. Direction comes from the
