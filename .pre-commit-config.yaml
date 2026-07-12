@@ -65,6 +65,13 @@ repos:
         types: [python]
         pass_filenames: false
 
+      - id: import-linter
+        name: import-linter (architecture contracts)
+        language: system
+        entry: bash -c 'PYTHONPATH=src uv run lint-imports'
+        pass_filenames: false
+        always_run: true
+
       - id: gen-catalog-prompt
         name: catalog prompt is generated from the catalog (no drift)
         language: system

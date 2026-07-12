@@ -84,6 +84,46 @@ pytest_add_cli_args_test_selection = ["test/unit/"]
 # DEP004: pytest/pytest_bdd in test files are dev deps used as intended
 ignore = ["DEP002", "DEP003", "DEP004"]
 
+# Architectural boundaries — run with `PYTHONPATH=src uv run lint-imports` (see
+# Makefile `arch` target and the import-linter pre-commit hook). lint-imports
+# does not read pytest's `pythonpath`, so src must be on PYTHONPATH.
+[tool.importlinter]
+root_packages = ["chat", "identity", "shared"]
+# Required so the "Domain imports no framework" forbidden contract can name
+# external packages (langchain, duckdb, …) as forbidden targets.
+include_external_packages = true
+
+# Bounded contexts: chat/identity share ids via the shared kernel and are wired
+# at bootstrap.py; they never import each other, and shared depends on neither.
+# Siblings joined by `|` cannot import each other; the upper layer may import
+# the lower (chat/identity -> shared) but not the reverse.
+[[tool.importlinter.contracts]]
+name = "Components stay decoupled (share ids via the shared kernel)"
+type = "layers"
+layers = ["chat | identity", "shared"]
+
+# Clean Architecture rings, enforced inside every component: infrastructure may
+# import application may import domain — never the reverse. Covers the old
+# "application imports no infrastructure" test and adds the domain direction.
+[[tool.importlinter.contracts]]
+name = "Layers point inward (infrastructure > application > domain)"
+type = "layers"
+# `application` is parenthesized (optional): shared has no application layer, so
+# the contract skips it there while still enforcing it in chat/identity.
+layers = ["infrastructure", "(application)", "domain"]
+containers = ["chat", "identity", "shared"]
+
+# The domain ring imports no framework. pydantic is intentionally omitted from
+# the forbidden list (serialization boundary sanctioned by CLAUDE.md).
+[[tool.importlinter.contracts]]
+name = "Domain imports no framework"
+type = "forbidden"
+source_modules = ["chat.domain", "identity.domain", "shared.domain"]
+forbidden_modules = [
+    "langchain", "langchain_core", "langgraph", "fastapi", "starlette",
+    "sse_starlette", "duckdb", "litellm", "uvicorn",
+]
+
 [dependency-groups]
 dev = [
     "bandit==1.9.4",

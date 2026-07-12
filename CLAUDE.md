@@ -37,8 +37,9 @@
   values (and prompt examples that name them) are discovered at runtime via
   `SqlEnginePort` — never hardcoded. Sample-dataset identity lives only in
   `scripts/seed_dev_data.py`, `test/`, and `dev_data/`. Use neutral placeholders
-  (`events`, `category`, `amount`) in docstrings/examples. Guarded by
-  `test/unit/architecture/test_no_dataset_identity_in_src.py`.
+  (`events`, `category`, `amount`) in docstrings/examples. This is a review
+  convention, not an automated check — pinning it to the volatile sample-dataset
+  names (which get replaced over time) proved too brittle to enforce statically.
 
 ## Formatting
 
