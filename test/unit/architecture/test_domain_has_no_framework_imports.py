@@ -17,7 +17,7 @@ import ast
 from pathlib import Path
 
 _SRC_ROOT = Path(__file__).resolve().parents[3] / "src"
-_DOMAIN_ROOTS = ("chat/domain", "shared/domain")
+_DOMAIN_ROOTS = ("chat/domain", "shared/domain", "identity/domain")
 
 # Top-level packages that belong to the outer (infrastructure) ring only.
 _FORBIDDEN_ROOTS = frozenset(

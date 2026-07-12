@@ -14,7 +14,7 @@ import ast
 from pathlib import Path
 
 _SRC_ROOT = Path(__file__).resolve().parents[3] / "src"
-_APPLICATION_ROOTS = ("chat/application", "shared/application")
+_APPLICATION_ROOTS = ("chat/application", "shared/application", "identity/application")
 
 
 def _application_files() -> list[Path]:
