@@ -15,7 +15,7 @@ from chat.domain.value_objects.stream_event import (
 )
 from chat.infrastructure.api.chat_router import ChatRouter
 from shared.domain.value_objects.query_result import QueryResult
-from test.unit.chat.infrastructure.api.fakes import FakeCurrentUser
+from test.unit.chat.infrastructure.api.fakes import fake_owner_id
 
 
 class FakeStreamMessage:
@@ -35,7 +35,7 @@ class FakeStreamMessage:
 
 def _client(fake: FakeStreamMessage, user_id: str = "u-1") -> TestClient:
     app = FastAPI()
-    app.include_router(ChatRouter(cast(StreamMessage, fake), FakeCurrentUser(user_id)).router)
+    app.include_router(ChatRouter(cast(StreamMessage, fake), fake_owner_id(user_id)).router)
     return TestClient(app)
 
 

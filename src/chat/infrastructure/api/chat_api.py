@@ -20,7 +20,7 @@ from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
 from chat.infrastructure.persistence.in_memory_conversation_repository import (
     InMemoryConversationRepository,
 )
-from shared.application.ports.current_user import CurrentUser
+from shared.infrastructure.api.current_user import ResolveOwnerId
 from shared.infrastructure.config.settings import AppSettings
 from shared.infrastructure.logging.logger_factory import get_logger
 from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
@@ -29,7 +29,7 @@ from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlE
 def build_chat_routers(
     stream_message: StreamMessage,
     repository: ConversationRepository,
-    resolve_current_user: CurrentUser,
+    resolve_current_user: ResolveOwnerId,
 ) -> list[APIRouter]:
     """Assemble chat's routers over a shared conversation store (abstractions injected).
 
@@ -49,7 +49,7 @@ def build_chat_routers(
     ]
 
 
-def build_chat_api(settings: AppSettings, resolve_current_user: CurrentUser) -> list[APIRouter]:
+def build_chat_api(settings: AppSettings, resolve_current_user: ResolveOwnerId) -> list[APIRouter]:
     """Compose chat's HTTP surface from settings; self-contained for standalone deploy.
 
     ``resolve_current_user`` comes from the identity component (wired by the

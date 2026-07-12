@@ -12,15 +12,15 @@ from dataclasses import dataclass
 from fastapi import APIRouter
 
 from identity.infrastructure.api.current_user import (
-    ResolveCurrentPrincipal,
-    ResolveCurrentUser,
+    build_owner_id_resolver,
+    build_principal_resolver,
 )
 from identity.infrastructure.api.me_router import MeRouter
 from identity.infrastructure.auth.guest_authenticator import GuestAuthenticator
 from identity.infrastructure.persistence.in_memory_user_repository import (
     InMemoryUserRepository,
 )
-from shared.application.ports.current_user import CurrentUser
+from shared.infrastructure.api.current_user import ResolveOwnerId
 from shared.infrastructure.config.settings import AppSettings
 
 
@@ -33,7 +33,7 @@ class IdentityApi:
     composition root.
     """
 
-    resolve_current_user: CurrentUser
+    resolve_current_user: ResolveOwnerId
     routers: list[APIRouter]
 
 
@@ -47,5 +47,5 @@ def build_identity_api(settings: AppSettings) -> IdentityApi:
     """
     users = InMemoryUserRepository()
     authenticator = GuestAuthenticator(users, settings.guest_user_id, settings.guest_display_name)
-    routers = [MeRouter(ResolveCurrentPrincipal(authenticator)).router]
-    return IdentityApi(ResolveCurrentUser(authenticator), routers)
+    routers = [MeRouter(build_principal_resolver(authenticator)).router]
+    return IdentityApi(build_owner_id_resolver(authenticator), routers)

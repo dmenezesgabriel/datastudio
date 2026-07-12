@@ -15,7 +15,7 @@ from chat.infrastructure.api.chat_api import build_chat_routers
 from chat.infrastructure.persistence.in_memory_conversation_repository import (
     InMemoryConversationRepository,
 )
-from test.unit.chat.infrastructure.api.fakes import FakeCurrentUser
+from test.unit.chat.infrastructure.api.fakes import fake_owner_id
 
 
 class FakeStreamMessage:
@@ -52,7 +52,7 @@ def _repo_with_one_turn() -> InMemoryConversationRepository:
 def _client(repo: InMemoryConversationRepository) -> TestClient:
     app = FastAPI()
     stream_message = cast(StreamMessage, FakeStreamMessage())
-    for router in build_chat_routers(stream_message, repo, FakeCurrentUser("u-1")):
+    for router in build_chat_routers(stream_message, repo, fake_owner_id("u-1")):
         app.include_router(router)
     return TestClient(app)
 
@@ -64,7 +64,7 @@ class TestBuildChatRouters:
         stream_message = cast(StreamMessage, FakeStreamMessage())
         # act
         for router in build_chat_routers(
-            stream_message, InMemoryConversationRepository(), FakeCurrentUser("u-1")
+            stream_message, InMemoryConversationRepository(), fake_owner_id("u-1")
         ):
             app.include_router(router)
         paths = set(app.openapi()["paths"])

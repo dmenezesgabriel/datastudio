@@ -1,18 +1,19 @@
 """HTTP seam: resolve the current request's user from the Authorization header.
 
 Adapts the :class:`~identity.application.ports.authenticator.Authenticator` to
-FastAPI. ``ResolveCurrentUser`` returns just the ``user_id`` and is the
-dependency feature contexts (chat) consume via the shared ``CurrentUser`` port;
-``ResolveCurrentPrincipal`` returns the full principal for identity's own
-``/api/me``. Both are FastAPI dependencies (callable instances whose ``__call__``
-declares the header parameter FastAPI injects).
+FastAPI. ``build_owner_id_resolver`` yields just the ``user_id`` and is the
+dependency feature contexts (chat) consume via the shared ``ResolveOwnerId``
+seam; ``build_principal_resolver`` yields the full principal for identity's own
+``/api/me``. Each returns a FastAPI dependency (an async callable whose
+``authorization`` parameter FastAPI injects from the header).
 """
 
 from fastapi import Header
 
 from identity.application.ports.authenticator import Authenticator
 from identity.domain.value_objects.principal import Principal
-from shared.application.ports.current_user import CurrentUser
+from identity.infrastructure.types import ResolvePrincipal
+from shared.infrastructure.api.current_user import ResolveOwnerId
 
 _BEARER_PREFIX = "Bearer "
 
@@ -24,34 +25,34 @@ def _bearer(authorization: str | None) -> str | None:
     return authorization[len(_BEARER_PREFIX) :].strip() or None
 
 
-class ResolveCurrentUser(CurrentUser):
-    """FastAPI dependency yielding the current request's ``user_id``.
+async def _principal(authenticator: Authenticator, authorization: str | None) -> Principal:
+    """Resolve the caller's principal from a raw ``Authorization`` header value."""
+    return await authenticator.authenticate(_bearer(authorization))
 
-    Implements the shared ``CurrentUser`` port so chat can depend on it without
-    importing this component.
+
+def build_principal_resolver(authenticator: Authenticator) -> ResolvePrincipal:
+    """Build the ``/api/me`` dependency: resolve the full current :class:`Principal`.
 
     Example:
-        resolve = ResolveCurrentUser(authenticator)
-        user_id = await resolve()  # or Depends(resolve) in a route
+        resolve = build_principal_resolver(authenticator)
+        principal = await resolve(authorization="Bearer <token>")
     """
 
-    def __init__(self, authenticator: Authenticator) -> None:
-        """Wire the authenticator that turns the bearer token into a principal."""
-        self._authenticator = authenticator
+    async def resolve(authorization: str | None = Header(default=None)) -> Principal:
+        return await _principal(authenticator, authorization)
 
-    async def __call__(self, authorization: str | None = Header(default=None)) -> str:
-        """Resolve the caller and return their id (the guest id when unauthenticated)."""
-        principal = await self._authenticator.authenticate(_bearer(authorization))
-        return principal.user_id
+    return resolve
 
 
-class ResolveCurrentPrincipal:
-    """FastAPI dependency yielding the full current :class:`Principal` (for ``/api/me``)."""
+def build_owner_id_resolver(authenticator: Authenticator) -> ResolveOwnerId:
+    """Build the shared dependency feature contexts consume: the current ``user_id``.
 
-    def __init__(self, authenticator: Authenticator) -> None:
-        """Wire the authenticator that turns the bearer token into a principal."""
-        self._authenticator = authenticator
+    Example:
+        resolve = build_owner_id_resolver(authenticator)
+        user_id = await resolve(authorization=None)  # the guest id when unauthenticated
+    """
 
-    async def __call__(self, authorization: str | None = Header(default=None)) -> Principal:
-        """Resolve and return the caller's principal (the guest when unauthenticated)."""
-        return await self._authenticator.authenticate(_bearer(authorization))
+    async def resolve(authorization: str | None = Header(default=None)) -> str:
+        return (await _principal(authenticator, authorization)).user_id
+
+    return resolve

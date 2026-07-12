@@ -12,7 +12,7 @@ from chat.application.use_cases.stream_message import StreamMessage
 from chat.domain.value_objects.stream_event import NarrativeReady
 from chat.infrastructure.api.chat_request import StreamChatRequest
 from chat.infrastructure.api.spec_stream import SpecStreamSerializer
-from shared.application.ports.current_user import CurrentUser
+from shared.infrastructure.api.current_user import ResolveOwnerId
 from shared.infrastructure.logging.logger_factory import get_logger
 
 _logger = get_logger(__name__)
@@ -35,13 +35,13 @@ class ChatRouter:
         app.include_router(router)
     """
 
-    def __init__(self, stream_message: StreamMessage, resolve_current_user: CurrentUser) -> None:
+    def __init__(self, stream_message: StreamMessage, resolve_current_user: ResolveOwnerId) -> None:
         """Wire the use case and the current-user dependency, then register the route."""
         self._stream_message = stream_message
         self.router = APIRouter()
         self._add_routes(resolve_current_user)
 
-    def _add_routes(self, resolve_current_user: CurrentUser) -> None:
+    def _add_routes(self, resolve_current_user: ResolveOwnerId) -> None:
         """Bind the route via a closure so the dependency is a valid ``Depends`` default."""
 
         async def handle_chat(

@@ -10,7 +10,7 @@ from chat.infrastructure.api.conversations_router import ConversationsRouter
 from chat.infrastructure.persistence.in_memory_conversation_repository import (
     InMemoryConversationRepository,
 )
-from test.unit.chat.infrastructure.api.fakes import FakeCurrentUser
+from test.unit.chat.infrastructure.api.fakes import fake_owner_id
 
 _OWNER = "u-1"
 
@@ -37,7 +37,7 @@ def _repo_with_one_turn(owner: str = _OWNER) -> InMemoryConversationRepository:
 
 def _client(repo: InMemoryConversationRepository, user_id: str = _OWNER) -> TestClient:
     app = FastAPI()
-    app.include_router(ConversationsRouter(repo, FakeCurrentUser(user_id)).router)
+    app.include_router(ConversationsRouter(repo, fake_owner_id(user_id)).router)
     return TestClient(app)
 
 

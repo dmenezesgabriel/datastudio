@@ -1,15 +1,18 @@
 import asyncio
 
-from identity.infrastructure.api.current_user import ResolveCurrentUser, _bearer
+from identity.infrastructure.api.current_user import (
+    _bearer,
+    build_owner_id_resolver,
+    build_principal_resolver,
+)
 from identity.infrastructure.auth.guest_authenticator import GuestAuthenticator
 from identity.infrastructure.persistence.in_memory_user_repository import (
     InMemoryUserRepository,
 )
 
 
-def _resolver() -> ResolveCurrentUser:
-    auth = GuestAuthenticator(InMemoryUserRepository(), "guest", "Guest")
-    return ResolveCurrentUser(auth)
+def _authenticator() -> GuestAuthenticator:
+    return GuestAuthenticator(InMemoryUserRepository(), "guest", "Guest")
 
 
 class TestBearerExtraction:
@@ -25,12 +28,19 @@ class TestBearerExtraction:
         assert _bearer("Bearer   ") is None
 
 
-class TestResolveCurrentUser:
+class TestOwnerIdResolver:
     def test_missing_header_resolves_to_the_guest_id(self) -> None:
-        user_id = asyncio.run(_resolver()(authorization=None))
-        assert user_id == "guest"
+        resolve = build_owner_id_resolver(_authenticator())
+        assert asyncio.run(resolve(authorization=None)) == "guest"
 
     def test_bearer_header_still_resolves_to_guest_in_the_guest_phase(self) -> None:
         # the guest authenticator ignores the token; the id is always the guest's
-        user_id = asyncio.run(_resolver()(authorization="Bearer some-token"))
-        assert user_id == "guest"
+        resolve = build_owner_id_resolver(_authenticator())
+        assert asyncio.run(resolve(authorization="Bearer some-token")) == "guest"
+
+
+class TestPrincipalResolver:
+    def test_resolves_the_full_guest_principal(self) -> None:
+        resolve = build_principal_resolver(_authenticator())
+        principal = asyncio.run(resolve(authorization=None))
+        assert (principal.user_id, principal.email, principal.is_guest) == ("guest", None, True)

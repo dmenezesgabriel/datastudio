@@ -9,7 +9,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from identity.domain.value_objects.principal import Principal
-from identity.infrastructure.api.current_user import ResolveCurrentPrincipal
+from identity.infrastructure.types import ResolvePrincipal
 
 
 class MeRouter:
@@ -20,12 +20,12 @@ class MeRouter:
         app.include_router(router)
     """
 
-    def __init__(self, resolve_principal: ResolveCurrentPrincipal) -> None:
+    def __init__(self, resolve_principal: ResolvePrincipal) -> None:
         """Register ``GET /api/me`` backed by the principal-resolving dependency."""
         self.router = APIRouter()
         self._add_routes(resolve_principal)
 
-    def _add_routes(self, resolve_principal: ResolveCurrentPrincipal) -> None:
+    def _add_routes(self, resolve_principal: ResolvePrincipal) -> None:
         """Bind the route via a closure so the dependency is a valid ``Depends`` default."""
 
         async def me(
@@ -34,6 +34,7 @@ class MeRouter:
             return {
                 "user_id": principal.user_id,
                 "display_name": principal.display_name,
+                "email": principal.email,
                 "is_guest": principal.is_guest,
             }
 

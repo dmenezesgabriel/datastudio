@@ -1,11 +1,10 @@
-from shared.application.ports.current_user import CurrentUser
+from shared.infrastructure.api.current_user import ResolveOwnerId
 
 
-class FakeCurrentUser(CurrentUser):
-    """Test ``CurrentUser`` resolving every request to a fixed user id."""
+def fake_owner_id(user_id: str = "u-1") -> ResolveOwnerId:
+    """Build a ``ResolveOwnerId`` dependency resolving every request to a fixed id."""
 
-    def __init__(self, user_id: str = "u-1") -> None:
-        self._user_id = user_id
+    async def resolve() -> str:
+        return user_id
 
-    async def __call__(self) -> str:
-        return self._user_id
+    return resolve

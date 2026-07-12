@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from chat.application.ports.conversation_repository import ConversationRepository
 from chat.domain.entities.conversation import Conversation
 from chat.domain.value_objects.message import Message
-from shared.application.ports.current_user import CurrentUser
+from shared.infrastructure.api.current_user import ResolveOwnerId
 
 
 class ConversationsRouter:
@@ -24,14 +24,14 @@ class ConversationsRouter:
     """
 
     def __init__(
-        self, repository: ConversationRepository, resolve_current_user: CurrentUser
+        self, repository: ConversationRepository, resolve_current_user: ResolveOwnerId
     ) -> None:
         """Wire the repository and current-user dependency, then register the read routes."""
         self._repository = repository
         self.router = APIRouter()
         self._add_routes(resolve_current_user)
 
-    def _add_routes(self, resolve_current_user: CurrentUser) -> None:
+    def _add_routes(self, resolve_current_user: ResolveOwnerId) -> None:
         """Bind routes via closures so the dependency is a valid ``Depends`` default."""
 
         async def list_conversations(

@@ -3,8 +3,9 @@
 Bounded-context rule: feature/identity components communicate only through ids
 and the ``shared`` kernel — never by importing each other's modules. ``chat``
 must not import ``identity`` (it receives a ``user_id`` via the injected
-``CurrentUser`` port); ``identity`` must not import ``chat``; and ``shared`` must
-depend on no component. Cross-component wiring lives solely in ``bootstrap.py``.
+``ResolveOwnerId`` seam); ``identity`` must not import ``chat``; and ``shared``
+must depend on no component. Cross-component wiring lives solely in
+``bootstrap.py``.
 
 This fails fast if any module under ``src/<component>`` imports a sibling
 component's top-level package.
