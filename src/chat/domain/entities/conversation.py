@@ -15,21 +15,26 @@ class Conversation:
     assistant answers produced for them. Short-term memory: persistence lifetime
     is owned by the repository, not this entity.
 
+    ``owner_id`` is the id of the user who owns this conversation (a foreign
+    identifier into the identity context); the repository scopes reads by it so a
+    caller only ever sees their own threads.
+
     Example:
-        conv = Conversation.new("c-1")
+        conv = Conversation.new("c-1", "guest")
         conv.append_user_message("How many events?")
         msg = conv.append_assistant_message(result)
     """
 
-    def __init__(self, conversation_id: str, messages: list[Message]) -> None:
-        """Build a conversation from its id and existing turns."""
+    def __init__(self, conversation_id: str, owner_id: str, messages: list[Message]) -> None:
+        """Build a conversation from its id, owning user, and existing turns."""
         self.conversation_id = conversation_id
+        self.owner_id = owner_id
         self.messages = messages
 
     @classmethod
-    def new(cls, conversation_id: str) -> "Conversation":
-        """Start an empty conversation with the given id."""
-        return cls(conversation_id, [])
+    def new(cls, conversation_id: str, owner_id: str) -> "Conversation":
+        """Start an empty conversation with the given id, owned by ``owner_id``."""
+        return cls(conversation_id, owner_id, [])
 
     def title(self) -> str:
         """The sidebar label: the first user question, truncated (``"New chat"`` if none).

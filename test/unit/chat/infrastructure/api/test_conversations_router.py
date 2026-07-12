@@ -10,6 +10,9 @@ from chat.infrastructure.api.conversations_router import ConversationsRouter
 from chat.infrastructure.persistence.in_memory_conversation_repository import (
     InMemoryConversationRepository,
 )
+from test.unit.chat.infrastructure.api.fakes import FakeCurrentUser
+
+_OWNER = "u-1"
 
 
 def _narrative_result(text: str) -> Text2SqlResult:
@@ -23,18 +26,18 @@ def _narrative_result(text: str) -> Text2SqlResult:
     return Text2SqlResult(narrative=text, view=view)
 
 
-def _repo_with_one_turn() -> InMemoryConversationRepository:
+def _repo_with_one_turn(owner: str = _OWNER) -> InMemoryConversationRepository:
     repo = InMemoryConversationRepository()
-    conversation = Conversation.new("c-1")
+    conversation = Conversation.new("c-1", owner)
     conversation.append_user_message("How many orders?")
     conversation.append_assistant_message(_narrative_result("There are 42 orders."))
     repo.save(conversation)
     return repo
 
 
-def _client(repo: InMemoryConversationRepository) -> TestClient:
+def _client(repo: InMemoryConversationRepository, user_id: str = _OWNER) -> TestClient:
     app = FastAPI()
-    app.include_router(ConversationsRouter(repo).router)
+    app.include_router(ConversationsRouter(repo, FakeCurrentUser(user_id)).router)
     return TestClient(app)
 
 
@@ -71,3 +74,15 @@ class TestGetConversation:
     def test_missing_conversation_returns_404(self) -> None:
         response = _client(InMemoryConversationRepository()).get("/api/conversations/absent")
         assert response.status_code == 404
+
+    def test_another_users_conversation_returns_404(self) -> None:
+        # c-1 belongs to _OWNER; bob must not be able to read it (same 404 as absent)
+        client = _client(_repo_with_one_turn(), user_id="bob")
+        assert client.get("/api/conversations/c-1").status_code == 404
+
+
+class TestOwnerScoping:
+    def test_list_shows_only_the_callers_conversations(self) -> None:
+        # the sidebar for bob (who owns nothing here) is empty even though c-1 exists
+        client = _client(_repo_with_one_turn(), user_id="bob")
+        assert client.get("/api/conversations").json() == {"conversations": []}

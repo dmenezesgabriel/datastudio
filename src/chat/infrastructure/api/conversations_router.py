@@ -5,11 +5,14 @@ renderable json-render specs, so the client can reopen it and continue. Separate
 ``ChatRouter`` (which streams answers) to keep each router single-purpose.
 """
 
-from fastapi import APIRouter, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException
 
 from chat.application.ports.conversation_repository import ConversationRepository
 from chat.domain.entities.conversation import Conversation
 from chat.domain.value_objects.message import Message
+from shared.application.ports.current_user import CurrentUser
 
 
 class ConversationsRouter:
@@ -20,18 +23,36 @@ class ConversationsRouter:
         app.include_router(router)
     """
 
-    def __init__(self, repository: ConversationRepository) -> None:
-        """Wire the conversation repository and register the read routes."""
+    def __init__(
+        self, repository: ConversationRepository, resolve_current_user: CurrentUser
+    ) -> None:
+        """Wire the repository and current-user dependency, then register the read routes."""
         self._repository = repository
         self.router = APIRouter()
-        self.router.add_api_route("/api/conversations", self._list, methods=["GET"])
+        self._add_routes(resolve_current_user)
+
+    def _add_routes(self, resolve_current_user: CurrentUser) -> None:
+        """Bind routes via closures so the dependency is a valid ``Depends`` default."""
+
+        async def list_conversations(
+            user_id: Annotated[str, Depends(resolve_current_user)],
+        ) -> dict[str, object]:
+            return self._list(user_id)
+
+        async def get_conversation(
+            conversation_id: str,
+            user_id: Annotated[str, Depends(resolve_current_user)],
+        ) -> dict[str, object]:
+            return self._get(user_id, conversation_id)
+
+        self.router.add_api_route("/api/conversations", list_conversations, methods=["GET"])
         self.router.add_api_route(
-            "/api/conversations/{conversation_id}", self._get, methods=["GET"]
+            "/api/conversations/{conversation_id}", get_conversation, methods=["GET"]
         )
 
-    def _list(self) -> dict[str, object]:
-        """Return sidebar summaries of every stored conversation, most-recent first."""
-        summaries = self._repository.list_summaries()
+    def _list(self, owner_id: str) -> dict[str, object]:
+        """Return sidebar summaries of the caller's conversations, most-recent first."""
+        summaries = self._repository.list_summaries(owner_id)
         return {
             "conversations": [
                 {
@@ -44,9 +65,9 @@ class ConversationsRouter:
             ]
         }
 
-    def _get(self, conversation_id: str) -> dict[str, object]:
-        """Return one conversation's transcript as renderable turns, or 404 if absent."""
-        conversation = self._repository.get(conversation_id)
+    def _get(self, owner_id: str, conversation_id: str) -> dict[str, object]:
+        """Return the caller's conversation transcript as turns, or 404 if absent/not theirs."""
+        conversation = self._repository.get(conversation_id, owner_id)
         if conversation is None:
             raise HTTPException(
                 status_code=404, detail=f"conversation {conversation_id!r} not found"

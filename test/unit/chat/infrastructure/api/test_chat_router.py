@@ -15,6 +15,7 @@ from chat.domain.value_objects.stream_event import (
 )
 from chat.infrastructure.api.chat_router import ChatRouter
 from shared.domain.value_objects.query_result import QueryResult
+from test.unit.chat.infrastructure.api.fakes import FakeCurrentUser
 
 
 class FakeStreamMessage:
@@ -22,17 +23,19 @@ class FakeStreamMessage:
 
     def __init__(self, events: list[ChatStreamEvent]) -> None:
         self._events = events
-        self.calls: list[tuple[str, str]] = []
+        self.calls: list[tuple[str, str, str]] = []
 
-    async def execute(self, conversation_id: str, question: str) -> AsyncIterator[ChatStreamEvent]:
-        self.calls.append((conversation_id, question))
+    async def execute(
+        self, owner_id: str, conversation_id: str, question: str
+    ) -> AsyncIterator[ChatStreamEvent]:
+        self.calls.append((owner_id, conversation_id, question))
         for event in self._events:
             yield event
 
 
-def _client(fake: FakeStreamMessage) -> TestClient:
+def _client(fake: FakeStreamMessage, user_id: str = "u-1") -> TestClient:
     app = FastAPI()
-    app.include_router(ChatRouter(cast(StreamMessage, fake)).router)
+    app.include_router(ChatRouter(cast(StreamMessage, fake), FakeCurrentUser(user_id)).router)
     return TestClient(app)
 
 
@@ -80,13 +83,16 @@ class TestChatRouterStreaming:
         element_blobs = json.dumps([p for p in patches if str(p["path"]).startswith("/elements")])
         assert '"n"' not in element_blobs  # the result column key only appears under /state
 
-    def test_passes_conversation_id_from_context_to_use_case(self) -> None:
+    def test_passes_owner_and_conversation_id_to_use_case(self) -> None:
         fake = FakeStreamMessage(_events())
-        _stream_lines(_client(fake), {"prompt": "q", "context": {"conversation_id": "c-9"}})
-        assert fake.calls == [("c-9", "q")]
+        _stream_lines(
+            _client(fake, "alice"), {"prompt": "q", "context": {"conversation_id": "c-9"}}
+        )
+        # the owner comes from the resolved current user, not the request body
+        assert fake.calls == [("alice", "c-9", "q")]
 
     def test_missing_conversation_id_still_streams(self) -> None:
         fake = FakeStreamMessage(_events())
         patches = _stream_lines(_client(fake), {"prompt": "q"})
         assert patches
-        assert fake.calls[0][1] == "q"
+        assert fake.calls[0][2] == "q"

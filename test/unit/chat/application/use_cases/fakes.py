@@ -14,18 +14,21 @@ from shared.domain.value_objects.query_result import QueryResult
 
 
 class FakeConversationRepository:
-    """In-test conversation store recording saves keyed by id."""
+    """In-test conversation store recording saves keyed by id, scoped by owner."""
 
     def __init__(self) -> None:
         self.saved: dict[str, Conversation] = {}
 
-    def get(self, conversation_id: str) -> Conversation | None:
-        return self.saved.get(conversation_id)
+    def get(self, conversation_id: str, owner_id: str) -> Conversation | None:
+        conversation = self.saved.get(conversation_id)
+        if conversation is None or conversation.owner_id != owner_id:
+            return None
+        return conversation
 
     def save(self, conversation: Conversation) -> None:
         self.saved[conversation.conversation_id] = conversation
 
-    def list_summaries(self) -> list[ConversationSummary]:
+    def list_summaries(self, owner_id: str) -> list[ConversationSummary]:
         return [
             ConversationSummary(
                 conversation_id=c.conversation_id,
@@ -34,6 +37,7 @@ class FakeConversationRepository:
                 updated_at=0.0,
             )
             for c in self.saved.values()
+            if c.owner_id == owner_id
         ]
 
 

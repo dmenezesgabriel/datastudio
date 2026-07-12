@@ -2,15 +2,17 @@
 
 from collections.abc import AsyncIterator
 from time import perf_counter
+from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
 from chat.application.use_cases.stream_message import StreamMessage
 from chat.domain.value_objects.stream_event import NarrativeReady
 from chat.infrastructure.api.chat_request import StreamChatRequest
 from chat.infrastructure.api.spec_stream import SpecStreamSerializer
+from shared.application.ports.current_user import CurrentUser
 from shared.infrastructure.logging.logger_factory import get_logger
 
 _logger = get_logger(__name__)
@@ -33,30 +35,47 @@ class ChatRouter:
         app.include_router(router)
     """
 
-    def __init__(self, stream_message: StreamMessage) -> None:
-        """Wire the use case and register the streaming chat route."""
+    def __init__(self, stream_message: StreamMessage, resolve_current_user: CurrentUser) -> None:
+        """Wire the use case and the current-user dependency, then register the route."""
         self._stream_message = stream_message
         self.router = APIRouter()
-        self.router.add_api_route("/api/chat", self._handle_chat, methods=["POST"])
+        self._add_routes(resolve_current_user)
 
-    async def _handle_chat(self, request: StreamChatRequest) -> StreamingResponse:
+    def _add_routes(self, resolve_current_user: CurrentUser) -> None:
+        """Bind the route via a closure so the dependency is a valid ``Depends`` default."""
+
+        async def handle_chat(
+            request: StreamChatRequest,
+            user_id: Annotated[str, Depends(resolve_current_user)],
+        ) -> StreamingResponse:
+            return await self._handle_chat(user_id, request)
+
+        self.router.add_api_route("/api/chat", handle_chat, methods=["POST"])
+
+    async def _handle_chat(self, user_id: str, request: StreamChatRequest) -> StreamingResponse:
         """Stream one answer as newline-delimited json-render patches."""
         cid = str(request.context.get("conversation_id") or uuid4())
         _logger.info(
             "chat.request.received",
-            extra={"conversation_id": cid, "question_length": len(request.prompt)},
+            extra={
+                "owner_id": user_id,
+                "conversation_id": cid,
+                "question_length": len(request.prompt),
+            },
         )
-        generator = self._stream_patches(cid, request.prompt)
+        generator = self._stream_patches(user_id, cid, request.prompt)
         return StreamingResponse(
             generator, media_type="application/x-ndjson", headers=_STREAM_HEADERS
         )
 
-    async def _stream_patches(self, conversation_id: str, prompt: str) -> AsyncIterator[str]:
+    async def _stream_patches(
+        self, owner_id: str, conversation_id: str, prompt: str
+    ) -> AsyncIterator[str]:
         """Serialize use-case events to NDJSON; on failure, stream a graceful message."""
         serializer = SpecStreamSerializer()
         t0 = perf_counter()
         try:
-            async for event in self._stream_message.execute(conversation_id, prompt):
+            async for event in self._stream_message.execute(owner_id, conversation_id, prompt):
                 for line in serializer.lines_for(event):
                     yield line + "\n"
         except Exception:

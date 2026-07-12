@@ -29,7 +29,7 @@ class StreamMessage:
 
     Example:
         use_case = StreamMessage(repository, engine, view_builder, logger)
-        async for event in use_case.execute("c-1", "Overview"):
+        async for event in use_case.execute("guest", "c-1", "Overview"):
             ...
     """
 
@@ -51,19 +51,22 @@ class StreamMessage:
         self._view_builder = view_builder
         self._logger = logger
 
-    async def execute(self, conversation_id: str, question: str) -> TypedChatStream:
+    async def execute(self, owner_id: str, conversation_id: str, question: str) -> TypedChatStream:
         """Record the question, stream the answer, then persist both turns.
 
-        The short-term memory window is read *before* the current question is
-        appended, so ``question`` is passed once (as the current turn) and never
-        duplicated inside the injected history.
+        Scoped to ``owner_id``: an existing conversation is only continued when it
+        belongs to this caller — otherwise a fresh one is started under them, so a
+        caller can never write into another user's thread. The short-term memory
+        window is read *before* the current question is appended, so ``question``
+        is passed once (as the current turn) and never duplicated inside history.
         """
-        existing = self._repository.get(conversation_id)
-        conversation = existing or Conversation.new(conversation_id)
+        existing = self._repository.get(conversation_id, owner_id)
+        conversation = existing or Conversation.new(conversation_id, owner_id)
         history = conversation.recent_messages(_MEMORY_WINDOW_MESSAGES)  # prior turns only
         self._logger.info(
             "stream_message.start",
             extra={
+                "owner_id": owner_id,
                 "conversation_id": conversation_id,
                 "is_new": existing is None,
                 "history_message_count": len(history),

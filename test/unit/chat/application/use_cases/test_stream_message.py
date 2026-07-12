@@ -36,9 +36,14 @@ def _result(response: str) -> Text2SqlResult:
     return Text2SqlResult(narrative=response, view=view)
 
 
-def _drain(use_case: StreamMessage, cid: str, question: str) -> list[ChatStreamEvent]:
+_OWNER = "u-1"
+
+
+def _drain(
+    use_case: StreamMessage, cid: str, question: str, owner: str = _OWNER
+) -> list[ChatStreamEvent]:
     async def run() -> list[ChatStreamEvent]:
-        return [event async for event in use_case.execute(cid, question)]
+        return [event async for event in use_case.execute(owner, cid, question)]
 
     return asyncio.run(run())
 
@@ -65,7 +70,7 @@ class TestStreamMessage:
 
     def test_reuses_existing_conversation(self) -> None:
         repository = FakeConversationRepository()
-        existing = Conversation.new("c-1")
+        existing = Conversation.new("c-1", _OWNER)
         existing.append_user_message("earlier")
         repository.save(existing)
         engine = FakeStreamingText2SqlEngine(make_events("ans"))
@@ -76,6 +81,25 @@ class TestStreamMessage:
             "ans",
         ]
 
+    def test_new_conversation_is_stamped_with_the_owner(self) -> None:
+        # A brand-new conversation is created owned by the caller, so later reads are scoped.
+        repository = FakeConversationRepository()
+        _drain(
+            _use_case(repository, FakeStreamingText2SqlEngine(make_events())), "c-1", "q", "alice"
+        )
+        assert repository.saved["c-1"].owner_id == "alice"
+
+    def test_does_not_continue_another_users_conversation(self) -> None:
+        # Bob's turn on an id Alice owns must not append to Alice's thread — a fresh
+        # conversation is started under Bob instead (the repo scopes get by owner).
+        repository = FakeConversationRepository()
+        alices = Conversation.new("c-1", "alice")
+        alices.append_user_message("alice's question")
+        repository.save(alices)
+        _drain(_use_case(repository, FakeStreamingText2SqlEngine(make_events())), "c-1", "q", "bob")
+        assert repository.saved["c-1"].owner_id == "bob"
+        assert [m.content for m in repository.saved["c-1"].messages][0] == "q"
+
     def test_new_conversation_forwards_empty_history(self) -> None:
         engine = FakeStreamingText2SqlEngine(make_events())
         _drain(_use_case(FakeConversationRepository(), engine), "c-1", "first question")
@@ -85,7 +109,7 @@ class TestStreamMessage:
     def test_forwards_prior_turns_without_duplicating_current_question(self) -> None:
         # arrange — a conversation with one completed exchange already recorded
         repository = FakeConversationRepository()
-        existing = Conversation.new("c-1")
+        existing = Conversation.new("c-1", _OWNER)
         existing.append_user_message("earlier")
         existing.append_assistant_message(_result("earlier answer"))
         repository.save(existing)

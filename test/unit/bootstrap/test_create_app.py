@@ -25,6 +25,7 @@ class TestCreateApp:
             "/api/chat",
             "/api/conversations",
             "/api/conversations/{conversation_id}",
+            "/api/me",
         } <= paths
 
     def test_does_not_serve_a_frontend_spa(self, offline_env: None) -> None:

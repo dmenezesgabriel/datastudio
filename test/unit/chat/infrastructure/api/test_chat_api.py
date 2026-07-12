@@ -15,12 +15,15 @@ from chat.infrastructure.api.chat_api import build_chat_routers
 from chat.infrastructure.persistence.in_memory_conversation_repository import (
     InMemoryConversationRepository,
 )
+from test.unit.chat.infrastructure.api.fakes import FakeCurrentUser
 
 
 class FakeStreamMessage:
     """Stands in for the StreamMessage use case; never runs the graph."""
 
-    async def execute(self, conversation_id: str, question: str) -> AsyncIterator[ChatStreamEvent]:
+    async def execute(
+        self, owner_id: str, conversation_id: str, question: str
+    ) -> AsyncIterator[ChatStreamEvent]:
         # The router-assembly tests never drive the write path, so this yields nothing.
         return
         yield  # pragma: no cover - marks this an async generator
@@ -39,7 +42,7 @@ def _narrative_result(text: str) -> Text2SqlResult:
 
 def _repo_with_one_turn() -> InMemoryConversationRepository:
     repo = InMemoryConversationRepository()
-    conversation = Conversation.new("c-1")
+    conversation = Conversation.new("c-1", "u-1")
     conversation.append_user_message("How many orders?")
     conversation.append_assistant_message(_narrative_result("There are 42 orders."))
     repo.save(conversation)
@@ -49,7 +52,7 @@ def _repo_with_one_turn() -> InMemoryConversationRepository:
 def _client(repo: InMemoryConversationRepository) -> TestClient:
     app = FastAPI()
     stream_message = cast(StreamMessage, FakeStreamMessage())
-    for router in build_chat_routers(stream_message, repo):
+    for router in build_chat_routers(stream_message, repo, FakeCurrentUser("u-1")):
         app.include_router(router)
     return TestClient(app)
 
@@ -60,7 +63,9 @@ class TestBuildChatRouters:
         app = FastAPI()
         stream_message = cast(StreamMessage, FakeStreamMessage())
         # act
-        for router in build_chat_routers(stream_message, InMemoryConversationRepository()):
+        for router in build_chat_routers(
+            stream_message, InMemoryConversationRepository(), FakeCurrentUser("u-1")
+        ):
             app.include_router(router)
         paths = set(app.openapi()["paths"])
         # assert

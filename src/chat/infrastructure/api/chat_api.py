@@ -20,36 +20,48 @@ from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
 from chat.infrastructure.persistence.in_memory_conversation_repository import (
     InMemoryConversationRepository,
 )
+from shared.application.ports.current_user import CurrentUser
 from shared.infrastructure.config.settings import AppSettings
 from shared.infrastructure.logging.logger_factory import get_logger
 from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
 
 
 def build_chat_routers(
-    stream_message: StreamMessage, repository: ConversationRepository
+    stream_message: StreamMessage,
+    repository: ConversationRepository,
+    resolve_current_user: CurrentUser,
 ) -> list[APIRouter]:
     """Assemble chat's routers over a shared conversation store (abstractions injected).
 
     One store feeds both the write-side ``ChatRouter`` (via the use case) and the
     read-side ``ConversationsRouter`` — otherwise the sidebar sees an empty one.
+    ``resolve_current_user`` is injected (not built here) so identity owns auth and
+    chat stays ignorant of it.
 
     Example:
-        routers = build_chat_routers(stream_message, repository)
+        routers = build_chat_routers(stream_message, repository, resolve_current_user)
         for router in routers:
             app.include_router(router)
     """
-    return [ChatRouter(stream_message).router, ConversationsRouter(repository).router]
+    return [
+        ChatRouter(stream_message, resolve_current_user).router,
+        ConversationsRouter(repository, resolve_current_user).router,
+    ]
 
 
-def build_chat_api(settings: AppSettings) -> list[APIRouter]:
+def build_chat_api(settings: AppSettings, resolve_current_user: CurrentUser) -> list[APIRouter]:
     """Compose chat's HTTP surface from settings; self-contained for standalone deploy.
 
+    ``resolve_current_user`` comes from the identity component (wired by the
+    composition root) and scopes every conversation to its owning user.
+
     Example:
-        for router in build_chat_api(AppSettings()):
+        for router in build_chat_api(AppSettings(), resolve_current_user):
             app.include_router(router)
     """
     repository = InMemoryConversationRepository()  # one shared store, by construction
-    return build_chat_routers(build_stream_message(settings, repository), repository)
+    stream_message = build_stream_message(settings, repository)
+    return build_chat_routers(stream_message, repository, resolve_current_user)
 
 
 def build_stream_message(

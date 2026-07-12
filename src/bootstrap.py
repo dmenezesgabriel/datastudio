@@ -2,33 +2,30 @@
 
 The app's bootstrap / dependency container — the single module allowed to know
 about every component. Components stay self-contained (each exposes a
-``build_<component>_api`` factory); the decision of which to wire together — one
-backend, or one component per container / FaaS — lives here in ``_COMPONENT_APIS``.
+``build_<component>_api`` factory); the decision of how to wire them together —
+including cross-component dependencies like feature contexts consuming identity's
+current-user resolver — lives here and nowhere else.
 
 Example:
     app = create_app()  # or `uvicorn bootstrap:create_app --factory`
 """
 
 import logging
-from collections.abc import Callable
 
 import uvicorn
 from fastapi import APIRouter, FastAPI
 
 from chat.infrastructure.api.chat_api import build_chat_api
+from identity.infrastructure.api.identity_api import build_identity_api
 from shared.infrastructure.config.settings import AppSettings
 from shared.infrastructure.logging.logging_config import configure_logging
-
-# The seam every component's HTTP adapter implements: settings in, its routers out.
-ComponentApiFactory = Callable[[AppSettings], list[APIRouter]]
-
-# The wiring decision: which component APIs make up this backend. Add a component
-# by appending its factory; a single-component deploy wires a one-element tuple.
-_COMPONENT_APIS: tuple[ComponentApiFactory, ...] = (build_chat_api,)
 
 
 def create_app() -> FastAPI:
     """Assemble the backend: configure the runtime, then mount every component's API.
+
+    Identity is built first so its current-user resolver can be injected into the
+    feature components (chat) that scope their data by owner.
 
     Example:
         app = create_app()
@@ -36,9 +33,13 @@ def create_app() -> FastAPI:
     settings = AppSettings()  # type: ignore[call-arg]
     _configure_runtime(settings)
     app = FastAPI(title="datastudio")
-    for build_api in _COMPONENT_APIS:
-        for router in build_api(settings):
-            app.include_router(router)
+    identity = build_identity_api(settings)
+    routers: list[APIRouter] = [
+        *identity.routers,
+        *build_chat_api(settings, identity.resolve_current_user),
+    ]
+    for router in routers:
+        app.include_router(router)
     return app
 
 
