@@ -20,6 +20,7 @@ class Principal:
 
     user_id: str
     display_name: str
+    email: str | None
     is_guest: bool
 
     def __post_init__(self) -> None:
@@ -30,4 +31,9 @@ class Principal:
     @classmethod
     def for_user(cls, user: User) -> "Principal":
         """Snapshot a persisted :class:`User` as the current request's principal."""
-        return cls(user_id=user.user_id, display_name=user.display_name, is_guest=user.is_guest)
+        return cls(
+            user_id=user.user_id,
+            display_name=user.display_name,
+            email=user.email,
+            is_guest=user.is_guest,
+        )

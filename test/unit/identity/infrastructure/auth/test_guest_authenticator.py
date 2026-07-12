@@ -18,7 +18,9 @@ class TestGuestAuthenticator:
         # act — even a bearer token is ignored in the guest phase
         principal = _authenticate(auth, "Bearer whatever")
         # assert
-        assert principal == Principal(user_id="guest", display_name="Guest", is_guest=True)
+        assert principal == Principal(
+            user_id="guest", display_name="Guest", email=None, is_guest=True
+        )
 
     def test_creates_the_guest_account_on_first_use(self) -> None:
         # arrange — an empty store; the guest must be minted lazily
