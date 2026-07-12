@@ -24,10 +24,6 @@ class InMemoryUserRepository(UserRepository):
         """Return the account for the id, or None if absent."""
         return self._users.get(user_id)
 
-    def find_by_subject(self, subject: str) -> User | None:
-        """Return the account linked to the external subject, or None if absent."""
-        return next((user for user in self._users.values() if user.subject == subject), None)
-
     def save(self, user: User) -> None:
         """Persist the account, overwriting any prior state for its id."""
         self._users[user.user_id] = user
