@@ -32,6 +32,10 @@ class AppSettings(BaseSettings):
     language_model_temperature: float = 0.0
     duckdb_path: str = "./dev_data/datastudio.duckdb"
     log_level: Annotated[str, AfterValidator(_normalise_log_level)] = "INFO"
+    # Identity for unauthenticated callers until a real IdP (MSAL/OIDC) is wired.
+    # Every request without an Authorization token resolves to this single guest user.
+    guest_user_id: str = "guest"
+    guest_display_name: str = "Guest"
     # Token pricing (USD per million tokens) used to compute eval cost_usd.
     input_token_price_per_million: float = 0.0
     output_token_price_per_million: float = 0.0
