@@ -75,13 +75,17 @@ export function KpiStat({
   );
 }
 
-/** The raw result rows rendered as a plain table. */
+/** The raw result rows rendered as a plain table.
+ *  `numericColumns[i]` right-aligns column i (measures align on the decimal; text
+ *  columns stay left) — a Tufte table reads down a column of numbers by their tails. */
 export function DataTable({
   columns,
   rows,
+  numericColumns,
 }: {
   columns: string[];
   rows: unknown[][];
+  numericColumns: boolean[];
 }) {
   // A wide table scrolls inside this box rather than widening the page (CLAUDE.md).
   return (
@@ -89,8 +93,10 @@ export function DataTable({
       <table className="data-table text-base">
         <thead>
           <tr>
-            {columns.map((column) => (
-              <th key={column}>{column}</th>
+            {columns.map((column, columnIndex) => (
+              <th key={column} className={numericColumns[columnIndex] ? "data-table__num" : undefined}>
+                {column}
+              </th>
             ))}
           </tr>
         </thead>
@@ -98,7 +104,9 @@ export function DataTable({
           {rows.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {row.map((value, columnIndex) => (
-                <td key={columnIndex}>{String(value)}</td>
+                <td key={columnIndex} className={numericColumns[columnIndex] ? "data-table__num" : undefined}>
+                  {String(value)}
+                </td>
               ))}
             </tr>
           ))}

@@ -12,7 +12,7 @@ import {
   Stack,
 } from "./components/Panels";
 import { WidgetFrame } from "./components/WidgetFrame";
-import { formatCell, formatLabel, formatValue } from "./format";
+import { formatCell, formatLabel, formatValue, isNumeric } from "./format";
 
 // Bind each catalogue component to its React implementation. Data props arrive
 // already resolved from provider state (the $state binding), as an array of row
@@ -37,6 +37,13 @@ function toChartNumber(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
   const num = Number(value);
   return Number.isFinite(num) ? num : null;
+}
+
+// A column is numeric (→ right-aligned) when it has values and every non-empty cell
+// reads as a number. Ids and years are numeric too — that's correct; they align right.
+function isNumericColumn(rows: Row[], column: string): boolean {
+  const present = rows.map((row) => row[column]).filter((v) => v !== null && v !== undefined && v !== "");
+  return present.length > 0 && present.every(isNumeric);
 }
 
 // Build the KPI's trend badge from a signed change column. Direction comes from the
@@ -81,8 +88,10 @@ export const { registry } = defineRegistry(catalog, {
     DataTable: ({ props }) => {
       const result = (props.data ?? {}) as { columns?: string[]; rows?: Row[] };
       const columns = result.columns ?? [];
-      const rows = (result.rows ?? []).map((row) => columns.map((column) => formatCell(row[column])));
-      return <DataTable columns={columns} rows={rows} />;
+      const sourceRows = result.rows ?? [];
+      const rows = sourceRows.map((row) => columns.map((column) => formatCell(row[column])));
+      const numericColumns = columns.map((column) => isNumericColumn(sourceRows, column));
+      return <DataTable columns={columns} rows={rows} numericColumns={numericColumns} />;
     },
   },
 });

@@ -35,6 +35,21 @@ function numericOrNull(value: unknown): number | null {
 }
 
 /**
+ * Whether a raw cell reads as a number (a finite number, or a numeric string like
+ * "160.99"). Drives right-alignment of numeric table columns — a measure column
+ * aligns on the decimal, a text column stays left. null/empty are neutral (false).
+ *
+ * @example
+ *   isNumeric(2017)          // true
+ *   isNumeric("160.99026")   // true
+ *   isNumeric("credit_card") // false
+ */
+export function isNumeric(value: unknown): boolean {
+  if (typeof value === "number") return Number.isFinite(value);
+  return numericOrNull(value) !== null;
+}
+
+/**
  * Format a data-table cell. Fractional numbers (measures like a summed total) get
  * thousands separators and at most two decimals, so a float-precision artifact like
  * 16008872.119998764 reads "16,008,872.12". Integers are left plain on purpose —
