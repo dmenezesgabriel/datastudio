@@ -17,6 +17,7 @@ from fastapi import APIRouter, FastAPI
 
 from chat.infrastructure.api.chat_api import build_chat_api
 from identity.infrastructure.api.identity_api import build_identity_api
+from shared.infrastructure.api.error_handlers import register_error_handlers
 from shared.infrastructure.config.settings import AppSettings
 from shared.infrastructure.logging.logging_config import configure_logging
 
@@ -33,6 +34,7 @@ def create_app() -> FastAPI:
     settings = AppSettings()  # type: ignore[call-arg]
     _configure_runtime(settings)
     app = FastAPI(title="datastudio")
+    register_error_handlers(app)  # domain errors -> HTTP, in one place
     identity = build_identity_api(settings)
     routers: list[APIRouter] = [
         *identity.routers,

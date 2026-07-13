@@ -7,10 +7,11 @@ renderable json-render specs, so the client can reopen it and continue. Separate
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from chat.application.ports.conversation_repository import ConversationRepository
 from chat.domain.entities.conversation import Conversation
+from chat.domain.errors import ConversationNotFoundError
 from chat.domain.value_objects.message import Message
 from shared.infrastructure.api.current_user import ResolveOwnerId
 
@@ -69,9 +70,7 @@ class ConversationsRouter:
         """Return the caller's conversation transcript as turns, or 404 if absent/not theirs."""
         conversation = self._repository.get(conversation_id, owner_id)
         if conversation is None:
-            raise HTTPException(
-                status_code=404, detail=f"conversation {conversation_id!r} not found"
-            )
+            raise ConversationNotFoundError(f"conversation {conversation_id!r} not found")
         return {
             "conversation_id": conversation_id,
             "title": conversation.title(),

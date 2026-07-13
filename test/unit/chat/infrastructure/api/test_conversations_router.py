@@ -10,6 +10,7 @@ from chat.infrastructure.api.conversations_router import ConversationsRouter
 from chat.infrastructure.persistence.in_memory_conversation_repository import (
     InMemoryConversationRepository,
 )
+from shared.infrastructure.api.error_handlers import register_error_handlers
 from test.unit.chat.infrastructure.api.fakes import fake_owner_id
 
 _OWNER = "u-1"
@@ -37,6 +38,7 @@ def _repo_with_one_turn(owner: str = _OWNER) -> InMemoryConversationRepository:
 
 def _client(repo: InMemoryConversationRepository, user_id: str = _OWNER) -> TestClient:
     app = FastAPI()
+    register_error_handlers(app)  # so ConversationNotFound maps to 404, as in production
     app.include_router(ConversationsRouter(repo, fake_owner_id(user_id)).router)
     return TestClient(app)
 
