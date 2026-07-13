@@ -83,7 +83,9 @@ const TurnView = memo(function TurnView({
   return (
     <section>
       {/* The question is this turn's heading (labels the dashboard below it), not a paragraph. */}
-      <h2 className="turn__prompt font-semibold text-lg">{prompt}</h2>
+      <h2 className="font-semibold text-lg mt-0 mb-3 ml-5 py-2 px-3 bg-subtle border rounded-md">
+        {prompt}
+      </h2>
       <ProgressChecklist steps={progress} />
       <JSONUIProvider registry={registry} initialState={stateModel}>
         {/* loading lets the renderer show partial trees gracefully while patches arrive */}
