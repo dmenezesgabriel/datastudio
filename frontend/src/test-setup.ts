@@ -6,3 +6,19 @@ if (typeof globalThis.crypto?.randomUUID !== "function") {
     configurable: true,
   });
 }
+
+// ChartJsView subscribes to prefers-color-scheme to re-theme charts; jsdom has no
+// matchMedia, so provide an inert stand-in (no change events fire in tests).
+if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
+  window.matchMedia = (query: string) =>
+    ({
+      matches: false,
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      onchange: null,
+      dispatchEvent: () => false,
+    }) as unknown as MediaQueryList;
+}

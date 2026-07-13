@@ -25,6 +25,25 @@
   --color-done: #1f8a4c;
   --color-failed: #c0362c;
 
+  /* Chart categorical palette (light). Colorblind-validated, ordered — the slot
+     order is the CVD-safety mechanism (max-min adjacent ΔE), not cosmetic, so keep
+     it. Charts read these so color lives in the token system like everything else. */
+  --chart-1: #2a78d6; /* blue — also the single-series accent (--chart-accent) */
+  --chart-2: #1baf7a; /* aqua */
+  --chart-3: #eda100; /* yellow */
+  --chart-4: #008300; /* green */
+  --chart-5: #4a3aa7; /* violet */
+  --chart-6: #e34948; /* red */
+  --chart-7: #e87ba4; /* magenta */
+  --chart-8: #eb6834; /* orange */
+  --chart-accent: var(--chart-1);
+
+  /* Chart chrome: recessive grid/axis so the data is the only loud thing. */
+  --chart-grid: #e1e0d9; /* hairline gridline, one step off the surface */
+  --chart-axis: var(--color-text-muted); /* tick + axis label ink */
+  --chart-surface: var(--color-bg-raised); /* tooltip background */
+  --chart-tooltip-border: var(--color-border);
+
   /* Spacing scale */
   --space-1: 4px;
   --space-2: 8px;
@@ -71,6 +90,20 @@
     --color-running: #d9a441;
     --color-done: #46b877;
     --color-failed: #e0685c;
+
+    /* Chart categorical palette (dark): the same eight hues stepped for the dark
+       surface (not a separate palette), validated as a set against #1a1a19-class
+       surfaces. --chart-grid/-axis re-point to dark chrome; the others inherit. */
+    --chart-1: #3987e5;
+    --chart-2: #199e70;
+    --chart-3: #c98500;
+    --chart-4: #008300;
+    --chart-5: #9085e9;
+    --chart-6: #e66767;
+    --chart-7: #d55181;
+    --chart-8: #d95926;
+
+    --chart-grid: #2c2c2a;
 
     --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
   }
