@@ -5,3 +5,7 @@ from shared.domain.errors import NotFoundError
 
 class ConversationNotFoundError(NotFoundError):
     """The requested conversation does not exist or is not owned by the caller."""
+
+
+class ArtifactNotFoundError(NotFoundError):
+    """The requested artifact does not exist or is not owned by the caller."""
