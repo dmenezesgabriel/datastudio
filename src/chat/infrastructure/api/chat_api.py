@@ -22,7 +22,6 @@ from chat.infrastructure.persistence.in_memory_conversation_repository import (
 )
 from shared.infrastructure.api.current_user import ResolveOwnerId
 from shared.infrastructure.config.settings import AppSettings
-from shared.infrastructure.logging.logger_factory import get_logger
 from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
 
 
@@ -84,9 +83,7 @@ def build_stream_message(
         api_base=settings.openai_base_url,
     )
     engine = Text2SqlEngineAdapter(graph, timeout_s=settings.query_timeout_s)
-    return StreamMessage(
-        repository, engine, DashboardViewBuilder(), get_logger("chat.stream_message")
-    )
+    return StreamMessage(repository, engine, DashboardViewBuilder())
 
 
 def _build_chat_model(settings: AppSettings, model_name: str) -> BaseChatModel:

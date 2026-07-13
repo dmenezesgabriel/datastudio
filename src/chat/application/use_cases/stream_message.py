@@ -1,7 +1,5 @@
 """Use case: send a user message and stream the assistant's dashboard answer."""
 
-import logging
-
 from chat.application.ports.conversation_repository import ConversationRepository
 from chat.application.ports.text2sql_port import Text2SqlPort
 from chat.application.ports.turn_view_builder import TurnViewBuilder
@@ -28,7 +26,7 @@ class StreamMessage:
     Dependencies are injected so the use case stays infra-free.
 
     Example:
-        use_case = StreamMessage(repository, engine, view_builder, logger)
+        use_case = StreamMessage(repository, engine, view_builder)
         async for event in use_case.execute("guest", "c-1", "Overview"):
             ...
     """
@@ -38,18 +36,15 @@ class StreamMessage:
         repository: ConversationRepository,
         engine: Text2SqlPort,
         view_builder: TurnViewBuilder,
-        logger: logging.Logger,
     ) -> None:
-        """Wire the conversation repository, the text2sql engine, view builder, and logger.
+        """Wire the conversation repository, the text2sql engine, and view builder.
 
-        ``logger`` is injected (not built from an infrastructure factory) so the
-        application layer depends only on the stdlib ``logging`` abstraction — the
-        composition root supplies the configured structured logger.
+        The use case does no logging — that is a driving-adapter concern. The API edge
+        logs the request lifecycle so the application layer stays transport-agnostic.
         """
         self._repository = repository
         self._engine = engine
         self._view_builder = view_builder
-        self._logger = logger
 
     async def execute(self, owner_id: str, conversation_id: str, question: str) -> TypedChatStream:
         """Record the question, stream the answer, then persist both turns.
@@ -63,15 +58,6 @@ class StreamMessage:
         existing = self._repository.get(conversation_id, owner_id)
         conversation = existing or Conversation.new(conversation_id, owner_id)
         history = conversation.recent_messages(_MEMORY_WINDOW_MESSAGES)  # prior turns only
-        self._logger.info(
-            "stream_message.start",
-            extra={
-                "owner_id": owner_id,
-                "conversation_id": conversation_id,
-                "is_new": existing is None,
-                "history_message_count": len(history),
-            },
-        )
         conversation.append_user_message(question)
         narrative = ""
         turn_events: list[ChatStreamEvent] = []
@@ -83,7 +69,6 @@ class StreamMessage:
             yield event
         self._record_assistant_turn(conversation, narrative, turn_events)
         self._repository.save(conversation)
-        self._logger.info("stream_message.complete", extra={"conversation_id": conversation_id})
 
     def _record_assistant_turn(
         self, conversation: Conversation, narrative: str, events: list[ChatStreamEvent]
