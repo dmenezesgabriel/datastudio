@@ -4,9 +4,17 @@ import { useUIStream } from "@json-render/react";
 import { Sidebar } from "./components/Sidebar";
 import { MessageList } from "./components/MessageList";
 import { Composer } from "./components/Composer";
+import { ArtifactGallery } from "./components/ArtifactGallery";
+import { ArtifactView } from "./components/ArtifactView";
 import { useConversations } from "./hooks/useConversations";
+import { useArtifacts } from "./hooks/useArtifacts";
 import { newConversationId } from "./session";
 import type { SpecWithState, ThreadSummary, Turn } from "./types";
+
+// Which surface the main pane shows. Chat is the default; the gallery lists saved
+// dashboards and an "artifact" opens one for viewing/editing. No router — a saved
+// dashboard is not deep-linkable in v1, so a small view state is enough.
+type View = { kind: "chat" } | { kind: "gallery" } | { kind: "artifact"; id: string };
 
 // Transcripts are cached client-side per conversation id so switching threads is instant;
 // the sidebar list and each reopened transcript come from the server (which owns the
@@ -17,7 +25,9 @@ export function App() {
   const [turnsByConv, setTurnsByConv] = useState<Record<string, Turn[]>>({
     [firstId]: [],
   });
+  const [view, setView] = useState<View>({ kind: "chat" });
   const { threads, refresh, loadTurns } = useConversations();
+  const { artifacts, refresh: refreshArtifacts, deleteArtifact } = useArtifacts();
 
   // Refs so useUIStream's onComplete (bound once) records against the live thread/prompt.
   const activeIdRef = useRef(activeId);
@@ -36,6 +46,7 @@ export function App() {
         ],
       }));
       void refresh(); // the completed turn is now persisted server-side → update the sidebar
+      void refreshArtifacts(); // the turn auto-saved its dashboard + widgets → refresh the gallery
     },
   });
 
@@ -56,11 +67,13 @@ export function App() {
     const id = newConversationId();
     setTurnsByConv((prev) => ({ ...prev, [id]: [] }));
     setActiveId(id);
+    setView({ kind: "chat" });
   }, [isStreaming, clear]);
 
   const selectThread = useCallback(
     async (id: string) => {
       if (isStreaming) return;
+      setView({ kind: "chat" });
       if (id === activeId && turnsByConv[id]) return; // already open and loaded — nothing to do
       clear(); // the error banner belongs to the thread that produced it, not the one we open
       setActiveId(id);
@@ -71,6 +84,12 @@ export function App() {
     },
     [isStreaming, activeId, turnsByConv, clear, loadTurns],
   );
+
+  const openArtifacts = useCallback(() => {
+    if (isStreaming) return;
+    void refreshArtifacts();
+    setView({ kind: "gallery" });
+  }, [isStreaming, refreshArtifacts]);
 
   const activeTurns = turnsByConv[activeId] ?? [];
   // Memoized so the array identity is stable across streaming patches — otherwise a fresh
@@ -85,22 +104,42 @@ export function App() {
       <Sidebar
         threads={threadList}
         activeId={activeId}
+        view={view.kind === "chat" ? "chat" : "artifacts"}
         onNewChat={newChat}
         onSelect={selectThread}
+        onOpenArtifacts={openArtifacts}
       />
-      <main className="main">
-        <MessageList
-          conversationId={activeId}
-          turns={activeTurns}
-          streaming={isStreaming ? { prompt: livePrompt.current, spec } : null}
+      {view.kind === "chat" && (
+        <main className="main">
+          <MessageList
+            conversationId={activeId}
+            turns={activeTurns}
+            streaming={isStreaming ? { prompt: livePrompt.current, spec } : null}
+          />
+          {error && (
+            <p className="error-banner max-w-content mx-auto mb-4 text-base">
+              {error.message}
+            </p>
+          )}
+          <Composer onSubmit={ask} disabled={isStreaming} />
+        </main>
+      )}
+      {view.kind === "gallery" && (
+        <main className="main">
+          <ArtifactGallery
+            artifacts={artifacts}
+            onOpen={(id) => setView({ kind: "artifact", id })}
+            onDelete={(id) => void deleteArtifact(id)}
+          />
+        </main>
+      )}
+      {view.kind === "artifact" && (
+        <ArtifactView
+          key={view.id}
+          artifactId={view.id}
+          onBack={() => setView({ kind: "gallery" })}
         />
-        {error && (
-          <p className="error-banner max-w-content mx-auto mb-4 text-base">
-            {error.message}
-          </p>
-        )}
-        <Composer onSubmit={ask} disabled={isStreaming} />
-      </main>
+      )}
     </div>
   );
 }

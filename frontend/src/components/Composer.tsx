@@ -9,9 +9,13 @@ import { type KeyboardEvent, memo, useState } from "react";
 export const Composer = memo(function Composer({
   onSubmit,
   disabled,
+  placeholder = "Ask a question about your data…",
+  label = "Ask",
 }: {
   onSubmit: (prompt: string) => void;
   disabled: boolean;
+  placeholder?: string;
+  label?: string;
 }) {
   const [value, setValue] = useState("");
 
@@ -44,14 +48,14 @@ export const Composer = memo(function Composer({
           value={value}
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask a question about your data…"
+          placeholder={placeholder}
         />
         <button
           type="submit"
           className="composer__send px-5 py-3 text-base font-medium rounded-md cursor-pointer"
           disabled={disabled}
         >
-          {disabled ? "…" : "Ask"}
+          {disabled ? "…" : label}
         </button>
       </form>
     </div>

@@ -7,7 +7,8 @@ import { ProgressChecklist } from "./ProgressChecklist";
 import type { ProgressSteps, SpecWithState, Turn } from "../types";
 
 // The scrollable transcript: settled turns, then the in-progress turn while streaming.
-// Rendering of each turn's dashboard is delegated to TurnView (unchanged behaviour).
+// Rendering of each turn's dashboard is delegated to TurnView. Dashboards (and their
+// widgets) are auto-saved as artifacts server-side, so there is no per-turn save action.
 export function MessageList({
   conversationId,
   turns,

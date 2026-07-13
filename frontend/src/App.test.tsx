@@ -45,6 +45,11 @@ function routeFetch(chatResponder: () => Response) {
     if (typeof url === "string" && url.startsWith("/api/conversations")) {
       return Promise.resolve(jsonResponse({ conversations: [] }));
     }
+    // The gallery's useArtifacts hook fetches /api/artifacts on mount; route it to an
+    // empty list so these chat tests keep the shared stream responder for /api/chat only.
+    if (typeof url === "string" && url.startsWith("/api/artifacts")) {
+      return Promise.resolve(jsonResponse({ artifacts: [] }));
+    }
     return Promise.resolve(chatResponder());
   });
 }

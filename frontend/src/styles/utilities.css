@@ -9,6 +9,12 @@
 .flex {
   display: flex;
 }
+.grid {
+  display: grid;
+}
+.block {
+  display: block;
+}
 .flex-col {
   flex-direction: column;
 }
@@ -20,6 +26,9 @@
 }
 .flex-1 {
   flex: 1;
+}
+.shrink-0 {
+  flex-shrink: 0;
 }
 
 .gap-1 {
@@ -114,6 +123,11 @@
 .min-w-0 {
   min-width: 0;
 }
+/* Let a flex child shrink below its content so its own overflow scrolls instead of
+   pushing siblings (e.g. a scroll area next to the docked composer). */
+.min-h-0 {
+  min-height: 0;
+}
 .max-w-content {
   max-width: var(--content-max);
 }
@@ -124,6 +138,12 @@
 }
 .border-strong {
   border: 1px solid var(--color-border-strong);
+}
+.border-b {
+  border-bottom: 1px solid var(--color-border);
+}
+.border-l {
+  border-left: 1px solid var(--color-border);
 }
 .rounded-sm {
   border-radius: var(--radius-sm);

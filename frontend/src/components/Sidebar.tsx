@@ -10,13 +10,18 @@ import type { ThreadSummary } from "../types";
 export const Sidebar = memo(function Sidebar({
   threads,
   activeId,
+  view,
   onNewChat,
   onSelect,
+  onOpenArtifacts,
 }: {
   threads: ThreadSummary[];
   activeId: string;
+  // Which surface is open, so the sidebar can highlight it and dim the thread selection.
+  view: "chat" | "artifacts";
   onNewChat: () => void;
   onSelect: (id: string) => void;
+  onOpenArtifacts: () => void;
 }) {
   return (
     <nav
@@ -33,6 +38,16 @@ export const Sidebar = memo(function Sidebar({
       >
         <span aria-hidden="true">+</span> New chat
       </button>
+      <button
+        type="button"
+        className={
+          "sidebar__artifacts flex items-center gap-2 w-full p-3 text-base font-medium bg-raised border-strong rounded-md cursor-pointer" +
+          (view === "artifacts" ? " thread-list__item--active" : "")
+        }
+        onClick={onOpenArtifacts}
+      >
+        <span aria-hidden="true">▤</span> Artifacts
+      </button>
       <div className="px-2 pt-2 text-sm text-muted uppercase">
         Conversations
       </div>
@@ -46,7 +61,9 @@ export const Sidebar = memo(function Sidebar({
                 type="button"
                 className={
                   "thread-list__item w-full text-left px-3 py-2 text-base rounded-sm cursor-pointer truncate" +
-                  (thread.id === activeId ? " thread-list__item--active" : "")
+                  (view === "chat" && thread.id === activeId
+                    ? " thread-list__item--active"
+                    : "")
                 }
                 onClick={() => onSelect(thread.id)}
                 title={thread.title}
