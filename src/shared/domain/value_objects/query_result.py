@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+from shared.domain.errors import InvariantViolationError
+
 
 @dataclass(frozen=True)
 class QueryResult:
@@ -19,7 +21,7 @@ class QueryResult:
     def __post_init__(self) -> None:
         """Validate that row_count matches the actual number of rows."""
         if self.row_count != len(self.rows):
-            raise ValueError(
+            raise InvariantViolationError(
                 f"row_count={self.row_count!r} does not match len(rows)={len(self.rows)!r}"
             )
 

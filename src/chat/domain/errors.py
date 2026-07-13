@@ -1,0 +1,7 @@
+"""Chat component domain errors — concrete cases extending the shared categories."""
+
+from shared.domain.errors import NotFoundError
+
+
+class ConversationNotFoundError(NotFoundError):
+    """The requested conversation does not exist or is not owned by the caller."""

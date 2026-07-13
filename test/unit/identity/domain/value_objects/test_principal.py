@@ -2,6 +2,7 @@ import pytest
 
 from identity.domain.entities.user import User
 from identity.domain.value_objects.principal import Principal
+from shared.domain.errors import InvariantViolationError
 
 
 class TestPrincipalForUser:
@@ -25,5 +26,5 @@ class TestPrincipalForUser:
 class TestPrincipalValidation:
     def test_rejects_empty_user_id(self) -> None:
         # a principal without an id could own nothing — construction must fail loudly
-        with pytest.raises(ValueError, match="user_id must be non-empty"):
+        with pytest.raises(InvariantViolationError, match="user_id must be non-empty"):
             Principal(user_id="", display_name="Nobody", email=None, is_guest=True)

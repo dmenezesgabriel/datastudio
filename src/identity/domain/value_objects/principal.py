@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 from identity.domain.entities.user import User
+from shared.domain.errors import InvariantViolationError
 
 
 @dataclass(frozen=True)
@@ -26,7 +27,9 @@ class Principal:
     def __post_init__(self) -> None:
         """A principal without an id cannot own anything — reject it early."""
         if not self.user_id:
-            raise ValueError(f"Principal.user_id must be non-empty, got {self.user_id!r}")
+            raise InvariantViolationError(
+                f"Principal.user_id must be non-empty, got {self.user_id!r}"
+            )
 
     @classmethod
     def for_user(cls, user: User) -> "Principal":

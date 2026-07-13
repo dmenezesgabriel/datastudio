@@ -1,5 +1,6 @@
 import pytest
 
+from shared.domain.errors import InvariantViolationError
 from shared.domain.value_objects.query_result import QueryResult
 
 
@@ -9,7 +10,7 @@ class TestQueryResult:
         assert result.row_count == 1
 
     def test_raises_when_row_count_mismatches(self) -> None:
-        with pytest.raises(ValueError, match="row_count=2.*len\\(rows\\)=1"):
+        with pytest.raises(InvariantViolationError, match="row_count=2.*len\\(rows\\)=1"):
             QueryResult(columns=["id"], rows=[(1,)], row_count=2)
 
     def test_to_dict_list_zips_columns_and_rows(self) -> None:
