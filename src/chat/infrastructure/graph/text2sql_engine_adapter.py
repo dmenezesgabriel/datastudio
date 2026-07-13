@@ -12,10 +12,7 @@ from chat.domain.value_objects.stream_event import (
     ChatStreamEvent,
     NarrativeReady,
     ProgressStep,
-    SqlReady,
     TypedChatStream,
-    ViewPatchLine,
-    WidgetDataReady,
 )
 from chat.domain.value_objects.text2sql_result import Text2SqlResult
 from chat.domain.value_objects.widget import WidgetResult
@@ -23,6 +20,7 @@ from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.history_messages import to_chat_history
 from chat.infrastructure.graph.types import TypedChatGraph
 from chat.infrastructure.graph.view.render_tree_builder import compile_render_tree, narrative_tree
+from chat.infrastructure.graph.widget_stream_events import as_list, widget_events
 from shared.infrastructure.logging.logger_factory import get_logger
 
 _logger = get_logger(__name__)
@@ -151,34 +149,13 @@ def _events_for_chunk(mode: str, chunk: object) -> list[ChatStreamEvent]:
 def _events_for(node_name: str, update: Mapping[str, object]) -> list[ChatStreamEvent]:
     """Map one node update to zero or more payload events (silent nodes yield none)."""
     if node_name == "build_widget":
-        return _widget_events(update)
+        return widget_events(update)
     # Both the dashboard summary and the text-only branch write the ``narrative``
     # channel; each surfaces as the narrative (a text-only turn has no widgets).
     if node_name in ("compose_narrative", "answer_text"):
         narrative = update.get("narrative")
         return [NarrativeReady(text=narrative)] if isinstance(narrative, str) else []
     return []
-
-
-def _widget_events(update: Mapping[str, object]) -> list[ChatStreamEvent]:
-    """Map one finished build_widget worker to its data patch, view patches, and SQL.
-
-    Data first (so ``$state`` exists when the view binds), then the namespaced view
-    lines, then the SQL disclosure. A failed widget yields only its note view lines.
-    """
-    results = [r for r in _as_list(update.get("widget_results")) if isinstance(r, WidgetResult)]
-    lines = [ln for ln in _as_list(update.get("widget_patch_lines")) if isinstance(ln, str)]
-    events: list[ChatStreamEvent] = [
-        WidgetDataReady(widget_id=r.widget_id, result=r.result) for r in results
-    ]
-    events += [ViewPatchLine(line=line) for line in lines]
-    events += [SqlReady(widget_id=r.widget_id, sql=r.sql) for r in results if r.sql]
-    return events
-
-
-def _as_list(value: object) -> list[object]:
-    """Return value as a list of objects, or empty when it is not a list."""
-    return cast(list[object], value) if isinstance(value, list) else []
 
 
 def _to_result(state: ChatState) -> Text2SqlResult:
@@ -189,9 +166,9 @@ def _to_result(state: ChatState) -> Text2SqlResult:
     """
     state_dict = cast(dict[str, object], state)
     narrative = state["narrative"]
-    results = [r for r in _as_list(state_dict.get("widget_results")) if isinstance(r, WidgetResult)]
+    results = [r for r in as_list(state_dict.get("widget_results")) if isinstance(r, WidgetResult)]
     sql_by_widget = {r.widget_id: r.sql for r in results if r.sql}
-    lines = [ln for ln in _as_list(state_dict.get("widget_patch_lines")) if isinstance(ln, str)]
+    lines = [ln for ln in as_list(state_dict.get("widget_patch_lines")) if isinstance(ln, str)]
     view = (
         compile_render_tree(narrative, lines, sql_by_widget) if lines else narrative_tree(narrative)
     )

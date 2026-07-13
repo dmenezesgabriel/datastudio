@@ -113,3 +113,93 @@ def _to_element(element_dict: dict[str, object]) -> RenderElement:
         if isinstance(children, list)
         else [],
     )
+
+
+def apply_patch_lines(base: RenderTree, patch_lines: list[str]) -> RenderTree:
+    """Apply RFC-6902 patch lines to an existing tree, returning the edited tree.
+
+    The edit counterpart of ``compile_render_tree``: instead of building from the
+    F-layout base, it mutates a *saved* dashboard (``/elements``, ``/state`` and ``/root``
+    paths) so an artifact edit reuses only the widgets the instruction changed. Appending
+    a child id already present is a no-op, so a reanalyzed widget that reuses its id
+    overwrites its elements in place without duplicating its frame in the region.
+
+    Example:
+        edited = apply_patch_lines(spec, ['{"op":"replace","path":"/elements/w0/props/kind",...}'])
+    """
+    doc = base.model_dump()
+    if doc.get("state") is None:
+        doc["state"] = {}
+    for line in patch_lines:
+        _apply_patch(doc, line)
+    return RenderTree.model_validate(doc)
+
+
+def _apply_patch(doc: dict[str, object], line: str) -> None:
+    """Apply one RFC-6902 patch line to the mutable document, ignoring malformed ops."""
+    patch = parse_patch(line)
+    if patch is None:
+        return
+    op, path = patch.get("op"), patch.get("path")
+    if not isinstance(op, str) or not isinstance(path, str) or not path.startswith("/"):
+        return
+    tokens = [_unescape(token) for token in path.split("/")[1:]]
+    if not tokens:
+        return
+    try:
+        parent = _navigate(doc, tokens[:-1])
+        _apply_op(parent, tokens[-1], op, patch.get("value"))
+    except (KeyError, IndexError, TypeError, ValueError):
+        return  # patch referenced a missing/mistyped location — skip it
+
+
+def _unescape(token: str) -> str:
+    """Decode JSON-Pointer escapes (``~1`` -> ``/``, ``~0`` -> ``~``)."""
+    return token.replace("~1", "/").replace("~0", "~")
+
+
+def _navigate(node: object, tokens: list[str]) -> object:
+    """Walk into ``node`` following pointer ``tokens``, raising when a step is invalid."""
+    for token in tokens:
+        if isinstance(node, list):
+            node = cast(list[object], node)[int(token)]
+        elif isinstance(node, dict):
+            node = cast(dict[str, object], node)[token]
+        else:
+            raise TypeError(f"cannot descend into {type(node).__name__} at {token!r}")
+    return node
+
+
+def _apply_op(parent: object, leaf: str, op: str, value: object) -> None:
+    """Add/replace/remove ``value`` at ``leaf`` within its parent container."""
+    if op == "remove":
+        _remove(parent, leaf)
+    elif op in ("add", "replace"):
+        _set(parent, leaf, op, value)
+
+
+def _set(parent: object, leaf: str, op: str, value: object) -> None:
+    """Set ``value`` at ``leaf``; appending an already-present list item is a no-op."""
+    if isinstance(parent, list):
+        target = cast(list[object], parent)
+        if leaf == "-":
+            if value not in target:  # idempotent: a reused widget id won't duplicate its frame
+                target.append(value)
+        elif op == "add":
+            target.insert(int(leaf), value)
+        else:
+            target[int(leaf)] = value
+    elif isinstance(parent, dict):
+        cast(dict[str, object], parent)[leaf] = value
+    else:
+        raise TypeError(f"cannot set {leaf!r} on {type(parent).__name__}")
+
+
+def _remove(parent: object, leaf: str) -> None:
+    """Remove ``leaf`` from its parent container (a missing key is ignored)."""
+    if isinstance(parent, list):
+        cast(list[object], parent).pop(int(leaf))
+    elif isinstance(parent, dict):
+        cast(dict[str, object], parent).pop(leaf, None)
+    else:
+        raise TypeError(f"cannot remove {leaf!r} from {type(parent).__name__}")

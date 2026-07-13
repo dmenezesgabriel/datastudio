@@ -55,7 +55,7 @@ def _json_default(value: object) -> object:
     return str(value)
 
 
-def _patch_line(op: str, path: str, value: object) -> str:
+def patch_line(op: str, path: str, value: object) -> str:
     """Serialize a single RFC-6902 patch op to a compact JSON line."""
     return json.dumps(
         {"op": op, "path": path, "value": value}, ensure_ascii=False, default=_json_default
@@ -96,6 +96,20 @@ class SpecStreamSerializer:
         self._progress_initialized = False
         self._progress_orders: dict[str, int] = {}
 
+    @classmethod
+    def for_edit(cls) -> "SpecStreamSerializer":
+        """Serializer for editing an already-rendered dashboard.
+
+        The client already holds the root Stack and the F-layout regions (it fetched the
+        artifact), so their one-time ``add`` scaffolding must be suppressed — re-adding
+        ``/elements/root`` would wipe the existing widgets. Only the edit's own patches
+        (and the live progress checklist) are streamed.
+        """
+        serializer = cls()
+        serializer._root_initialized = True
+        serializer._regions_initialized = True
+        return serializer
+
     def lines_for(self, event: ChatStreamEvent) -> list[str]:
         """Return the patch lines for one event, advancing internal state."""
         if isinstance(event, ProgressStep):
@@ -104,7 +118,7 @@ class SpecStreamSerializer:
             return self._narrative_lines(event.text)
         if isinstance(event, WidgetDataReady):
             return [
-                _patch_line("add", f"/state/{event.widget_id}", self._state_value(event.result))
+                patch_line("add", f"/state/{event.widget_id}", self._state_value(event.result))
             ]
         if isinstance(event, ViewPatchLine):
             return self._region_init_lines() + [event.line]
@@ -123,7 +137,7 @@ class SpecStreamSerializer:
         lines = self._progress_init_lines()
         if step.step_id in self._progress_orders:
             path = f"/state/progress/{step.step_id}/status"
-            return lines + [_patch_line("replace", path, step.status)]
+            return lines + [patch_line("replace", path, step.status)]
         order = len(self._progress_orders)
         self._progress_orders[step.step_id] = order
         value = {
@@ -132,14 +146,14 @@ class SpecStreamSerializer:
             "parentId": step.parent_id,
             "order": order,
         }
-        return lines + [_patch_line("add", f"/state/progress/{step.step_id}", value)]
+        return lines + [patch_line("add", f"/state/progress/{step.step_id}", value)]
 
     def _progress_init_lines(self) -> list[str]:
         """Emit the empty ``/state/progress`` map exactly once (no-op afterwards)."""
         if self._progress_initialized:
             return []
         self._progress_initialized = True
-        return [_patch_line("add", "/state/progress", {})]
+        return [patch_line("add", "/state/progress", {})]
 
     def _state_value(self, result: QueryResult) -> dict[str, object]:
         """The ``{columns, rows}`` object a widget's $state bindings read."""
@@ -152,7 +166,7 @@ class SpecStreamSerializer:
         (narrative → KPI band → grid); the text streams last and only replaces here.
         """
         lines = self._root_init_lines()
-        return lines + [_patch_line("replace", f"/elements/{_NARRATIVE_ID}/props/text", text)]
+        return lines + [patch_line("replace", f"/elements/{_NARRATIVE_ID}/props/text", text)]
 
     def _sql_lines(self, widget_id: str, sql: str) -> list[str]:
         """Fill the widget frame's ``sql`` prop (skipped when empty).
@@ -164,7 +178,7 @@ class SpecStreamSerializer:
         """
         if not sql:
             return []
-        return [_patch_line("replace", f"/elements/{widget_id}-frame/props/sql", sql)]
+        return [patch_line("replace", f"/elements/{widget_id}-frame/props/sql", sql)]
 
     def _root_init_lines(self) -> list[str]:
         """Emit the root Stack + a leading (empty) narrative element exactly once.
@@ -177,9 +191,9 @@ class SpecStreamSerializer:
         self._root_initialized = True
         root = RenderElement(type="Stack", props={}, children=[_NARRATIVE_ID])
         return [
-            _patch_line("add", "/root", "root"),
-            _patch_line("add", "/elements/root", root.model_dump()),
-            _patch_line(
+            patch_line("add", "/root", "root"),
+            patch_line("add", "/elements/root", root.model_dump()),
+            patch_line(
                 "add", f"/elements/{_NARRATIVE_ID}", build_markdown_element("").model_dump()
             ),
         ]
@@ -203,6 +217,6 @@ class SpecStreamSerializer:
     def _add_element_lines(self, element_id: str, element: RenderElement) -> list[str]:
         """Add one element and reference it from the root Stack's children."""
         return [
-            _patch_line("add", f"/elements/{element_id}", element.model_dump()),
-            _patch_line("add", "/elements/root/children/-", element_id),
+            patch_line("add", f"/elements/{element_id}", element.model_dump()),
+            patch_line("add", "/elements/root/children/-", element_id),
         ]

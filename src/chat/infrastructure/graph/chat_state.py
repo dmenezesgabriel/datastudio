@@ -5,6 +5,7 @@ from typing import Annotated, NotRequired, TypedDict
 
 from langchain_core.messages import BaseMessage
 
+from chat.domain.value_objects.render_tree import RenderTree
 from chat.domain.value_objects.widget import WidgetResult, WidgetSpec
 from shared.domain.value_objects.query_result import QueryResult
 
@@ -43,3 +44,11 @@ class ChatState(TypedDict):
     widget_patch_lines: Annotated[list[str], add]  # each worker appends its SpecStream patch lines
     widget_results: Annotated[list[WidgetResult], add]  # each worker appends its executed result
     narrative: str  # the overall narrative, set by compose_narrative
+    # Edit-graph-only fields (absent on the build flow): an edit reopens a saved dashboard,
+    # so ``prior_spec`` seeds the current dashboard as context and ``classify_edit`` routes the
+    # turn — ``restyle`` (patch existing elements, no SQL) vs ``reanalyze`` (rebuild one widget
+    # via the SQL worker, reusing ``widget``/``question`` above with ``target_widget_id``).
+    instruction: NotRequired[str]  # the user's edit request (edit graph)
+    prior_spec: NotRequired[RenderTree]  # the artifact's current dashboard spec, seeded for edits
+    edit_mode: NotRequired[str]  # "restyle" | "reanalyze"; set by classify_edit
+    target_widget_id: NotRequired[str]  # widget id a reanalyze rebuilds (existing or minted)
