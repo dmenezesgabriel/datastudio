@@ -20,9 +20,7 @@ def _dashboard() -> RenderTree:
             "widget-0-frame": RenderElement(
                 type="WidgetFrame", props={"sql": "SELECT 1"}, children=["widget-0-chart"]
             ),
-            "widget-0-chart": RenderElement(
-                type="ChartJs", props={"kind": "bar"}, children=[]
-            ),
+            "widget-0-chart": RenderElement(type="ChartJs", props={"kind": "bar"}, children=[]),
         },
         state={"widget-0": {"columns": ["m"], "rows": []}},
     )
@@ -31,7 +29,9 @@ def _dashboard() -> RenderTree:
 class TestEditedDashboardViewBuilder:
     def test_applies_a_restyle_patch_to_the_prior_spec(self) -> None:
         events: list[ChatStreamEvent] = [
-            ViewPatchLine(line='{"op":"replace","path":"/elements/widget-0-chart/props/kind","value":"line"}')
+            ViewPatchLine(
+                line='{"op":"replace","path":"/elements/widget-0-chart/props/kind","value":"line"}'
+            )
         ]
         edited = EditedDashboardViewBuilder().build(_dashboard(), events)
         assert edited.elements["widget-0-chart"].props["kind"] == "line"

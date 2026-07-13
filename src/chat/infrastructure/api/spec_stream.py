@@ -117,9 +117,7 @@ class SpecStreamSerializer:
         if isinstance(event, NarrativeReady):
             return self._narrative_lines(event.text)
         if isinstance(event, WidgetDataReady):
-            return [
-                patch_line("add", f"/state/{event.widget_id}", self._state_value(event.result))
-            ]
+            return [patch_line("add", f"/state/{event.widget_id}", self._state_value(event.result))]
         if isinstance(event, ViewPatchLine):
             return self._region_init_lines() + [event.line]
         return self._sql_lines(event.widget_id, event.sql)  # SqlReady (union exhausted)
