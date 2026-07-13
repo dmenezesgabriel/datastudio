@@ -69,3 +69,47 @@ def make_events(response: str = "Summary.") -> list[ChatStreamEvent]:
         SqlReady(widget_id="widget-0", sql="SELECT 1"),
         NarrativeReady(text=response),
     ]
+
+
+def _widget_view_lines(widget_id: str, leaf: str, kind: str, region: str, title: str) -> list[str]:
+    """The namespaced frame+leaf patch lines one build_widget worker emits (as authored)."""
+    leaf_id = f"{widget_id}-{leaf}"
+    frame_id = f"{widget_id}-frame"
+    binding = f'"data":{{"$state":"/{widget_id}/rows"}}'
+    leaf_el = f'{{"type":"{kind}","props":{{{title},{binding}}},"children":[]}}'
+    frame_el = f'{{"type":"WidgetFrame","props":{{"sql":""}},"children":["{leaf_id}"]}}'
+    return [
+        f'{{"op":"add","path":"/elements/{leaf_id}","value":{leaf_el}}}',
+        f'{{"op":"add","path":"/elements/{frame_id}","value":{frame_el}}}',
+        f'{{"op":"add","path":"/elements/{region}/children/-","value":"{frame_id}"}}',
+    ]
+
+
+def _widget_events(
+    widget_id: str, leaf: str, kind: str, region: str, title: str, result: QueryResult, sql: str
+) -> list[ChatStreamEvent]:
+    """One widget's full event group: data, framed view lines, then its SQL."""
+    events: list[ChatStreamEvent] = [WidgetDataReady(widget_id=widget_id, result=result)]
+    events += [
+        ViewPatchLine(line=ln) for ln in _widget_view_lines(widget_id, leaf, kind, region, title)
+    ]
+    events.append(SqlReady(widget_id=widget_id, sql=sql))
+    return events
+
+
+def make_dashboard_events(response: str = "Overview.") -> list[ChatStreamEvent]:
+    """Build a realistic two-widget dashboard stream (a KPI + a chart, each framed).
+
+    Mirrors what two ``build_widget`` workers emit, so ``DashboardViewBuilder`` compiles a
+    tree with ``widget-0-frame``/``widget-1-frame`` — the shape the artifact split reads.
+    """
+    kpi = QueryResult(columns=["c"], rows=[(42,)], row_count=1)
+    chart = QueryResult(columns=["g", "n"], rows=[("Drama", 789)], row_count=1)
+    events = _widget_events(
+        "widget-0", "kpi", "KpiStat", "kpi-row", '"label":"Total"', kpi, "SELECT c"
+    )
+    events += _widget_events(
+        "widget-1", "chart", "ChartJs", "grid", '"title":"By genre"', chart, "SELECT g"
+    )
+    events.append(NarrativeReady(text=response))
+    return events

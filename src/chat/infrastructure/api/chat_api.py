@@ -9,14 +9,26 @@ routers; keeping the seam here lets chat be deployed alone or alongside others.
 from fastapi import APIRouter
 from langchain_core.language_models import BaseChatModel
 
+from chat.application.ports.artifact_repository import ArtifactRepository
 from chat.application.ports.conversation_repository import ConversationRepository
+from chat.application.use_cases.edit_artifact import EditArtifact
+from chat.application.use_cases.save_artifact import SaveArtifact
+from chat.application.use_cases.set_artifact_version import SetArtifactVersion
 from chat.application.use_cases.stream_message import StreamMessage
+from chat.infrastructure.api.artifact_edit_router import ArtifactEditRouter
+from chat.infrastructure.api.artifacts_router import ArtifactsRouter
 from chat.infrastructure.api.chat_router import ChatRouter
 from chat.infrastructure.api.conversations_router import ConversationsRouter
 from chat.infrastructure.api.dashboard_view_builder import DashboardViewBuilder
+from chat.infrastructure.api.edited_dashboard_view_builder import EditedDashboardViewBuilder
+from chat.infrastructure.graph.edit_dashboard_adapter import EditDashboardAdapter
+from chat.infrastructure.graph.edit_graph import build_edit_graph
 from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
 from chat.infrastructure.graph.text2sql_engine_adapter import Text2SqlEngineAdapter
 from chat.infrastructure.graph.text2sql_graph import build_text2sql_graph
+from chat.infrastructure.persistence.in_memory_artifact_repository import (
+    InMemoryArtifactRepository,
+)
 from chat.infrastructure.persistence.in_memory_conversation_repository import (
     InMemoryConversationRepository,
 )
@@ -27,24 +39,32 @@ from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlE
 
 def build_chat_routers(
     stream_message: StreamMessage,
-    repository: ConversationRepository,
+    conversation_repository: ConversationRepository,
+    edit_artifact: EditArtifact,
+    artifact_repository: ArtifactRepository,
     resolve_current_user: ResolveOwnerId,
 ) -> list[APIRouter]:
-    """Assemble chat's routers over a shared conversation store (abstractions injected).
+    """Assemble chat's routers over its shared conversation and artifact stores.
 
-    One store feeds both the write-side ``ChatRouter`` (via the use case) and the
-    read-side ``ConversationsRouter`` — otherwise the sidebar sees an empty one.
-    ``resolve_current_user`` is injected (not built here) so identity owns auth and
-    chat stays ignorant of it.
+    Each store feeds both its write and read routers (the conversation store feeds the
+    chat stream + sidebar; the artifact store feeds the edit stream + gallery/CRUD) —
+    otherwise a reader sees an empty one. ``resolve_current_user`` is injected (not built
+    here) so identity owns auth and chat stays ignorant of it.
 
     Example:
-        routers = build_chat_routers(stream_message, repository, resolve_current_user)
+        routers = build_chat_routers(stream_message, conv_repo, edit, art_repo, resolve)
         for router in routers:
             app.include_router(router)
     """
+    save_artifact = SaveArtifact(artifact_repository)
+    set_artifact_version = SetArtifactVersion(artifact_repository)
     return [
         ChatRouter(stream_message, resolve_current_user).router,
-        ConversationsRouter(repository, resolve_current_user).router,
+        ConversationsRouter(conversation_repository, resolve_current_user).router,
+        ArtifactsRouter(
+            artifact_repository, save_artifact, set_artifact_version, resolve_current_user
+        ).router,
+        ArtifactEditRouter(edit_artifact, artifact_repository, resolve_current_user).router,
     ]
 
 
@@ -52,27 +72,38 @@ def build_chat_api(settings: AppSettings, resolve_current_user: ResolveOwnerId) 
     """Compose chat's HTTP surface from settings; self-contained for standalone deploy.
 
     ``resolve_current_user`` comes from the identity component (wired by the
-    composition root) and scopes every conversation to its owning user.
+    composition root) and scopes every conversation and artifact to its owning user.
 
     Example:
         for router in build_chat_api(AppSettings(), resolve_current_user):
             app.include_router(router)
     """
-    repository = InMemoryConversationRepository()  # one shared store, by construction
-    stream_message = build_stream_message(settings, repository)
-    return build_chat_routers(stream_message, repository, resolve_current_user)
+    conversation_repository = InMemoryConversationRepository()  # one shared store, by construction
+    artifact_repository = InMemoryArtifactRepository()  # shared by the CRUD API and the edit stream
+    stream_message = build_stream_message(settings, conversation_repository, artifact_repository)
+    edit_artifact = build_edit_artifact(settings, artifact_repository)
+    return build_chat_routers(
+        stream_message,
+        conversation_repository,
+        edit_artifact,
+        artifact_repository,
+        resolve_current_user,
+    )
 
 
 def build_stream_message(
-    settings: AppSettings, repository: ConversationRepository
+    settings: AppSettings,
+    repository: ConversationRepository,
+    artifact_repository: ArtifactRepository,
 ) -> StreamMessage:
-    """Wire the graph, engine adapter, and use case from settings over a shared repository.
+    """Wire the graph, engine adapter, and use case from settings over shared repositories.
 
-    The repository is injected (not built here) so the read-side conversations API and
-    the write-side chat stream share one store — otherwise the sidebar sees an empty one.
+    Both stores are injected (not built here): the conversation store so the sidebar and
+    chat stream share one, and the artifact store so every dashboard/widget the turn
+    auto-saves lands in the same gallery the CRUD API serves.
 
     Example:
-        use_case = build_stream_message(AppSettings(), InMemoryConversationRepository())
+        use_case = build_stream_message(AppSettings(), conv_repo, InMemoryArtifactRepository())
     """
     chat_model = _build_chat_model(settings, settings.language_model_name)
     format_chat_model = _build_chat_model(settings, settings.format_model_name)
@@ -83,7 +114,29 @@ def build_stream_message(
         api_base=settings.openai_base_url,
     )
     engine = Text2SqlEngineAdapter(graph, timeout_s=settings.query_timeout_s)
-    return StreamMessage(repository, engine, DashboardViewBuilder())
+    save_artifact = SaveArtifact(artifact_repository)
+    return StreamMessage(repository, engine, DashboardViewBuilder(), save_artifact)
+
+
+def build_edit_artifact(settings: AppSettings, repository: ArtifactRepository) -> EditArtifact:
+    """Wire the edit graph, edit engine, and use case from settings over a shared repository.
+
+    The repository is injected (not built here) so the CRUD artifacts API and the write-side
+    edit stream share one store — otherwise the gallery never sees an edit's new version.
+
+    Example:
+        use_case = build_edit_artifact(AppSettings(), InMemoryArtifactRepository())
+    """
+    chat_model = _build_chat_model(settings, settings.language_model_name)
+    format_chat_model = _build_chat_model(settings, settings.format_model_name)
+    graph = build_edit_graph(
+        chat_model,
+        DuckDbSqlEngine(settings.duckdb_path),
+        format_chat_model=format_chat_model,
+        api_base=settings.openai_base_url,
+    )
+    engine = EditDashboardAdapter(graph, timeout_s=settings.query_timeout_s)
+    return EditArtifact(repository, engine, EditedDashboardViewBuilder())
 
 
 def _build_chat_model(settings: AppSettings, model_name: str) -> BaseChatModel:

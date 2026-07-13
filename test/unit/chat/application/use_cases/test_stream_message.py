@@ -3,27 +3,41 @@ from typing import cast
 
 from chat.application.ports.conversation_repository import ConversationRepository
 from chat.application.ports.text2sql_port import Text2SqlPort
+from chat.application.use_cases.save_artifact import SaveArtifact
 from chat.application.use_cases.stream_message import StreamMessage
+from chat.domain.entities.artifact import Artifact
 from chat.domain.entities.conversation import Conversation
 from chat.domain.value_objects.render_tree import RenderElement, RenderTree
-from chat.domain.value_objects.stream_event import ChatStreamEvent, SqlReady, WidgetDataReady
+from chat.domain.value_objects.stream_event import (
+    ChatStreamEvent,
+    NarrativeReady,
+    SqlReady,
+    WidgetDataReady,
+)
 from chat.domain.value_objects.text2sql_result import Text2SqlResult
 from chat.infrastructure.api.dashboard_view_builder import DashboardViewBuilder
+from chat.infrastructure.persistence.in_memory_artifact_repository import (
+    InMemoryArtifactRepository,
+)
 from shared.domain.value_objects.query_result import QueryResult
 from test.unit.chat.application.use_cases.fakes import (
     FakeConversationRepository,
     FakeStreamingText2SqlEngine,
+    make_dashboard_events,
     make_events,
 )
 
 
 def _use_case(
-    repository: FakeConversationRepository, engine: FakeStreamingText2SqlEngine
+    repository: FakeConversationRepository,
+    engine: FakeStreamingText2SqlEngine,
+    artifact_repository: InMemoryArtifactRepository | None = None,
 ) -> StreamMessage:
     return StreamMessage(
         cast(ConversationRepository, repository),
         cast(Text2SqlPort, engine),
         DashboardViewBuilder(),
+        SaveArtifact(artifact_repository or InMemoryArtifactRepository()),
     )
 
 
@@ -156,3 +170,45 @@ class TestStreamMessage:
         assert view is not None
         assert "widget-0-table" in view.elements  # the LLM-authored widget, not just narrative
         assert view.state == {"widget-0": {"columns": ["n"], "rows": [{"n": 42}]}}
+
+
+class TestAutoSaveArtifacts:
+    def _saved(self, artifacts: InMemoryArtifactRepository) -> list[Artifact]:
+        got = [artifacts.get(s.artifact_id, _OWNER) for s in artifacts.list_summaries(_OWNER)]
+        return [a for a in got if a is not None]
+
+    def _drain_dashboard(
+        self, artifacts: InMemoryArtifactRepository, cid: str = "c-1", question: str = "Overview"
+    ) -> None:
+        engine = FakeStreamingText2SqlEngine(make_dashboard_events())
+        _drain(_use_case(FakeConversationRepository(), engine, artifacts), cid, question)
+
+    def test_persists_the_dashboard_and_each_widget(self) -> None:
+        artifacts = InMemoryArtifactRepository()
+        self._drain_dashboard(artifacts)
+        assert len(artifacts.list_summaries(_OWNER)) == 3  # dashboard + 2 widgets
+
+    def test_titles_dashboard_by_question_and_widgets_by_their_own_titles(self) -> None:
+        artifacts = InMemoryArtifactRepository()
+        self._drain_dashboard(artifacts, question="Movies overview")
+        titles = {s.title for s in artifacts.list_summaries(_OWNER)}
+        assert titles == {"Movies overview", "Total", "By genre"}
+
+    def test_widget_artifact_is_a_single_widget_spec(self) -> None:
+        artifacts = InMemoryArtifactRepository()
+        self._drain_dashboard(artifacts)
+        widget = next(a for a in self._saved(artifacts) if a.title == "By genre")
+        assert "widget-1-frame" in widget.current_spec.elements
+        assert "widget-0-frame" not in widget.current_spec.elements  # carries only its own widget
+
+    def test_artifacts_reference_the_source_conversation(self) -> None:
+        artifacts = InMemoryArtifactRepository()
+        self._drain_dashboard(artifacts, cid="conv-9")
+        assert all(a.source_conversation_id == "conv-9" for a in self._saved(artifacts))
+
+    def test_text_only_turn_persists_no_artifacts(self) -> None:
+        # A narrative-only answer (no widgets) adds nothing to the gallery.
+        artifacts = InMemoryArtifactRepository()
+        engine = FakeStreamingText2SqlEngine([NarrativeReady(text="Hello!")])
+        _drain(_use_case(FakeConversationRepository(), engine, artifacts), "c-1", "hi")
+        assert artifacts.list_summaries(_OWNER) == []
