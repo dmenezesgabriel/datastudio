@@ -3,7 +3,6 @@ from typing import cast
 
 from chat.application.ports.conversation_repository import ConversationRepository
 from chat.application.ports.text2sql_port import Text2SqlPort
-from chat.application.use_cases.save_artifact import SaveArtifact
 from chat.application.use_cases.stream_message import StreamMessage
 from chat.domain.entities.artifact import Artifact
 from chat.domain.entities.conversation import Conversation
@@ -37,7 +36,7 @@ def _use_case(
         cast(ConversationRepository, repository),
         cast(Text2SqlPort, engine),
         DashboardViewBuilder(),
-        SaveArtifact(artifact_repository or InMemoryArtifactRepository()),
+        artifact_repository or InMemoryArtifactRepository(),
     )
 
 

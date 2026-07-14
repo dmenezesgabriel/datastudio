@@ -1,9 +1,13 @@
 """Use case: send a user message and stream the assistant's dashboard answer."""
 
+import time
+from uuid import uuid4
+
+from chat.application.ports.artifact_repository import ArtifactRepository
 from chat.application.ports.conversation_repository import ConversationRepository
 from chat.application.ports.text2sql_port import Text2SqlPort
 from chat.application.ports.turn_view_builder import TurnViewBuilder
-from chat.application.use_cases.save_artifact import SaveArtifact
+from chat.domain.entities.artifact import Artifact
 from chat.domain.entities.conversation import Conversation
 from chat.domain.services.dashboard_widgets import artifact_drafts
 from chat.domain.value_objects.render_tree import RenderTree
@@ -31,7 +35,7 @@ class StreamMessage:
     use case stays infra-free.
 
     Example:
-        use_case = StreamMessage(repository, engine, view_builder, save_artifact)
+        use_case = StreamMessage(repository, engine, view_builder, artifact_repository)
         async for event in use_case.execute("guest", "c-1", "Overview"):
             ...
     """
@@ -41,9 +45,13 @@ class StreamMessage:
         repository: ConversationRepository,
         engine: Text2SqlPort,
         view_builder: TurnViewBuilder,
-        save_artifact: SaveArtifact,
+        artifact_repository: ArtifactRepository,
     ) -> None:
-        """Wire the conversation repository, the engine, the view builder, and artifact save.
+        """Wire the conversation repository, the engine, the view builder, and artifact store.
+
+        Depends on the ``ArtifactRepository`` port (not the ``SaveArtifact`` use case): a
+        use case orchestrates ports and the domain, never another use case. Auto-save
+        builds each artifact via the ``Artifact.create`` domain factory and persists it.
 
         The use case does no logging — that is a driving-adapter concern. The API edge
         logs the request lifecycle so the application layer stays transport-agnostic.
@@ -51,7 +59,7 @@ class StreamMessage:
         self._repository = repository
         self._engine = engine
         self._view_builder = view_builder
-        self._save_artifact = save_artifact
+        self._artifact_repository = artifact_repository
 
     async def execute(self, owner_id: str, conversation_id: str, question: str) -> TypedChatStream:
         """Record the question, stream the answer, then persist both turns.
@@ -103,6 +111,7 @@ class StreamMessage:
         whole dashboard plus one single-widget artifact per widget.
         """
         for draft in artifact_drafts(question, view):
-            self._save_artifact.execute(
-                owner_id, draft.title, draft.spec, source_conversation_id=conversation_id
+            artifact = Artifact.create(
+                uuid4().hex, owner_id, draft.title, draft.spec, time.time(), conversation_id
             )
+            self._artifact_repository.save(artifact)

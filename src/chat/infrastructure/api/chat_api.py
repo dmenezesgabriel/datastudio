@@ -114,8 +114,7 @@ def build_stream_message(
         api_base=settings.openai_base_url,
     )
     engine = Text2SqlEngineAdapter(graph, timeout_s=settings.query_timeout_s)
-    save_artifact = SaveArtifact(artifact_repository)
-    return StreamMessage(repository, engine, DashboardViewBuilder(), save_artifact)
+    return StreamMessage(repository, engine, DashboardViewBuilder(), artifact_repository)
 
 
 def build_edit_artifact(settings: AppSettings, repository: ArtifactRepository) -> EditArtifact:
