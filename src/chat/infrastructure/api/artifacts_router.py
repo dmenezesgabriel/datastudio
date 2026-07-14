@@ -11,6 +11,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from chat.application.ports.artifact_repository import ArtifactRepository
+from chat.application.use_cases.delete_artifact import DeleteArtifact
 from chat.application.use_cases.save_artifact import SaveArtifact
 from chat.application.use_cases.set_artifact_version import SetArtifactVersion
 from chat.domain.entities.artifact import Artifact
@@ -23,10 +24,11 @@ class ArtifactsRouter:
     """Builds an APIRouter for the artifact gallery, versions, and revert.
 
     Reads go straight to the repository (matching the conversations read router);
-    writes go through use cases so invariants stay in the domain.
+    every write — save, revert, delete — goes through a use case so invariants and
+    owner scoping stay in the application/domain layers.
 
     Example:
-        router = ArtifactsRouter(repo, save, set_version, resolve_current_user).router
+        router = ArtifactsRouter(repo, save, set_version, delete, resolve_current_user).router
         app.include_router(router)
     """
 
@@ -35,12 +37,14 @@ class ArtifactsRouter:
         repository: ArtifactRepository,
         save_artifact: SaveArtifact,
         set_artifact_version: SetArtifactVersion,
+        delete_artifact: DeleteArtifact,
         resolve_current_user: ResolveOwnerId,
     ) -> None:
         """Wire the repository, write use cases, and current-user dependency; add routes."""
         self._repository = repository
         self._save_artifact = save_artifact
         self._set_artifact_version = set_artifact_version
+        self._delete_artifact = delete_artifact
         self.router = APIRouter()
         self._add_read_routes(resolve_current_user)
         self._add_write_routes(resolve_current_user)
@@ -89,7 +93,7 @@ class ArtifactsRouter:
         async def delete_artifact(
             artifact_id: str, user_id: Annotated[str, Depends(resolve_current_user)]
         ) -> dict[str, object]:
-            self._repository.delete(artifact_id, user_id)
+            self._delete_artifact.execute(user_id, artifact_id)
             return {"deleted": artifact_id}
 
         self.router.add_api_route("/api/artifacts", save_artifact, methods=["POST"])

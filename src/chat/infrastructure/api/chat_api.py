@@ -11,6 +11,7 @@ from langchain_core.language_models import BaseChatModel
 
 from chat.application.ports.artifact_repository import ArtifactRepository
 from chat.application.ports.conversation_repository import ConversationRepository
+from chat.application.use_cases.delete_artifact import DeleteArtifact
 from chat.application.use_cases.edit_artifact import EditArtifact
 from chat.application.use_cases.save_artifact import SaveArtifact
 from chat.application.use_cases.set_artifact_version import SetArtifactVersion
@@ -58,11 +59,16 @@ def build_chat_routers(
     """
     save_artifact = SaveArtifact(artifact_repository)
     set_artifact_version = SetArtifactVersion(artifact_repository)
+    delete_artifact = DeleteArtifact(artifact_repository)
     return [
         ChatRouter(stream_message, resolve_current_user).router,
         ConversationsRouter(conversation_repository, resolve_current_user).router,
         ArtifactsRouter(
-            artifact_repository, save_artifact, set_artifact_version, resolve_current_user
+            artifact_repository,
+            save_artifact,
+            set_artifact_version,
+            delete_artifact,
+            resolve_current_user,
         ).router,
         ArtifactEditRouter(edit_artifact, artifact_repository, resolve_current_user).router,
     ]

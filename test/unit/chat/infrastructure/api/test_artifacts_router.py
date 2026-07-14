@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from chat.application.use_cases.delete_artifact import DeleteArtifact
 from chat.application.use_cases.save_artifact import SaveArtifact
 from chat.application.use_cases.set_artifact_version import SetArtifactVersion
 from chat.domain.entities.artifact import Artifact
@@ -26,7 +27,11 @@ def _client(repo: InMemoryArtifactRepository, user_id: str = _OWNER) -> TestClie
     app = FastAPI()
     register_error_handlers(app)  # so ArtifactNotFound -> 404, InvariantViolation -> 422
     router = ArtifactsRouter(
-        repo, SaveArtifact(repo), SetArtifactVersion(repo), fake_owner_id(user_id)
+        repo,
+        SaveArtifact(repo),
+        SetArtifactVersion(repo),
+        DeleteArtifact(repo),
+        fake_owner_id(user_id),
     ).router
     app.include_router(router)
     return TestClient(app)
