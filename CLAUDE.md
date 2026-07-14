@@ -33,6 +33,14 @@
 
 - Prefer small focused modules over god files.
 - Use Package by component (src/component/domain/entities, src/component/domain/value_objects, src/component/application/ports, src/component/application/use_cases, src/component/infrastructure)
+- One home per kind of logic (the greppable test — no `application/services/`):
+  - **Use case** (`application/use_cases/`): orchestrates injected **ports**. One
+    `VerbNoun` class, one `execute()`. A use case depends on ports + domain, **never on
+    another use case**.
+  - **Domain service** (`domain/services/`): **pure** logic over domain types — zero
+    ports, zero I/O. If it needs a port, it is a use case, not a domain service.
+  - **Adapter** (`infrastructure/<kind>/`): implements a port; frameworks live here.
+  - Writes go through a use case; reads may hit the repository directly from a router.
 - Data-agnostic core: no dataset identity in `src/`. Table/column names and domain
   values (and prompt examples that name them) are discovered at runtime via
   `SqlEnginePort` — never hardcoded. Sample-dataset identity lives only in
