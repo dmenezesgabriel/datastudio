@@ -36,11 +36,17 @@ class SeedSettings(BaseSettings):
 
 @dataclass(frozen=True)
 class PublicDataset:
-    """Dataset available at a public HTTP URL."""
+    """Dataset available at a public HTTP URL.
+
+    ``csv_nulls`` lists extra literal strings to read as SQL NULL (csv only) — some
+    sources write the string "NULL" for missing values, which would otherwise force
+    typed columns (dates, numbers) down to VARCHAR.
+    """
 
     name: str
     url: str
     fmt: Literal["parquet", "csv", "json"]
+    csv_nulls: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -50,6 +56,11 @@ class KaggleDataset:
     slug: str  # e.g. "olistbr/brazilian-ecommerce"
     files: list[tuple[str, str]]  # (filename_inside_zip, duckdb_table_name)
 
+
+_NORTHWIND_BASE_URL = (
+    "https://raw.githubusercontent.com/graphql-compose/graphql-compose-examples"
+    "/master/examples/northwind/data/csv"
+)
 
 _PUBLIC_DATASETS: list[PublicDataset] = [
     PublicDataset(
@@ -71,6 +82,27 @@ _PUBLIC_DATASETS: list[PublicDataset] = [
         "cars",
         "https://raw.githubusercontent.com/vega/vega-datasets/main/data/cars.json",
         "json",
+    ),
+    # Northwind — the classic multi-table trading-company dataset (~1 MB total), used by
+    # the executive-scenario eval track. Files write missing values as the string "NULL".
+    *(
+        PublicDataset(
+            f"northwind_{table}",
+            f"{_NORTHWIND_BASE_URL}/{table}.csv",
+            "csv",
+            csv_nulls=("NULL",),
+        )
+        for table in (
+            "categories",
+            "customers",
+            "employees",
+            "order_details",
+            "orders",
+            "products",
+            "regions",
+            "shippers",
+            "suppliers",
+        )
     ),
 ]
 
@@ -101,6 +133,18 @@ _READ_SQL: dict[str, str] = {
 def _escape_path(path: object) -> str:
     """Return a path string safe for single-quoted DuckDB string literals."""
     return str(path).replace("'", "''")
+
+
+def _public_source_sql(ds: PublicDataset, dest: Path) -> str:
+    """The SELECT that reads a downloaded public file, honouring csv null markers.
+
+    The default empty-string null is kept alongside any extra markers so adding
+    ``csv_nulls`` never changes how ordinary blank cells are read.
+    """
+    if ds.fmt == "csv" and ds.csv_nulls:
+        markers = ", ".join(f"'{m}'" for m in ("", *ds.csv_nulls))
+        return f"SELECT * FROM read_csv_auto('{_escape_path(dest)}', nullstr=[{markers}])"
+    return _READ_SQL[ds.fmt].format(path=_escape_path(dest))
 
 
 class KaggleClient:
@@ -157,8 +201,7 @@ def _seed_public(
         ext = ds.url.rsplit(".", 1)[-1]
         dest = data_dir / f"{ds.name}.{ext}"
         _download_public_file(ds.url, dest)
-        source_sql = _READ_SQL[ds.fmt].format(path=_escape_path(dest))
-        _load_table(conn, ds.name, source_sql)
+        _load_table(conn, ds.name, _public_source_sql(ds, dest))
 
 
 def _seed_kaggle(
