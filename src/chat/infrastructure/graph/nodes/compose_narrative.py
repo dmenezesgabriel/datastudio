@@ -24,7 +24,12 @@ _SYSTEM_PROMPT = (
     "the single most important finding, then interpret the main trend or breakdown — the 'so "
     "what' (e.g. where it is growing or concentrated, a notable peak, a striking share) — not "
     "just a list of numbers. Ground every claim in the widget results; do not include SQL or "
-    "raw tables, and never speculate beyond the data.\n\n"
+    "raw tables, and never speculate beyond the data.\n"
+    "When the question's metric could be computed in more than one defensible way (a revenue "
+    "with or without freight or discounts, a customer count of accounts vs unique people, an "
+    "average per order vs per item), state in one short clause which definition the figures "
+    "reflect — read it from each widget's SQL, but describe it in plain words (e.g. 'based on "
+    "item prices, excluding freight'), never by quoting the SQL.\n\n"
     "Number formatting:\n"
     "- Format large integers and decimals with thousands separators (e.g. 1,234,567 or "
     "13,591,643.70); use exactly two decimals for monetary values.\n"
@@ -57,9 +62,14 @@ class _AnswerOutput(BaseModel):
 
 
 def _build_human_content(question: str, widget_results: list[WidgetResult]) -> str:
-    """Build the summary prompt from the question and each widget's result table."""
+    """Build the summary prompt: each widget's result table plus the SQL that produced it.
+
+    The SQL is context for the writer (it reveals which metric definition the figures
+    reflect, e.g. price-only vs price+freight); the system prompt forbids quoting it.
+    """
     blocks = [
         f"Widget — {widget.title} ({widget.result.row_count} rows):\n"
+        f"SQL: {widget.sql}\n"
         f"{widget.result.to_markdown_table()}"
         for widget in widget_results
     ]
