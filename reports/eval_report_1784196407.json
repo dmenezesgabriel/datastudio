@@ -1,0 +1,3946 @@
+{
+  "run_at": "2026-07-16T10:06:47.827554+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 36,
+    "passed": 33,
+    "failed": 3,
+    "pass_rate": 0.917,
+    "avg_latency_s": 45.152,
+    "p95_latency_s": 92.045,
+    "total_input_tokens": 229367,
+    "total_output_tokens": 90816,
+    "total_cached_input_tokens": 148011,
+    "cache_read_rate": 0.645,
+    "avg_input_tokens": 6371.3,
+    "avg_output_tokens": 2522.7,
+    "cost_usd": 0.0,
+    "view_selection": {
+      "passed": 75,
+      "total": 75,
+      "accuracy": 1.0
+    },
+    "consistency": {
+      "cases": 12,
+      "mean_consistency": 0.917,
+      "reliable": 9,
+      "flaky": 3,
+      "failing": 0
+    },
+    "by_tag": {
+      "exec_scenario": {
+        "total": 12,
+        "passed": 12
+      },
+      "marketplace": {
+        "total": 27,
+        "passed": 25
+      },
+      "dashboard": {
+        "total": 3,
+        "passed": 3
+      },
+      "hard": {
+        "total": 9,
+        "passed": 9
+      },
+      "concentration": {
+        "total": 3,
+        "passed": 3
+      },
+      "trading": {
+        "total": 9,
+        "passed": 8
+      },
+      "ranking": {
+        "total": 3,
+        "passed": 3
+      },
+      "chart": {
+        "total": 3,
+        "passed": 3
+      },
+      "multi-turn": {
+        "total": 3,
+        "passed": 3
+      },
+      "drilldown": {
+        "total": 3,
+        "passed": 3
+      },
+      "time_series": {
+        "total": 6,
+        "passed": 6
+      },
+      "definitional_ambiguity": {
+        "total": 15,
+        "passed": 13
+      },
+      "aggregation": {
+        "total": 9,
+        "passed": 9
+      },
+      "percentage": {
+        "total": 6,
+        "passed": 4
+      },
+      "false_premise": {
+        "total": 6,
+        "passed": 5
+      },
+      "no_hallucination": {
+        "total": 6,
+        "passed": 5
+      },
+      "adversarial": {
+        "total": 3,
+        "passed": 3
+      },
+      "join": {
+        "total": 3,
+        "passed": 3
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "exec_board_marketplace_overview",
+      "question": "I present to the board tomorrow morning. Prepare the key numbers on our marketplace's performance.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.2195569169998635,
+          "input_tokens": 216,
+          "output_tokens": 51,
+          "cached_input_tokens": 215
+        },
+        "list_tables": {
+          "latency_s": 0.018570915010059252,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 5.255025531994761,
+          "input_tokens": 200,
+          "output_tokens": 290,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.2339761759940302,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 10.346947974001523,
+          "input_tokens": 1047,
+          "output_tokens": 530,
+          "cached_input_tokens": 470
+        },
+        "build_widget": {
+          "latency_s": 37.10765760100912,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 3366,
+          "output_tokens": 1666,
+          "cached_input_tokens": 1526
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 4150,
+          "output_tokens": 1042,
+          "cached_input_tokens": 739
+        },
+        "compose_narrative": {
+          "latency_s": 10.606358300996362,
+          "input_tokens": 1438,
+          "output_tokens": 464,
+          "cached_input_tokens": 402
+        }
+      },
+      "sql": "SELECT SUM(payment_value) AS total_revenue FROM olist_order_payments; SELECT COUNT(*) AS total_orders FROM olist_orders; SELECT AVG(review_score) AS average_review_score FROM olist_order_reviews WHERE review_score IS NOT NULL;; SELECT strftime(order_purchase_timestamp, '%Y-%m') AS month, SUM(payment_value) AS revenue FROM olist_orders o JOIN olist_order_payments p ON o.order_id = p.order_id GROUP BY month ORDER BY month;; WITH order_payments AS (\n    SELECT order_id, SUM(payment_value) AS order_payment_total\n    FROM olist_order_payments\n    WHERE payment_value IS NOT NULL\n    GROUP BY order_id\n),\nitem_values AS (\n    SELECT\n        oi.order_id,\n        oi.product_id,\n        oi.price + oi.freight_value AS item_value,\n        SUM(oi.price + oi.freight_value) OVER (PARTITION BY oi.order_id) AS order_items_total\n    FROM olist_order_items oi\n)\nSELECT\n    p.product_category_name,\n    SUM(op.order_payment_total * (iv.item_value / NULLIF(iv.order_items_total, 0))) AS total_revenue\nFROM item_values iv\nJOIN order_payments op ON iv.order_id = op.order_id\nJOIN olist_products p ON iv.product_id = p.product_id\nWHERE p.product_category_name IS NOT NULL\nGROUP BY p.product_category_name\nORDER BY total_revenue DESC\nLIMIT 10;",
+      "sql_valid": true,
+      "narrative": "The marketplace has generated R$16,008,872.12 in total revenue across 99,441 orders, with a healthy average review score of 4.09. Revenue is based on payment values recorded in the payment table, and category-level figures allocate each order's total payment proportionally by item price plus freight. Monthly revenue scaled steadily through 2017, peaking at R$1,194,882.80 in November 2017 before settling into a R$1.0\u20131.2 million range through August 2018, with the sharp drop in September\u2013October 2018 likely reflecting incomplete recent data. On the product side, beauty & health (beleza_saude) leads with R$1,441,197.90, closely followed by watches & gifts (relogios_presentes) at R$1,305,637.22 and bed, bath & table (cama_mesa_banho) at R$1,242,220.09, indicating a broad concentration across consumer lifestyle categories rather than dominance by any single one.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_count",
+          "value": "3",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "2",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A board briefing should lead with headline KPI cards (e.g. total revenue, order volume, satisfaction) and include at least one trend or breakdown chart below; no pie over 5 slices, no KPI bound to a multi-row result.",
+          "passed": true,
+          "reasoning": "The presentation aligns perfectly with the rubric and data-visualization best practices. The three single-row datasets (total_revenue, total_orders, average_review_score) are correctly rendered as KPI cards, leading the board briefing with headline metrics. The 25-row monthly revenue series is shown as a line chart, providing a clear trend view. The 10-row category revenue breakdown is shown as a bar chart, which is appropriate for categorical comparison. No pie charts are used, and no KPI is bound to a multi-row result. The choice of view types and chart kinds is well-matched to the underlying data shape."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "exec_scenario",
+        "marketplace",
+        "dashboard",
+        "hard"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "exec_board_marketplace_overview",
+      "question": "I present to the board tomorrow morning. Prepare the key numbers on our marketplace's performance.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.217164981004316,
+          "input_tokens": 216,
+          "output_tokens": 51,
+          "cached_input_tokens": 215
+        },
+        "list_tables": {
+          "latency_s": 0.016833057990879752,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 5.252611215997604,
+          "input_tokens": 200,
+          "output_tokens": 278,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.22483929600275587,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 10.31260829999519,
+          "input_tokens": 1048,
+          "output_tokens": 439,
+          "cached_input_tokens": 470
+        },
+        "build_widget": {
+          "latency_s": 10.35915319599735,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 3375,
+          "output_tokens": 344,
+          "cached_input_tokens": 1136
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 4123,
+          "output_tokens": 803,
+          "cached_input_tokens": 1548
+        },
+        "compose_narrative": {
+          "latency_s": 7.540352633004659,
+          "input_tokens": 1333,
+          "output_tokens": 324,
+          "cached_input_tokens": 113
+        }
+      },
+      "sql": "SELECT SUM(payment_value) AS total_revenue FROM olist_order_payments;; SELECT COUNT(DISTINCT order_id) AS total_distinct_orders FROM olist_orders; SELECT SUM(payment_value) / COUNT(DISTINCT order_id) AS average_order_value FROM olist_order_payments WHERE payment_value IS NOT NULL AND order_id IS NOT NULL;; SELECT AVG(review_score) AS avg_review_score FROM olist_order_reviews WHERE review_score IS NOT NULL;; SELECT\n    date_trunc('month', o.order_purchase_timestamp) AS month,\n    SUM(p.payment_value) AS total_revenue\nFROM olist_orders o\nJOIN olist_order_payments p ON o.order_id = p.order_id\nWHERE o.order_purchase_timestamp IS NOT NULL\n  AND p.payment_value IS NOT NULL\nGROUP BY 1\nORDER BY 1;",
+      "sql_valid": true,
+      "narrative": "The marketplace has generated **R$ 16,008,872.12** in total revenue across **99,441** orders, yielding an average order value of **R$ 160.99** (based on payment values as recorded, with no adjustments for freight or discounts). Monthly revenue scaled dramatically throughout 2017 \u2014 from roughly **R$ 138,488.04** in January to a peak of **R$ 1,194,882.80** in November \u2014 and sustained a plateau above **R$ 1,000,000** through August 2018 before trailing off sharply in the final two months, which appear to reflect incomplete data rather than a true collapse. Customer satisfaction is solid, with an average review score of **4.09** out of 5, suggesting that growth has not come at the expense of the buyer experience.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_count",
+          "value": "3",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "2",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A board briefing should lead with headline KPI cards (e.g. total revenue, order volume, satisfaction) and include at least one trend or breakdown chart below; no pie over 5 slices, no KPI bound to a multi-row result.",
+          "passed": true,
+          "reasoning": "The presentation aligns with the rubric. Four KPI cards are bound to single-row results (total revenue, order volume, average order value, and average review score), satisfying the requirement to lead with headline KPIs and the rule that no KPI is bound to a multi-row result. A line chart is included below the KPIs, bound to the 25-row monthly revenue series, which satisfies the requirement for at least one trend chart. No pie chart is used, so the pie-slice constraint is not applicable."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "exec_scenario",
+        "marketplace",
+        "dashboard",
+        "hard"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "exec_board_marketplace_overview",
+      "question": "I present to the board tomorrow morning. Prepare the key numbers on our marketplace's performance.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.224270267994143,
+          "input_tokens": 216,
+          "output_tokens": 51,
+          "cached_input_tokens": 215
+        },
+        "list_tables": {
+          "latency_s": 0.0167281570029445,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 8.627303198998561,
+          "input_tokens": 200,
+          "output_tokens": 192,
+          "cached_input_tokens": 8
+        },
+        "get_schema": {
+          "latency_s": 0.23587729199789464,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 10.519027010988793,
+          "input_tokens": 1048,
+          "output_tokens": 509,
+          "cached_input_tokens": 900
+        },
+        "build_widget": {
+          "latency_s": 23.639835595007753,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 3381,
+          "output_tokens": 976,
+          "cached_input_tokens": 1426
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 4152,
+          "output_tokens": 843,
+          "cached_input_tokens": 2985
+        },
+        "compose_narrative": {
+          "latency_s": 10.405515706996084,
+          "input_tokens": 1515,
+          "output_tokens": 447,
+          "cached_input_tokens": 13
+        }
+      },
+      "sql": "SELECT SUM(payment_value) AS total_revenue FROM olist_order_payments;; SELECT COUNT(*) AS total_orders FROM olist_orders; SELECT AVG(review_score) AS avg_review_score FROM olist_order_reviews WHERE review_score IS NOT NULL;; SELECT date_trunc('month', o.order_purchase_timestamp) AS month, SUM(p.payment_value) AS total_revenue FROM olist_orders o JOIN olist_order_payments p ON o.order_id = p.order_id WHERE o.order_purchase_timestamp IS NOT NULL AND p.payment_value IS NOT NULL GROUP BY 1 ORDER BY 1;; SELECT p.product_category_name, SUM(pay.payment_value) AS total_revenue FROM olist_order_items oi JOIN olist_products p ON oi.product_id = p.product_id JOIN olist_order_payments pay ON oi.order_id = pay.order_id GROUP BY p.product_category_name ORDER BY total_revenue DESC LIMIT 10;",
+      "sql_valid": true,
+      "narrative": "The marketplace has generated R$16,008,872.12 in total revenue across 99,441 orders, with a healthy average review score of 4.09 \u2014 these figures are based on total payment values, which include freight and all payment components. Revenue scaled rapidly throughout 2017, climbing from roughly R$138,488.04 in January to a peak of R$1,194,882.80 in November, and has since held above R$1,000,000 per month through August 2018 (the sharp drop in September\u2013October 2018 likely reflects incomplete recent data). The top three product categories \u2014 bed/bath/table (R$1,712,553.67), beauty/health (R$1,657,373.12), and IT accessories (R$1,585,330.45) \u2014 are tightly clustered and together account for a substantial share of category revenue, indicating no single category dominates but home and personal-care goods are the marketplace's clear strengths.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_count",
+          "value": "3",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "2",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A board briefing should lead with headline KPI cards (e.g. total revenue, order volume, satisfaction) and include at least one trend or breakdown chart below; no pie over 5 slices, no KPI bound to a multi-row result.",
+          "passed": true,
+          "reasoning": "The presentation aligns perfectly with the rubric and data-visualization best practices. The three KPI cards are correctly bound to single-row results (total_revenue, total_orders, avg_review_score), providing the headline numbers a board needs at a glance. Below the KPIs, a line chart appropriately visualizes the 25-row monthly revenue trend over time, and a bar chart effectively handles the 10-row category revenue breakdown. No pie charts are used, avoiding the >5-slice pitfall, and no KPI is bound to a multi-row result. The choice of view types and chart kinds is well-matched to the underlying data shape."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "exec_scenario",
+        "marketplace",
+        "dashboard",
+        "hard"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "exec_revenue_concentration_olist",
+      "question": "Is our marketplace's revenue driven by a handful of product categories, or is it a long tail?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.762394496006891,
+          "input_tokens": 218,
+          "output_tokens": 59,
+          "cached_input_tokens": 8
+        },
+        "list_tables": {
+          "latency_s": 0.015226821997202933,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.467667606993928,
+          "input_tokens": 202,
+          "output_tokens": 160,
+          "cached_input_tokens": 12
+        },
+        "get_schema": {
+          "latency_s": 0.07202869799220935,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 12.41838233800081,
+          "input_tokens": 873,
+          "output_tokens": 453,
+          "cached_input_tokens": 12
+        },
+        "build_widget": {
+          "latency_s": 123.07072332799726,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 2018,
+          "output_tokens": 1317,
+          "cached_input_tokens": 1567
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 3357,
+          "output_tokens": 5570,
+          "cached_input_tokens": 1436
+        },
+        "compose_narrative": {
+          "latency_s": 24.43119004399341,
+          "input_tokens": 2073,
+          "output_tokens": 1547,
+          "cached_input_tokens": 442
+        }
+      },
+      "sql": "SELECT SUM(price) AS total_revenue FROM olist_order_items; SELECT COUNT(DISTINCT t.product_category_name_english) AS distinct_categories_with_revenue FROM olist_order_items oi JOIN olist_products p ON oi.product_id = p.product_id JOIN olist_category_translation t ON p.product_category_name = t.product_category_name_english WHERE oi.price > 0 AND t.product_category_name_english IS NOT NULL;; SELECT t.product_category_name_english AS category, SUM(i.price) AS total_revenue FROM olist_order_items i JOIN olist_products p ON i.product_id = p.product_id JOIN olist_category_translation t ON p.product_category_name = t.product_category_name GROUP BY t.product_category_name_english ORDER BY total_revenue DESC;; WITH cat_rev AS (\n  SELECT\n    COALESCE(t.product_category_name_english, p.product_category_name) AS category,\n    SUM(oi.price + oi.freight_value) AS revenue\n  FROM olist_order_items oi\n  JOIN olist_products p USING (product_id)\n  LEFT JOIN olist_category_translation t USING (product_category_name)\n  GROUP BY 1\n),\nranked AS (\n  SELECT\n    category,\n    revenue,\n    ROW_NUMBER() OVER (ORDER BY revenue DESC) AS rn,\n    SUM(revenue) OVER (ORDER BY revenue DESC) AS cum_revenue,\n    SUM(revenue) OVER () AS total_revenue\n  FROM cat_rev\n),\ncum AS (\n  SELECT\n    rn,\n    cum_revenue * 100.0 / total_revenue AS cum_share\n  FROM ranked\n)\nSELECT\n  (SELECT MIN(rn) FROM cum WHERE cum_share >= 50) AS categories_for_50_pct,\n  (SELECT MIN(rn) FROM cum WHERE cum_share >= 80) AS categories_for_80_pct,\n  (SELECT MIN(rn) FROM cum WHERE cum_share >= 90) AS categories_for_90_pct;",
+      "sql_valid": true,
+      "narrative": "Our marketplace revenue is moderately concentrated, with a handful of top categories driving half of sales while a long tail of smaller categories makes up the rest. Based on item prices plus freight, just 8 categories account for 50% of cumulative revenue, and 18 categories reach 80%. The top contributors based on item prices excluding freight are health_beauty (1,258,681.34) and watches_gifts (1,205,005.68), leading a list of 71 categories that trail down to niche segments like security_and_services (283.29).",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer must take a position on concentration backed by numbers (e.g. the top five categories contribute roughly 40% of revenue), naming at least one leading category, rather than merely listing values.",
+          "passed": true,
+          "reasoning": "The response takes a clear position on the concentration of revenue, stating it is 'moderately concentrated' with a handful of top categories driving half of sales and a long tail making up the rest. It backs this up with specific numbers, noting that 8 categories account for 50% of cumulative revenue and 18 categories reach 80%. It also names leading categories, such as 'health_beauty' and 'watches_gifts'. Therefore, it fully satisfies the rubric."
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A concentration question over ~70 categories should be shown as a ranked bar chart or table of the leading categories, never a pie with more than 5 slices.",
+          "passed": true,
+          "reasoning": "The question asks about revenue concentration across ~70 categories. The chosen views include bar charts (ChartJs kind=bar) for the category-level data (71 rows), which aligns perfectly with the rubric's recommendation to use a ranked bar chart or table for concentration questions. The KPI stats provide useful summary context (total revenue, distinct categories, and concentration thresholds) without relying on inappropriate visualizations like a pie chart."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "exec_scenario",
+        "marketplace",
+        "concentration"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "exec_revenue_concentration_olist",
+      "question": "Is our marketplace's revenue driven by a handful of product categories, or is it a long tail?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.0206198719970416,
+          "input_tokens": 218,
+          "output_tokens": 49,
+          "cached_input_tokens": 217
+        },
+        "list_tables": {
+          "latency_s": 0.02351371300756,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.716615265002474,
+          "input_tokens": 202,
+          "output_tokens": 160,
+          "cached_input_tokens": 201
+        },
+        "get_schema": {
+          "latency_s": 0.0773197020025691,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 10.260204455000348,
+          "input_tokens": 873,
+          "output_tokens": 448,
+          "cached_input_tokens": 737
+        },
+        "build_widget": {
+          "latency_s": 53.24397356400732,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 2023,
+          "output_tokens": 1025,
+          "cached_input_tokens": 1822
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 3367,
+          "output_tokens": 1878,
+          "cached_input_tokens": 2836
+        },
+        "repair_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 562,
+          "output_tokens": 371,
+          "cached_input_tokens": 15
+        },
+        "compose_narrative": {
+          "latency_s": 21.7032141850068,
+          "input_tokens": 2166,
+          "output_tokens": 1030,
+          "cached_input_tokens": 360
+        }
+      },
+      "sql": "SELECT SUM(price) AS total_revenue FROM olist_order_items; SELECT COUNT(DISTINCT t.product_category_name_english) AS distinct_categories_with_revenue FROM olist_order_items oi JOIN olist_products p ON oi.product_id = p.product_id JOIN olist_category_translation t ON p.product_category_name = t.product_category_name WHERE oi.price IS NOT NULL AND t.product_category_name_english IS NOT NULL;; SELECT t.product_category_name_english AS product_category, SUM(i.price) AS total_revenue FROM olist_order_items i JOIN olist_products p ON i.product_id = p.product_id JOIN olist_category_translation t ON p.product_category_name = t.product_category_name GROUP BY t.product_category_name_english ORDER BY total_revenue DESC;; WITH category_revenue AS (\n  SELECT\n    COALESCE(t.product_category_name_english, p.product_category_name) AS category_english,\n    SUM(oi.price) AS total_revenue\n  FROM olist_order_items oi\n  JOIN olist_products p ON oi.product_id = p.product_id\n  LEFT JOIN olist_category_translation t ON p.product_category_name = t.product_category_name\n  WHERE oi.price IS NOT NULL\n  GROUP BY COALESCE(t.product_category_name_english, p.product_category_name)\n),\nranked AS (\n  SELECT\n    category_english,\n    total_revenue,\n    SUM(total_revenue) OVER (ORDER BY total_revenue DESC) AS cumulative_revenue,\n    SUM(total_revenue) OVER () AS grand_total,\n    ROW_NUMBER() OVER (ORDER BY total_revenue DESC) AS rn\n  FROM category_revenue\n),\ncumulative AS (\n  SELECT\n    category_english,\n    total_revenue,\n    cumulative_revenue,\n    grand_total,\n    (cumulative_revenue / grand_total) * 100 AS cumulative_pct,\n    rn AS categories_needed\n  FROM ranked\n)\nSELECT\n  categories_needed,\n  cumulative_pct,\n  category_english AS category_at_threshold,\n  total_revenue AS category_revenue,\n  cumulative_revenue,\n  grand_total\nFROM cumulative\nWHERE cumulative_pct >= 80\nORDER BY categories_needed\nLIMIT 1;",
+      "sql_valid": true,
+      "narrative": "Revenue is concentrated in a handful of categories rather than spread across a long tail, with just 18 of 71 distinct categories accounting for 81.20168659218197% of total revenue. Based on item prices excluding freight, the marketplace's 13,591,643.70 total revenue is heavily driven by top performers like health_beauty (1,258,681.34) and watches_gifts (1,205,005.68), while the remaining 53 categories contribute a much smaller share.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer must take a position on concentration backed by numbers (e.g. the top five categories contribute roughly 40% of revenue), naming at least one leading category, rather than merely listing values.",
+          "passed": true,
+          "reasoning": "The response explicitly takes a position that revenue is concentrated in a handful of categories rather than spread across a long tail. It backs this up with specific numbers (18 of 71 categories account for ~81.2% of revenue) and names leading categories (health_beauty and watches_gifts). It goes beyond merely listing values by providing a clear conclusion and context."
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A concentration question over ~70 categories should be shown as a ranked bar chart or table of the leading categories, never a pie with more than 5 slices.",
+          "passed": true,
+          "reasoning": "The question asks about revenue concentration across ~70 product categories. The rubric specifies that this should be shown as a ranked bar chart or table, not a pie chart. The chosen views include two bar charts (ChartJs kind=bar), which align perfectly with the rubric. One bar chart likely shows the ranked revenue by category (the long tail), while the other could show a Pareto/cumulative view. The KPI stats provide helpful summary context (total revenue, distinct categories, and categories needed to reach a threshold)."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "exec_scenario",
+        "marketplace",
+        "concentration"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "exec_revenue_concentration_olist",
+      "question": "Is our marketplace's revenue driven by a handful of product categories, or is it a long tail?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.1572398989956127,
+          "input_tokens": 218,
+          "output_tokens": 58,
+          "cached_input_tokens": 13
+        },
+        "list_tables": {
+          "latency_s": 0.022772515992983244,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.996828446004656,
+          "input_tokens": 202,
+          "output_tokens": 123,
+          "cached_input_tokens": 201
+        },
+        "get_schema": {
+          "latency_s": 0.07078081999497954,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 13.649790576993837,
+          "input_tokens": 873,
+          "output_tokens": 446,
+          "cached_input_tokens": 13
+        },
+        "build_widget": {
+          "latency_s": 16.371076746989274,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 2003,
+          "output_tokens": 652,
+          "cached_input_tokens": 1801
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 3314,
+          "output_tokens": 774,
+          "cached_input_tokens": 2851
+        },
+        "compose_narrative": {
+          "latency_s": 31.538529981989996,
+          "input_tokens": 2001,
+          "output_tokens": 1911,
+          "cached_input_tokens": 360
+        }
+      },
+      "sql": "SELECT SUM(price) AS total_revenue FROM olist_order_items; SELECT COUNT(DISTINCT p.product_category_name) AS distinct_categories_with_revenue FROM olist_order_items oi JOIN olist_products p ON oi.product_id = p.product_id WHERE oi.price IS NOT NULL;; WITH category_revenue AS ( SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS category, SUM(oi.price) AS revenue FROM olist_order_items oi JOIN olist_products p ON oi.product_id = p.product_id LEFT JOIN olist_category_translation t ON p.product_category_name = t.product_category_name GROUP BY 1 ), total AS ( SELECT SUM(revenue) AS total_revenue FROM category_revenue ), top5 AS ( SELECT SUM(revenue) AS top5_revenue FROM ( SELECT revenue FROM category_revenue ORDER BY revenue DESC LIMIT 5 ) ) SELECT (top5.top5_revenue / total.total_revenue) * 100 AS top5_revenue_pct FROM top5, total;; SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS product_category, SUM(i.price) AS total_revenue FROM olist_order_items i JOIN olist_products p ON i.product_id = p.product_id LEFT JOIN olist_category_translation t ON p.product_category_name = t.product_category_name GROUP BY COALESCE(t.product_category_name_english, p.product_category_name) ORDER BY total_revenue DESC;",
+      "sql_valid": true,
+      "narrative": "Revenue is spread across a long tail of 73 product categories, with the top five generating just 39.7352896324088% of total revenue. Based on item prices excluding freight, the marketplace's total revenue of 13,591,643.70 is led by health_beauty (1,258,681.34) and watches_gifts (1,205,005.68), but it tapers off gradually into a long tail of smaller categories, with the lowest categories contributing under 1,000.00.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer must take a position on concentration backed by numbers (e.g. the top five categories contribute roughly 40% of revenue), naming at least one leading category, rather than merely listing values.",
+          "passed": true,
+          "reasoning": "The response takes a clear position that revenue is spread across a long tail, backs this up with the number that the top five categories generate just 39.7352896324088% of total revenue, and names leading categories (health_beauty and watches_gifts). It goes beyond merely listing values by providing context and a definitive stance on concentration."
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A concentration question over ~70 categories should be shown as a ranked bar chart or table of the leading categories, never a pie with more than 5 slices.",
+          "passed": true,
+          "reasoning": "The chosen views include a bar chart for the 74 product categories, which perfectly aligns with the rubric's recommendation for a concentration question over ~70 categories. The supporting KPIs (total revenue, distinct categories, and top 5 revenue percentage) provide useful context without violating any best practices. No pie chart is used."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "exec_scenario",
+        "marketplace",
+        "concentration"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "exec_sales_reps_northwind",
+      "question": "Which sales reps carry our trading business? Show me each rep's total revenue.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.8071026429970516,
+          "input_tokens": 214,
+          "output_tokens": 40,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.015106701001059264,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 8.152286308992188,
+          "input_tokens": 198,
+          "output_tokens": 252,
+          "cached_input_tokens": 197
+        },
+        "get_schema": {
+          "latency_s": 0.05208913900423795,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.1454431650054175,
+          "input_tokens": 1667,
+          "output_tokens": 145,
+          "cached_input_tokens": 737
+        },
+        "build_widget": {
+          "latency_s": 9.419521527001052,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 1321,
+          "output_tokens": 136,
+          "cached_input_tokens": 364
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 849,
+          "output_tokens": 252,
+          "cached_input_tokens": 729
+        },
+        "compose_narrative": {
+          "latency_s": 9.416355959998327,
+          "input_tokens": 620,
+          "output_tokens": 394,
+          "cached_input_tokens": 360
+        }
+      },
+      "sql": "SELECT e.firstName || ' ' || e.lastName AS rep_name, SUM(od.unitPrice * od.quantity * (1 - od.discount)) AS total_revenue FROM northwind_employees e JOIN northwind_orders o ON o.employeeID = e.employeeID JOIN northwind_order_details od ON od.orderID = o.orderID GROUP BY e.employeeID, e.firstName, e.lastName ORDER BY total_revenue DESC;",
+      "sql_valid": true,
+      "narrative": "Margaret Peacock leads all sales reps with $232,890.85 in total revenue, followed by Janet Leverling at $202,812.84 and Nancy Davolio at $192,107.60 \u2014 together the top three reps account for roughly half of the $1,265,793.05 in total rep revenue, indicating meaningful concentration at the top. Revenue at the bottom drops off sharply, with the lowest three reps (Steven Buchanan at $68,792.28, Michael Suyama at $73,913.13, and Anne Dodsworth at $77,308.07) each generating less than a third of Peacock's total. These figures reflect net revenue after discounts, based on item unit price and quantity, and exclude freight.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "4 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Revenue per sales rep (9 reps) is a ranking: a bar chart or table, never a pie over 5 slices or a single KPI.",
+          "passed": true,
+          "reasoning": "The chosen view is a bar chart, which perfectly aligns with the rubric. For 9 sales reps and their total revenue, a bar chart is an excellent choice to show a ranking and compare the values, avoiding the pitfalls of a pie chart or a single KPI."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "exec_scenario",
+        "trading",
+        "ranking",
+        "chart"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "exec_sales_reps_northwind",
+      "question": "Which sales reps carry our trading business? Show me each rep's total revenue.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.0451400160091,
+          "input_tokens": 214,
+          "output_tokens": 40,
+          "cached_input_tokens": 213
+        },
+        "list_tables": {
+          "latency_s": 0.01401062699733302,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 5.305060555008822,
+          "input_tokens": 198,
+          "output_tokens": 246,
+          "cached_input_tokens": 197
+        },
+        "get_schema": {
+          "latency_s": 0.05057122699508909,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 9.784429178005666,
+          "input_tokens": 1658,
+          "output_tokens": 248,
+          "cached_input_tokens": 737
+        },
+        "build_widget": {
+          "latency_s": 12.286552921010298,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 1318,
+          "output_tokens": 137,
+          "cached_input_tokens": 418
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 850,
+          "output_tokens": 232,
+          "cached_input_tokens": 710
+        },
+        "compose_narrative": {
+          "latency_s": 12.493202906000079,
+          "input_tokens": 587,
+          "output_tokens": 991,
+          "cached_input_tokens": 360
+        }
+      },
+      "sql": "SELECT e.firstName || ' ' || e.lastName AS employee_name, SUM(od.unitPrice * od.quantity * (1 - od.discount)) AS total_revenue FROM northwind_employees e JOIN northwind_orders o ON o.employeeID = e.employeeID JOIN northwind_order_details od ON od.orderID = o.orderID WHERE e.title = 'Sales Representative' GROUP BY e.employeeID, e.firstName, e.lastName ORDER BY total_revenue DESC;",
+      "sql_valid": true,
+      "narrative": "Margaret Peacock leads the sales team with $232,890.85 in total revenue, based on item prices after discounts and excluding freight. The trading business is heavily concentrated among the top three representatives\u2014Peacock, Janet Leverling ($202,812.84), and Nancy Davolio ($192,107.60)\u2014who each out-earn the lower tier by a wide margin. By contrast, the bottom three reps, including Michael Suyama at $73,913.13, generate significantly less revenue.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "4 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Revenue per sales rep (9 reps) is a ranking: a bar chart or table, never a pie over 5 slices or a single KPI.",
+          "passed": true,
+          "reasoning": "The chosen view is a bar chart, which aligns perfectly with the rubric's recommendation for ranking data like revenue per sales rep. It effectively shows the comparison between reps, unlike a pie chart or single KPI."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "exec_scenario",
+        "trading",
+        "ranking",
+        "chart"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "exec_sales_reps_northwind",
+      "question": "Which sales reps carry our trading business? Show me each rep's total revenue.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.0473269560025074,
+          "input_tokens": 214,
+          "output_tokens": 40,
+          "cached_input_tokens": 213
+        },
+        "list_tables": {
+          "latency_s": 0.023032283002976328,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.644907711000997,
+          "input_tokens": 198,
+          "output_tokens": 181,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.057804166004643776,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.832001217000652,
+          "input_tokens": 1658,
+          "output_tokens": 193,
+          "cached_input_tokens": 778
+        },
+        "build_widget": {
+          "latency_s": 12.08229859500716,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 1324,
+          "output_tokens": 124,
+          "cached_input_tokens": 364
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 849,
+          "output_tokens": 320,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 11.67874675100029,
+          "input_tokens": 586,
+          "output_tokens": 407,
+          "cached_input_tokens": 381
+        }
+      },
+      "sql": "SELECT e.firstName || ' ' || e.lastName AS full_name, SUM(od.unitPrice * od.quantity * (1 - od.discount)) AS total_revenue FROM northwind_employees e JOIN northwind_orders o ON o.employeeID = e.employeeID JOIN northwind_order_details od ON od.orderID = o.orderID WHERE e.title = 'Sales Representative' GROUP BY e.employeeID, e.firstName, e.lastName ORDER BY total_revenue DESC;",
+      "sql_valid": true,
+      "narrative": "Margaret Peacock leads all sales representatives with $232,890.85 in total revenue, followed by Janet Leverling at $202,812.84 and Nancy Davolio at $192,107.60 \u2014 together, these top three reps account for roughly $627,811.29 of the $903,600.73 total, meaning the bulk of trading revenue is concentrated in a small group. The bottom three reps (Robert King at $124,568.24, Anne Dodsworth at $77,308.07, and Michael Suyama at $73,913.13) each contribute less than half of Peacock's figure, highlighting a wide performance gap across the team. Figures reflect net revenue after discounts, based on unit price times quantity, and exclude freight.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "4 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Revenue per sales rep (9 reps) is a ranking: a bar chart or table, never a pie over 5 slices or a single KPI.",
+          "passed": true,
+          "reasoning": "The chosen view is a bar chart, which aligns perfectly with the rubric's recommendation for ranking revenue per sales rep. The data shape (6 rows of reps and total revenue) is well-suited for a bar chart, allowing for easy comparison and identification of which reps carry the business."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "exec_scenario",
+        "trading",
+        "ranking",
+        "chart"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "exec_drilldown_best_month",
+      "question": "Show me our marketplace's monthly revenue trend.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.690242025986663,
+          "input_tokens": 974,
+          "output_tokens": 152,
+          "cached_input_tokens": 755
+        },
+        "list_tables": {
+          "latency_s": 0.015606257991748862,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.960516084000119,
+          "input_tokens": 926,
+          "output_tokens": 471,
+          "cached_input_tokens": 324
+        },
+        "get_schema": {
+          "latency_s": 0.06263148899597581,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 7.852938112991978,
+          "input_tokens": 2906,
+          "output_tokens": 573,
+          "cached_input_tokens": 2207
+        },
+        "build_widget": {
+          "latency_s": 22.59875850699609,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 1503,
+          "output_tokens": 888,
+          "cached_input_tokens": 1325
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 2490,
+          "output_tokens": 489,
+          "cached_input_tokens": 2286
+        },
+        "compose_narrative": {
+          "latency_s": 4.90000397899712,
+          "input_tokens": 2381,
+          "output_tokens": 1558,
+          "cached_input_tokens": 1088
+        }
+      },
+      "sql": "SELECT COUNT(DISTINCT order_id) AS distinct_orders\nFROM olist_orders\nWHERE strftime(order_purchase_timestamp, '%Y-%m') = '2017-11'",
+      "sql_valid": true,
+      "narrative": "November 2017, the marketplace's top revenue month at 1,194,882.80, generated that total across 7,544 distinct orders. That works out to a notably high order volume for the period, reinforcing why this month stands out as the platform's peak.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "ChartJs:line",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set_any",
+          "value": "1010271.37 | 1194882.8 | 1179143.77",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer identifies November 2017 as the best month and attaches a revenue figure to it (roughly 1.0-1.2 million depending on the revenue definition).",
+          "passed": true,
+          "reasoning": "The response explicitly identifies November 2017 as the best month and provides a revenue figure of 1,194,882.80. This figure falls within the 1.0-1.2 million range specified in the rubric. Therefore, the response fully satisfies the rubric."
+        },
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set_any",
+          "value": "7451 | 7544",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states the order count for that same month (about 7,450-7,550), resolving 'that month' from the prior turn.",
+          "passed": true,
+          "reasoning": "The response explicitly states that there were 7,544 distinct orders in November 2017. This count falls within the specified range of 7,450-7,550 and correctly resolves 'that month' based on the context."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "exec_scenario",
+        "marketplace",
+        "multi-turn",
+        "drilldown",
+        "time_series",
+        "hard"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "exec_drilldown_best_month",
+      "question": "Show me our marketplace's monthly revenue trend.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.7783678300038446,
+          "input_tokens": 1013,
+          "output_tokens": 151,
+          "cached_input_tokens": 613
+        },
+        "list_tables": {
+          "latency_s": 0.014281348005170003,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 8.234732247001375,
+          "input_tokens": 965,
+          "output_tokens": 600,
+          "cached_input_tokens": 473
+        },
+        "get_schema": {
+          "latency_s": 0.0629753920075018,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.610103402999812,
+          "input_tokens": 2947,
+          "output_tokens": 554,
+          "cached_input_tokens": 2358
+        },
+        "build_widget": {
+          "latency_s": 7.359044384997105,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 1512,
+          "output_tokens": 312,
+          "cached_input_tokens": 1263
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 2494,
+          "output_tokens": 699,
+          "cached_input_tokens": 2264
+        },
+        "compose_narrative": {
+          "latency_s": 2.169114397998783,
+          "input_tokens": 2375,
+          "output_tokens": 698,
+          "cached_input_tokens": 1274
+        }
+      },
+      "sql": "SELECT COUNT(*) AS order_count FROM olist_orders WHERE strftime(order_purchase_timestamp, '%Y-%m') = '2017-11';",
+      "sql_valid": true,
+      "narrative": "November 2017 brought in 1,194,882.80 in revenue from 7,544 orders, making it both the highest-grossing and busiest month in the dataset. This volume underscores the seasonal surge that drove the year's revenue peak.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "ChartJs:line",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set_any",
+          "value": "1010271.37 | 1194882.8 | 1179143.77",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer identifies November 2017 as the best month and attaches a revenue figure to it (roughly 1.0-1.2 million depending on the revenue definition).",
+          "passed": true,
+          "reasoning": "The response correctly identifies November 2017 as the best month and provides a revenue figure of 1,194,882.80, which falls within the 1.0-1.2 million range specified by the rubric."
+        },
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set_any",
+          "value": "7451 | 7544",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states the order count for that same month (about 7,450-7,550), resolving 'that month' from the prior turn.",
+          "passed": true,
+          "reasoning": "The response explicitly states that there were 7,544 orders in November 2017. This number falls within the range specified by the rubric (about 7,450-7,550) and correctly resolves the reference to 'that month' from the context."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "exec_scenario",
+        "marketplace",
+        "multi-turn",
+        "drilldown",
+        "time_series",
+        "hard"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "exec_drilldown_best_month",
+      "question": "Show me our marketplace's monthly revenue trend.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.0313013630075147,
+          "input_tokens": 895,
+          "output_tokens": 155,
+          "cached_input_tokens": 608
+        },
+        "list_tables": {
+          "latency_s": 0.014202465987182222,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 6.606838592997519,
+          "input_tokens": 847,
+          "output_tokens": 530,
+          "cached_input_tokens": 335
+        },
+        "get_schema": {
+          "latency_s": 0.04526345701015089,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 5.660766689994489,
+          "input_tokens": 2787,
+          "output_tokens": 720,
+          "cached_input_tokens": 2392
+        },
+        "build_widget": {
+          "latency_s": 11.187356117996387,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 1441,
+          "output_tokens": 551,
+          "cached_input_tokens": 1237
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 2496,
+          "output_tokens": 629,
+          "cached_input_tokens": 2151
+        },
+        "compose_narrative": {
+          "latency_s": 8.50094104699383,
+          "input_tokens": 2269,
+          "output_tokens": 935,
+          "cached_input_tokens": 832
+        }
+      },
+      "sql": "SELECT COUNT(*) AS order_count FROM olist_orders WHERE strftime(order_purchase_timestamp, '%Y-%m') = '2017-11';",
+      "sql_valid": true,
+      "narrative": "November 2017 brought in 7,544 orders, making it not only the highest-revenue month but also a peak month for order volume. This surge in both revenue and order count underscores the strength of the 2017 holiday shopping season, with the marketplace processing a notably higher volume of transactions than in surrounding months.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "ChartJs:line",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set_any",
+          "value": "1010271.37 | 1194882.8 | 1179143.77",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer identifies November 2017 as the best month and attaches a revenue figure to it (roughly 1.0-1.2 million depending on the revenue definition).",
+          "passed": true,
+          "reasoning": "The response explicitly identifies November 2017 as the best month and provides a revenue figure of 1,194,882.80, which falls within the 1.0-1.2 million range specified by the rubric. Therefore, it fully satisfies the rubric."
+        },
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set_any",
+          "value": "7451 | 7544",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states the order count for that same month (about 7,450-7,550), resolving 'that month' from the prior turn.",
+          "passed": true,
+          "reasoning": "The response explicitly states that November 2017 brought in 7,544 orders. This number falls within the required range of 7,450-7,550 specified in the rubric. Additionally, the response successfully resolves 'that month' by identifying it as November 2017."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "exec_scenario",
+        "marketplace",
+        "multi-turn",
+        "drilldown",
+        "time_series",
+        "hard"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "ambig_total_revenue_olist",
+      "question": "What is our marketplace's total revenue?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.4482464820030145,
+          "input_tokens": 206,
+          "output_tokens": 42,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.018255841001519002,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 6.648658484991756,
+          "input_tokens": 190,
+          "output_tokens": 157,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.037430080003105104,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.453174541005865,
+          "input_tokens": 791,
+          "output_tokens": 82,
+          "cached_input_tokens": 737
+        },
+        "build_widget": {
+          "latency_s": 4.813607927004341,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 432,
+          "output_tokens": 46,
+          "cached_input_tokens": 367
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 819,
+          "output_tokens": 162,
+          "cached_input_tokens": 818
+        },
+        "compose_narrative": {
+          "latency_s": 8.075391514008516,
+          "input_tokens": 417,
+          "output_tokens": 264,
+          "cached_input_tokens": 360
+        }
+      },
+      "sql": "SELECT SUM(payment_value) AS total_revenue FROM olist_order_payments",
+      "sql_valid": true,
+      "narrative": "The marketplace's total revenue is 16,008,872.12, based on the sum of payment values across all order payment records. This figure reflects gross payment amounts captured at the transaction level rather than net of fees, freight, or discounts. As a single aggregate, it represents the full monetary volume processed through the platform's payment system.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "3 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states a total revenue figure AND makes clear what it counted (item prices only, items plus freight, or payments received) \u2014 the basis must be identifiable from the answer.",
+          "passed": true,
+          "reasoning": "The response provides a specific total revenue figure (16,008,872.12) and clearly identifies the basis of the calculation. It explicitly states that the figure is based on the 'sum of payment values across all order payment records' and represents 'gross payment amounts' processed through the payment system. This makes it clear that the basis is payments received, satisfying the rubric's requirement."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "definitional_ambiguity",
+        "marketplace",
+        "aggregation"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "ambig_total_revenue_olist",
+      "question": "What is our marketplace's total revenue?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.923504867008887,
+          "input_tokens": 206,
+          "output_tokens": 45,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.018606352008646354,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.357722984001157,
+          "input_tokens": 190,
+          "output_tokens": 71,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.02748563000932336,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.839848504998372,
+          "input_tokens": 790,
+          "output_tokens": 82,
+          "cached_input_tokens": 737
+        },
+        "build_widget": {
+          "latency_s": 4.402383865002776,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 431,
+          "output_tokens": 29,
+          "cached_input_tokens": 387
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 819,
+          "output_tokens": 136,
+          "cached_input_tokens": 818
+        },
+        "compose_narrative": {
+          "latency_s": 11.466490592996706,
+          "input_tokens": 417,
+          "output_tokens": 736,
+          "cached_input_tokens": 360
+        }
+      },
+      "sql": "SELECT SUM(payment_value) AS total_revenue FROM olist_order_payments",
+      "sql_valid": true,
+      "narrative": "The marketplace's total revenue stands at 16,008,872.12, based on payment values recorded in the order payments table. This figure represents the cumulative sum of all transaction payments processed across the platform, serving as the top-line measure of gross marketplace activity.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "3 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states a total revenue figure AND makes clear what it counted (item prices only, items plus freight, or payments received) \u2014 the basis must be identifiable from the answer.",
+          "passed": true,
+          "reasoning": "The response states a total revenue figure of 16,008,872.12. It also clearly identifies the basis of the calculation by stating it is 'based on payment values recorded in the order payments table' and represents the 'cumulative sum of all transaction payments processed.' This makes clear that the figure counts payments received, satisfying the rubric's requirement."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "definitional_ambiguity",
+        "marketplace",
+        "aggregation"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "ambig_total_revenue_olist",
+      "question": "What is our marketplace's total revenue?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.0634020089928526,
+          "input_tokens": 206,
+          "output_tokens": 42,
+          "cached_input_tokens": 197
+        },
+        "list_tables": {
+          "latency_s": 0.01486427900090348,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 6.791795967001235,
+          "input_tokens": 190,
+          "output_tokens": 71,
+          "cached_input_tokens": 189
+        },
+        "get_schema": {
+          "latency_s": 0.02617971200379543,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.045344092010055,
+          "input_tokens": 791,
+          "output_tokens": 79,
+          "cached_input_tokens": 737
+        },
+        "build_widget": {
+          "latency_s": 6.1387828739971155,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 432,
+          "output_tokens": 29,
+          "cached_input_tokens": 406
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 819,
+          "output_tokens": 179,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 12.597410585993202,
+          "input_tokens": 417,
+          "output_tokens": 937,
+          "cached_input_tokens": 416
+        }
+      },
+      "sql": "SELECT SUM(payment_value) AS total_revenue FROM olist_order_payments",
+      "sql_valid": true,
+      "narrative": "The marketplace's total revenue stands at 16,008,872.12, based on the sum of payment values from the order payments table. This figure reflects the gross amount collected across all transactions, providing a top-line view of platform volume. Because it is a single aggregate, it does not show how revenue is distributed across sellers, categories, or time periods.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "3 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states a total revenue figure AND makes clear what it counted (item prices only, items plus freight, or payments received) \u2014 the basis must be identifiable from the answer.",
+          "passed": true,
+          "reasoning": "The response states a total revenue figure of 16,008,872.12. It also clearly identifies the basis of the calculation by stating it is 'based on the sum of payment values from the order payments table' and 'reflects the gross amount collected across all transactions', which corresponds to 'payments received'."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "definitional_ambiguity",
+        "marketplace",
+        "aggregation"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "ambig_aov_olist",
+      "question": "What's our marketplace's average order value?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.0706455600011395,
+          "input_tokens": 207,
+          "output_tokens": 41,
+          "cached_input_tokens": 206
+        },
+        "list_tables": {
+          "latency_s": 0.023001951005426235,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 16.465676908002933,
+          "input_tokens": 191,
+          "output_tokens": 720,
+          "cached_input_tokens": 18
+        },
+        "get_schema": {
+          "latency_s": 0.06321522699727211,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.237042567008757,
+          "input_tokens": 851,
+          "output_tokens": 130,
+          "cached_input_tokens": 738
+        },
+        "build_widget": {
+          "latency_s": 8.293623556994135,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 502,
+          "output_tokens": 71,
+          "cached_input_tokens": 405
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 822,
+          "output_tokens": 121,
+          "cached_input_tokens": 728
+        },
+        "compose_narrative": {
+          "latency_s": 8.572062963998178,
+          "input_tokens": 451,
+          "output_tokens": 613,
+          "cached_input_tokens": 361
+        }
+      },
+      "sql": "SELECT AVG(order_total) AS avg_total_payment_value_per_order\nFROM (\n  SELECT order_id, SUM(payment_value) AS order_total\n  FROM olist_order_payments\n  GROUP BY order_id\n) t",
+      "sql_valid": true,
+      "narrative": "The marketplace's average order value is 160.99, based on the total payment value summed per order. This figure represents the typical amount a customer spends in a single transaction across the platform.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "3 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states an average order value and makes clear how it was computed (payments per order, or item totals per order, with or without freight).",
+          "passed": true,
+          "reasoning": "The response states the average order value (160.99) and clearly explains how it was computed (total payment value summed per order), which satisfies the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "definitional_ambiguity",
+        "marketplace",
+        "aggregation"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "ambig_aov_olist",
+      "question": "What's our marketplace's average order value?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.7725527949951356,
+          "input_tokens": 207,
+          "output_tokens": 41,
+          "cached_input_tokens": 197
+        },
+        "list_tables": {
+          "latency_s": 0.013542942993808538,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 7.450261158999638,
+          "input_tokens": 191,
+          "output_tokens": 387,
+          "cached_input_tokens": 182
+        },
+        "get_schema": {
+          "latency_s": 0.02642302800086327,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.720080312996288,
+          "input_tokens": 791,
+          "output_tokens": 98,
+          "cached_input_tokens": 738
+        },
+        "build_widget": {
+          "latency_s": 9.989428771994426,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 436,
+          "output_tokens": 166,
+          "cached_input_tokens": 410
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 822,
+          "output_tokens": 254,
+          "cached_input_tokens": 821
+        },
+        "compose_narrative": {
+          "latency_s": 6.913557444000617,
+          "input_tokens": 459,
+          "output_tokens": 480,
+          "cached_input_tokens": 13
+        }
+      },
+      "sql": "SELECT AVG(order_total) AS avg_total_payment_value_per_order\nFROM (\n    SELECT order_id, SUM(payment_value) AS order_total\n    FROM olist_order_payments\n    WHERE payment_value IS NOT NULL\n    GROUP BY order_id\n) t",
+      "sql_valid": true,
+      "narrative": "The marketplace's average order value is 160.99, based on total payment value summed per order. This figure represents the mean amount paid across all orders with a recorded payment value.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "3 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states an average order value and makes clear how it was computed (payments per order, or item totals per order, with or without freight).",
+          "passed": true,
+          "reasoning": "The response explicitly states the average order value (160.99) and clearly explains how it was computed, noting that it is based on the total payment value summed per order. This satisfies the rubric's requirement to state the value and clarify the computation method."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "definitional_ambiguity",
+        "marketplace",
+        "aggregation"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "ambig_aov_olist",
+      "question": "What's our marketplace's average order value?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.4406490140099777,
+          "input_tokens": 207,
+          "output_tokens": 41,
+          "cached_input_tokens": 206
+        },
+        "list_tables": {
+          "latency_s": 0.02480988898605574,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.185959473994444,
+          "input_tokens": 191,
+          "output_tokens": 166,
+          "cached_input_tokens": 181
+        },
+        "get_schema": {
+          "latency_s": 0.07883345399750397,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.253428650001297,
+          "input_tokens": 852,
+          "output_tokens": 122,
+          "cached_input_tokens": 772
+        },
+        "build_widget": {
+          "latency_s": 5.072170023995568,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 502,
+          "output_tokens": 63,
+          "cached_input_tokens": 427
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 822,
+          "output_tokens": 129,
+          "cached_input_tokens": 821
+        },
+        "compose_narrative": {
+          "latency_s": 6.487537925000652,
+          "input_tokens": 444,
+          "output_tokens": 178,
+          "cached_input_tokens": 392
+        }
+      },
+      "sql": "SELECT AVG(order_total) AS avg_total_payment_value_per_order FROM (SELECT order_id, SUM(payment_value) AS order_total FROM olist_order_payments GROUP BY order_id) t",
+      "sql_valid": true,
+      "narrative": "The marketplace's average order value is 160.99, based on total payment value summed per order. This figure reflects the average amount paid per order across all orders in the dataset, giving a straightforward benchmark for typical transaction size on the platform.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "3 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states an average order value and makes clear how it was computed (payments per order, or item totals per order, with or without freight).",
+          "passed": true,
+          "reasoning": "The response explicitly states the average order value (160.99) and explains how it was computed, noting that it is based on the total payment value summed per order. This satisfies the rubric's requirement to state the value and make the computation method clear."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "definitional_ambiguity",
+        "marketplace",
+        "aggregation"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "ambig_revenue_northwind",
+      "question": "What is the total revenue of our trading business?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.0426163539959816,
+          "input_tokens": 208,
+          "output_tokens": 40,
+          "cached_input_tokens": 198
+        },
+        "list_tables": {
+          "latency_s": 0.013679554991540499,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 9.044034473990905,
+          "input_tokens": 192,
+          "output_tokens": 263,
+          "cached_input_tokens": 191
+        },
+        "get_schema": {
+          "latency_s": 0.03042706599808298,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.1885605700081214,
+          "input_tokens": 854,
+          "output_tokens": 123,
+          "cached_input_tokens": 739
+        },
+        "build_widget": {
+          "latency_s": 3.6844804680004017,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 501,
+          "output_tokens": 56,
+          "cached_input_tokens": 366
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 818,
+          "output_tokens": 123,
+          "cached_input_tokens": 817
+        },
+        "compose_narrative": {
+          "latency_s": 4.2351956619968405,
+          "input_tokens": 425,
+          "output_tokens": 123,
+          "cached_input_tokens": 362
+        }
+      },
+      "sql": "SELECT SUM(unitPrice * quantity * (1 - discount)) AS total_revenue FROM northwind_order_details;",
+      "sql_valid": true,
+      "narrative": "Total trading revenue is $1,265,793.04, based on item prices after discounts and excluding freight. This figure represents the full order-line value across the business, so it reflects gross product sales rather than net amounts billed to customers.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "2 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states the trading business's total revenue and makes clear whether line-item discounts were deducted.",
+          "passed": true,
+          "reasoning": "The response clearly states the total revenue as $1,265,793.04. It also explicitly clarifies whether line-item discounts were deducted by stating the figure is 'based on item prices after discounts'. Therefore, it satisfies the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "definitional_ambiguity",
+        "trading",
+        "aggregation"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "ambig_revenue_northwind",
+      "question": "What is the total revenue of our trading business?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.7512140280014137,
+          "input_tokens": 208,
+          "output_tokens": 43,
+          "cached_input_tokens": 198
+        },
+        "list_tables": {
+          "latency_s": 0.014337378001073375,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.25604098799522,
+          "input_tokens": 192,
+          "output_tokens": 88,
+          "cached_input_tokens": 182
+        },
+        "get_schema": {
+          "latency_s": 0.0297248459974071,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.131484105993877,
+          "input_tokens": 855,
+          "output_tokens": 104,
+          "cached_input_tokens": 739
+        },
+        "build_widget": {
+          "latency_s": 6.604704912999296,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 501,
+          "output_tokens": 53,
+          "cached_input_tokens": 364
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 818,
+          "output_tokens": 177,
+          "cached_input_tokens": 817
+        },
+        "compose_narrative": {
+          "latency_s": 4.543303238999215,
+          "input_tokens": 425,
+          "output_tokens": 130,
+          "cached_input_tokens": 360
+        }
+      },
+      "sql": "SELECT SUM(unitPrice * quantity * (1 - discount)) AS total_revenue FROM northwind_order_details;",
+      "sql_valid": true,
+      "narrative": "Total trading revenue is $1,265,793.04, based on item prices net of discounts and excluding freight. This figure represents the full order-detail value across the business, with no further breakdown by product, customer, or period shown here.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "2 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states the trading business's total revenue and makes clear whether line-item discounts were deducted.",
+          "passed": true,
+          "reasoning": "The response explicitly states the total trading revenue ($1,265,793.04) and clarifies that the figure is based on item prices 'net of discounts', which clearly indicates that line-item discounts were deducted."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "definitional_ambiguity",
+        "trading",
+        "aggregation"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "ambig_revenue_northwind",
+      "question": "What is the total revenue of our trading business?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.489801296993392,
+          "input_tokens": 208,
+          "output_tokens": 137,
+          "cached_input_tokens": 207
+        },
+        "list_tables": {
+          "latency_s": 0.023434022994479164,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 7.228902632006793,
+          "input_tokens": 192,
+          "output_tokens": 317,
+          "cached_input_tokens": 191
+        },
+        "get_schema": {
+          "latency_s": 0.03129263500159141,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.3391338619985618,
+          "input_tokens": 854,
+          "output_tokens": 116,
+          "cached_input_tokens": 853
+        },
+        "build_widget": {
+          "latency_s": 8.907603671992547,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 501,
+          "output_tokens": 62,
+          "cached_input_tokens": 366
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 818,
+          "output_tokens": 177,
+          "cached_input_tokens": 710
+        },
+        "compose_narrative": {
+          "latency_s": 3.070828720010468,
+          "input_tokens": 425,
+          "output_tokens": 127,
+          "cached_input_tokens": 424
+        }
+      },
+      "sql": "SELECT SUM(unitPrice * quantity * (1 - discount)) AS total_revenue FROM northwind_order_details;",
+      "sql_valid": true,
+      "narrative": "Total trading revenue is 1,265,793.04, based on item prices and quantities after discounts, excluding freight. This figure represents the full order-detail value across the business, so it reflects core product sales rather than any shipping or surcharge income.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "2 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states the trading business's total revenue and makes clear whether line-item discounts were deducted.",
+          "passed": true,
+          "reasoning": "The response explicitly states the total trading revenue is 1,265,793.04. It also clearly indicates that this figure is calculated 'after discounts', satisfying the requirement to clarify whether line-item discounts were deducted."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "definitional_ambiguity",
+        "trading",
+        "aggregation"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "ambig_lost_orders_olist",
+      "question": "What proportion of our marketplace's orders never made it to the customer?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.6318904830113752,
+          "input_tokens": 212,
+          "output_tokens": 54,
+          "cached_input_tokens": 211
+        },
+        "list_tables": {
+          "latency_s": 0.023733164998702705,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 5.074653435993241,
+          "input_tokens": 196,
+          "output_tokens": 173,
+          "cached_input_tokens": 181
+        },
+        "get_schema": {
+          "latency_s": 0.03739941999083385,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 8.99275511399901,
+          "input_tokens": 814,
+          "output_tokens": 423,
+          "cached_input_tokens": 738
+        },
+        "build_widget": {
+          "latency_s": 7.945044157007942,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 900,
+          "output_tokens": 165,
+          "cached_input_tokens": 809
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 1674,
+          "output_tokens": 480,
+          "cached_input_tokens": 1421
+        },
+        "compose_narrative": {
+          "latency_s": 22.335355150993564,
+          "input_tokens": 560,
+          "output_tokens": 1509,
+          "cached_input_tokens": 361
+        }
+      },
+      "sql": "SELECT 100.0 * SUM(CASE WHEN order_delivered_customer_date IS NULL THEN 1 ELSE 0 END) / COUNT(*) AS pct_null_delivered_customer_date FROM olist_orders; SELECT order_status, COUNT(*) AS order_count FROM olist_orders WHERE order_delivered_customer_date IS NULL GROUP BY order_status",
+      "sql_valid": true,
+      "narrative": "Nearly 2.981667521444877% of marketplace orders never made it to the customer, based on orders with a null customer delivery date. Among these undelivered orders, the largest group is in \"shipped\" status (1,107), indicating orders that left the seller but lack a confirmed delivery, followed by \"canceled\" (619) and \"unavailable\" (609) orders. Notably, 8 orders are marked \"delivered\" despite having no recorded customer delivery date.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "3 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states a small percentage of undelivered orders and makes clear which statuses it counted as 'never made it' (canceled only, canceled plus unavailable, or all non-delivered).",
+          "passed": true,
+          "reasoning": "The response states a small percentage (nearly 2.98%) of undelivered orders. It also makes clear how it defined 'never made it' by stating it was based on orders with a null customer delivery date, and it explicitly lists the statuses included in this count (shipped, canceled, unavailable, and even some marked delivered). This clearly communicates that it counted all non-delivered orders (by date) rather than just canceled or canceled plus unavailable."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "definitional_ambiguity",
+        "marketplace",
+        "percentage"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "ambig_lost_orders_olist",
+      "question": "What proportion of our marketplace's orders never made it to the customer?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 6.145219173995429,
+          "input_tokens": 212,
+          "output_tokens": 56,
+          "cached_input_tokens": 197
+        },
+        "list_tables": {
+          "latency_s": 0.013138408001395874,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 5.509337256007711,
+          "input_tokens": 196,
+          "output_tokens": 200,
+          "cached_input_tokens": 195
+        },
+        "get_schema": {
+          "latency_s": 0.03626925499702338,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 9.701728356012609,
+          "input_tokens": 814,
+          "output_tokens": 154,
+          "cached_input_tokens": 738
+        },
+        "build_widget": {
+          "latency_s": 6.029379309999058,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 455,
+          "output_tokens": 78,
+          "cached_input_tokens": 384
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 824,
+          "output_tokens": 140,
+          "cached_input_tokens": 710
+        },
+        "compose_narrative": {
+          "latency_s": 4.915875559992855,
+          "input_tokens": 455,
+          "output_tokens": 292,
+          "cached_input_tokens": 361
+        }
+      },
+      "sql": "SELECT 100.0 * SUM(CASE WHEN order_delivered_customer_date IS NULL THEN 1 ELSE 0 END) / COUNT(*) AS pct_null_delivered_customer_date FROM olist_orders",
+      "sql_valid": true,
+      "narrative": "Nearly 3% of marketplace orders \u2014 2.981667521444877% \u2014 never reached the customer, based on orders with a null customer delivery date. While this is a relatively small share, it still represents a meaningful volume of failed deliveries that could warrant investigation into root causes such as carrier issues, cancellations, or lost shipments.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "3 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states a small percentage of undelivered orders and makes clear which statuses it counted as 'never made it' (canceled only, canceled plus unavailable, or all non-delivered).",
+          "passed": true,
+          "reasoning": "The response states a small percentage (nearly 3%) of undelivered orders. It also makes clear what it counted as 'never made it' by specifying that it based this on orders with a 'null customer delivery date', which corresponds to counting all non-delivered orders."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "definitional_ambiguity",
+        "marketplace",
+        "percentage"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "ambig_lost_orders_olist",
+      "question": "What proportion of our marketplace's orders never made it to the customer?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.114383612992242,
+          "input_tokens": 212,
+          "output_tokens": 54,
+          "cached_input_tokens": 12
+        },
+        "list_tables": {
+          "latency_s": 0.014829481995548122,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 5.493337876992882,
+          "input_tokens": 196,
+          "output_tokens": 200,
+          "cached_input_tokens": 181
+        },
+        "get_schema": {
+          "latency_s": 0.03785985300783068,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 8.770608221995644,
+          "input_tokens": 814,
+          "output_tokens": 467,
+          "cached_input_tokens": 738
+        },
+        "build_widget": {
+          "latency_s": 7.272697619002429,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 909,
+          "output_tokens": 203,
+          "cached_input_tokens": 807
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 1675,
+          "output_tokens": 426,
+          "cached_input_tokens": 1418
+        },
+        "compose_narrative": {
+          "latency_s": 7.7665770840103505,
+          "input_tokens": 569,
+          "output_tokens": 355,
+          "cached_input_tokens": 361
+        }
+      },
+      "sql": "SELECT 100.0 * COUNT(*) FILTER (WHERE order_delivered_customer_date IS NULL OR order_status <> 'delivered') / COUNT(*) AS pct_never_delivered FROM olist_orders;; SELECT order_status, COUNT(*) AS order_count\nFROM olist_orders\nWHERE order_delivered_customer_date IS NULL\nGROUP BY order_status\nORDER BY order_count DESC;",
+      "sql_valid": true,
+      "narrative": "Nearly 2.99% of marketplace orders never reached the customer, based on orders lacking a customer delivery date or carrying a status other than 'delivered.' Among these non-delivered orders, the largest group \u2014 1,107 \u2014 is in 'shipped' status, suggesting many were dispatched but not confirmed as delivered, followed by 619 canceled and 609 unavailable orders. Together, shipped, canceled, and unavailable account for the bulk of the problem, while smaller clusters sit in invoiced (314) and processing (301), indicating fulfillment-stage friction as the primary driver.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "3 gold options",
+          "passed": false,
+          "reasoning": "no widget matched any gold (gold row counts [1, 1, 1]); got [1, 8]"
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states a small percentage of undelivered orders and makes clear which statuses it counted as 'never made it' (canceled only, canceled plus unavailable, or all non-delivered).",
+          "passed": true,
+          "reasoning": "The response states that nearly 2.99% of orders never reached the customer, which is a small percentage. It clearly explains that it counted orders as 'never made it' if they lacked a customer delivery date or had a status other than 'delivered' (i.e., all non-delivered). It also lists the specific statuses included in this count, such as shipped, canceled, unavailable, invoiced, and processing."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "definitional_ambiguity",
+        "marketplace",
+        "percentage"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "ambig_freight_share_northwind",
+      "question": "Overall, what share of our trading business's total revenue goes to freight?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.0323204150045058,
+          "input_tokens": 213,
+          "output_tokens": 40,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.023608727991813794,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.311168647996965,
+          "input_tokens": 197,
+          "output_tokens": 94,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.030261978012276813,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 7.2713572250067955,
+          "input_tokens": 858,
+          "output_tokens": 396,
+          "cached_input_tokens": 737
+        },
+        "build_widget": {
+          "latency_s": 12.281181497994112,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 511,
+          "output_tokens": 90,
+          "cached_input_tokens": 366
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 823,
+          "output_tokens": 177,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 11.56162852399575,
+          "input_tokens": 457,
+          "output_tokens": 601,
+          "cached_input_tokens": 360
+        }
+      },
+      "sql": "SELECT (SELECT SUM(freight) FROM northwind_orders) / (SELECT SUM(unitPrice * quantity * (1 - discount)) FROM northwind_order_details) * 100 AS freight_to_revenue_pct",
+      "sql_valid": true,
+      "narrative": "Freight represents 5.13% of total revenue, a modest but non-trivial cost layer on top of net product sales. This figure is based on net product revenue (unit price \u00d7 quantity after discount), with freight excluded from the revenue base. At this level, shipping costs consume roughly one in every twenty dollars of product revenue, suggesting that even small freight optimizations could yield meaningful margin improvement without changes to pricing or product mix.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set_any",
+          "value": "5.13 | 4.79",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states freight as roughly 5% of trading revenue.",
+          "passed": true,
+          "reasoning": "The response explicitly states that freight represents 5.13% of total revenue, which aligns with the rubric's requirement of stating freight as roughly 5% of trading revenue."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "definitional_ambiguity",
+        "trading",
+        "percentage"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "ambig_freight_share_northwind",
+      "question": "Overall, what share of our trading business's total revenue goes to freight?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.3628250350011513,
+          "input_tokens": 213,
+          "output_tokens": 40,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.014340221008751541,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.3620154859963804,
+          "input_tokens": 197,
+          "output_tokens": 94,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.03182927900343202,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 9.185576924995985,
+          "input_tokens": 858,
+          "output_tokens": 179,
+          "cached_input_tokens": 815
+        },
+        "build_widget": {
+          "latency_s": 13.105767269997159,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 515,
+          "output_tokens": 126,
+          "cached_input_tokens": 424
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 823,
+          "output_tokens": 201,
+          "cached_input_tokens": 731
+        },
+        "compose_narrative": {
+          "latency_s": 14.952433577011107,
+          "input_tokens": 457,
+          "output_tokens": 554,
+          "cached_input_tokens": 426
+        }
+      },
+      "sql": "SELECT (SELECT SUM(freight) FROM northwind_orders) / (SELECT SUM(unitPrice * quantity * (1 - discount)) FROM northwind_order_details) * 100 AS freight_share_of_revenue",
+      "sql_valid": true,
+      "narrative": "Freight accounts for 5.130593072754848% of total revenue, meaning roughly one in twenty revenue dollars is consumed by shipping costs. This figure is based on net product revenue \u2014 unit price multiplied by quantity and adjusted for discounts \u2014 with freight measured separately as the numerator, so it reflects freight's share of sales value rather than of the grand total including shipping. The relatively modest share suggests freight is not a major drag on top-line revenue, though any per-order freight optimization would still flow almost entirely to margin.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set_any",
+          "value": "5.13 | 4.79",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states freight as roughly 5% of trading revenue.",
+          "passed": true,
+          "reasoning": "The response explicitly states that freight accounts for 5.130593072754848% of total revenue, which satisfies the rubric's requirement of stating freight as roughly 5% of trading revenue."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "definitional_ambiguity",
+        "trading",
+        "percentage"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "ambig_freight_share_northwind",
+      "question": "Overall, what share of our trading business's total revenue goes to freight?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.321405351001886,
+          "input_tokens": 213,
+          "output_tokens": 40,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.014632340011303313,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.088854879999417,
+          "input_tokens": 197,
+          "output_tokens": 57,
+          "cached_input_tokens": 196
+        },
+        "get_schema": {
+          "latency_s": 0.021303850997355767,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 14.10698263400991,
+          "input_tokens": 833,
+          "output_tokens": 401,
+          "cached_input_tokens": 737
+        },
+        "answer_text": {
+          "latency_s": 3.3190008252859116e-06,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        }
+      },
+      "sql": "",
+      "sql_valid": false,
+      "narrative": "I can't compute the freight share of total revenue from the available schema. The `northwind_orders` table contains a `freight` column, but it has no revenue or order-amount column (there's no order-line detail table with unit prices and quantities). To calculate the share, I'd need either an order total/revenue field or an order-details table. If you can provide that table or confirm a column I should treat as revenue, I'll build the metric right away.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": false,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set_any",
+          "value": "5.13 | 4.79",
+          "passed": false,
+          "reasoning": "no query result"
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states freight as roughly 5% of trading revenue.",
+          "passed": false,
+          "reasoning": "The response explicitly states that it cannot compute the freight share of total revenue due to missing data in the schema. It does not provide a percentage or state that freight is roughly 5% of trading revenue."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "definitional_ambiguity",
+        "trading",
+        "percentage"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "premise_reviews_crashed",
+      "question": "Our marketplace's average review score crashed to nearly 1 star \u2014 what went wrong?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.057925045999582,
+          "input_tokens": 215,
+          "output_tokens": 64,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.020070213999133557,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 9.816506001996459,
+          "input_tokens": 199,
+          "output_tokens": 206,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.186665596003877,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 9.431332805994316,
+          "input_tokens": 1004,
+          "output_tokens": 628,
+          "cached_input_tokens": 737
+        },
+        "build_widget": {
+          "latency_s": 13.628671464000945,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 3193,
+          "output_tokens": 520,
+          "cached_input_tokens": 1888
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 4195,
+          "output_tokens": 1277,
+          "cached_input_tokens": 2836
+        },
+        "compose_narrative": {
+          "latency_s": 14.093299871994532,
+          "input_tokens": 2001,
+          "output_tokens": 585,
+          "cached_input_tokens": 360
+        }
+      },
+      "sql": "SELECT AVG(review_score) AS avg_review_score FROM olist_order_reviews; SELECT strftime(review_creation_date, '%Y-%m') AS review_month, AVG(review_score) AS avg_review_score FROM olist_order_reviews WHERE review_creation_date IS NOT NULL AND review_score IS NOT NULL GROUP BY review_month ORDER BY review_month; SELECT o.order_status, AVG(r.review_score) AS avg_review_score, COUNT(*) AS review_count FROM olist_order_reviews r JOIN olist_orders o ON r.order_id = o.order_id WHERE r.review_score IS NOT NULL GROUP BY o.order_status ORDER BY avg_review_score ASC;; SELECT p.product_category_name, AVG(r.review_score) AS avg_review_score FROM olist_order_reviews r JOIN olist_orders o ON r.order_id = o.order_id JOIN olist_order_items i ON o.order_id = i.order_id JOIN olist_products p ON i.product_id = p.product_id WHERE r.review_score IS NOT NULL AND p.product_category_name IS NOT NULL GROUP BY p.product_category_name ORDER BY avg_review_score ASC LIMIT 10;; SELECT s.seller_id, AVG(r.review_score) AS avg_review_score, COUNT(r.review_score) AS review_count FROM olist_sellers s JOIN olist_order_items oi ON s.seller_id = oi.seller_id JOIN olist_orders o ON oi.order_id = o.order_id JOIN olist_order_reviews r ON o.order_id = r.order_id WHERE r.review_score IS NOT NULL GROUP BY s.seller_id HAVING COUNT(r.review_score) >= 5 ORDER BY avg_review_score ASC LIMIT 10;",
+      "sql_valid": true,
+      "narrative": "The marketplace's overall average review score is actually 4.09, not near 1 star \u2014 the near-1-star readings are concentrated in non-delivered order statuses, which make up only a small fraction of total reviews. Specifically, processing orders average 1.28, unavailable 1.53, invoiced 1.66, canceled 1.81, and shipped 2.01, whereas delivered orders \u2014 which account for 96,361 of the reviews \u2014 average 4.16. The monthly trend shows a brief dip to 2.36 in December 2016, but scores have otherwise stayed in the 4.0\u20134.3 range, so the 'crash' likely reflects filtering on unfulfilled orders rather than a true marketplace-wide decline. Scores are based on the raw review_score field in the reviews table, with no weighting or recalculation.",
+      "check_results": [
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The premise is false: the average review score is about 4.1 out of 5. The answer must state the real average and dispute the claimed crash. Mentioning the genuine share of low-score reviews is acceptable, as long as the answer does not endorse the false 'nearly 1 star' claim.",
+          "passed": true,
+          "reasoning": "The response correctly states that the real average review score is 4.09 (about 4.1 out of 5) and explicitly disputes the claimed crash, explaining that the near-1-star readings are concentrated in non-delivered order statuses rather than reflecting a true marketplace-wide decline. It mentions the genuine share of low-score reviews without endorsing the false 'nearly 1 star' claim, fully satisfying all rubric criteria."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "false_premise",
+        "no_hallucination",
+        "marketplace"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "premise_reviews_crashed",
+      "question": "Our marketplace's average review score crashed to nearly 1 star \u2014 what went wrong?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.552574822999304,
+          "input_tokens": 215,
+          "output_tokens": 65,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.015836092992685735,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 8.692873649997637,
+          "input_tokens": 199,
+          "output_tokens": 282,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.18667779199313372,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 7.806909015998826,
+          "input_tokens": 1004,
+          "output_tokens": 523,
+          "cached_input_tokens": 737
+        },
+        "build_widget": {
+          "latency_s": 13.285903707001125,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 3181,
+          "output_tokens": 454,
+          "cached_input_tokens": 1835
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 4182,
+          "output_tokens": 1383,
+          "cached_input_tokens": 2846
+        },
+        "compose_narrative": {
+          "latency_s": 8.702110120008001,
+          "input_tokens": 1576,
+          "output_tokens": 443,
+          "cached_input_tokens": 360
+        }
+      },
+      "sql": "SELECT AVG(review_score) AS avg_review_score FROM olist_order_reviews;; SELECT strftime(review_creation_date, '%Y-%m') AS review_month, AVG(review_score) AS avg_review_score FROM olist_order_reviews WHERE review_score IS NOT NULL GROUP BY review_month ORDER BY review_month;; SELECT review_score, COUNT(*) AS review_count FROM olist_order_reviews WHERE review_score IS NOT NULL AND review_score BETWEEN 1 AND 5 GROUP BY review_score ORDER BY review_score; SELECT o.order_status, AVG(r.review_score) AS avg_review_score FROM olist_order_reviews r JOIN olist_orders o ON r.order_id = o.order_id WHERE r.review_score IS NOT NULL GROUP BY o.order_status ORDER BY avg_review_score ASC;; SELECT p.product_category_name, AVG(r.review_score) AS avg_review_score FROM olist_order_reviews r JOIN olist_orders o ON r.order_id = o.order_id JOIN olist_order_items oi ON o.order_id = oi.order_id JOIN olist_products p ON oi.product_id = p.product_id WHERE r.review_score IS NOT NULL AND p.product_category_name IS NOT NULL GROUP BY p.product_category_name ORDER BY avg_review_score ASC LIMIT 10;",
+      "sql_valid": true,
+      "narrative": "The overall average review score is actually 4.09, not near 1 star \u2014 the low scores are concentrated in orders that never reached \"delivered\" status. Processing orders average 1.28, unavailable 1.53, invoiced 1.66, canceled 1.81, and shipped 2.01, while delivered orders sit at 4.16, indicating fulfillment failures rather than product dissatisfaction are driving the worst reviews. The monthly trend shows a sharp dip to 2.36 in December 2016 before recovering above 4.0 by January 2017, suggesting a temporary operational disruption rather than a sustained crash. Among product categories, seguros_e_servicos is lowest at 2.50, but even the worst categories stay above 2.5, so category quality is not the primary culprit.",
+      "check_results": [
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The premise is false: the average review score is about 4.1 out of 5. The answer must state the real average and dispute the claimed crash. Mentioning the genuine share of low-score reviews is acceptable, as long as the answer does not endorse the false 'nearly 1 star' claim.",
+          "passed": true,
+          "reasoning": "The response explicitly states the real average review score is 4.09 (about 4.1 out of 5) and directly disputes the premise that it crashed to nearly 1 star. It explains that the low scores are concentrated in undelivered orders and a temporary dip in December 2016, without endorsing the false claim."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "false_premise",
+        "no_hallucination",
+        "marketplace"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "premise_reviews_crashed",
+      "question": "Our marketplace's average review score crashed to nearly 1 star \u2014 what went wrong?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.647572335001314,
+          "input_tokens": 215,
+          "output_tokens": 65,
+          "cached_input_tokens": 214
+        },
+        "list_tables": {
+          "latency_s": 0.014357047009980306,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 10.12274271500064,
+          "input_tokens": 199,
+          "output_tokens": 226,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.2085443399992073,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 15.661621663995902,
+          "input_tokens": 1004,
+          "output_tokens": 535,
+          "cached_input_tokens": 816
+        },
+        "build_widget": {
+          "latency_s": 10.080762432000483,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 3178,
+          "output_tokens": 450,
+          "cached_input_tokens": 2115
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 4221,
+          "output_tokens": 1366,
+          "cached_input_tokens": 3686
+        },
+        "compose_narrative": {
+          "latency_s": 15.345107213011943,
+          "input_tokens": 1584,
+          "output_tokens": 481,
+          "cached_input_tokens": 360
+        }
+      },
+      "sql": "SELECT AVG(review_score) AS avg_review_score FROM olist_order_reviews;; SELECT strftime(review_creation_date, '%Y-%m') AS review_month, AVG(review_score) AS avg_review_score FROM olist_order_reviews WHERE review_score IS NOT NULL AND review_creation_date IS NOT NULL GROUP BY review_month ORDER BY review_month;; SELECT review_score, COUNT(*) AS review_count FROM olist_order_reviews WHERE review_score BETWEEN 1 AND 5 GROUP BY review_score ORDER BY review_score;; SELECT p.product_category_name, AVG(r.review_score) AS avg_review_score FROM olist_order_reviews r JOIN olist_orders o ON r.order_id = o.order_id JOIN olist_order_items oi ON o.order_id = oi.order_id JOIN olist_products p ON oi.product_id = p.product_id WHERE r.review_score IS NOT NULL AND p.product_category_name IS NOT NULL GROUP BY p.product_category_name ORDER BY avg_review_score ASC LIMIT 10;; SELECT o.order_status, AVG(r.review_score) AS avg_review_score\nFROM olist_order_reviews r\nJOIN olist_orders o ON r.order_id = o.order_id\nWHERE r.review_score IS NOT NULL\nGROUP BY o.order_status\nORDER BY avg_review_score ASC;",
+      "sql_valid": true,
+      "narrative": "The marketplace's overall average review score is actually 4.09, not near 1 star \u2014 the premise doesn't hold up against the data. What may look like a crash is concentrated entirely in non-delivered orders: processing orders average 1.28, unavailable 1.53, invoiced 1.66, canceled 1.81, and shipped 2.01, whereas delivered orders sit at 4.16. The monthly trend shows a brief dip to 2.36 in 2016-12 (and 3.19 in 2016-11) before recovering to the 4.0\u20134.3 range for all of 2017\u20132018, with no sustained collapse. Among product categories, the lowest-scoring are seguros_e_servicos (2.50), fraldas_higiene (3.26), and portateis_cozinha_e_preparadores_de_alimentos (3.27), but even these are well above 1 star. The real signal is operational: customers who never receive their orders leave devastating reviews, while the delivered experience remains strong.",
+      "check_results": [
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The premise is false: the average review score is about 4.1 out of 5. The answer must state the real average and dispute the claimed crash. Mentioning the genuine share of low-score reviews is acceptable, as long as the answer does not endorse the false 'nearly 1 star' claim.",
+          "passed": true,
+          "reasoning": "The response explicitly states that the overall average review score is 4.09, which aligns with the rubric's requirement of stating the real average (about 4.1 out of 5). It directly disputes the claimed crash by stating 'the premise doesn't hold up against the data' and 'with no sustained collapse.' It also explains that low scores are concentrated in non-delivered orders without endorsing the false 'nearly 1 star' claim. Therefore, the response fully satisfies the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "false_premise",
+        "no_hallucination",
+        "marketplace"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "premise_sp_collapse",
+      "question": "Why did revenue from our S\u00e3o Paulo marketplace customers collapse to almost nothing?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.6769498329958878,
+          "input_tokens": 212,
+          "output_tokens": 48,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.015291874995455146,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 6.390196616994217,
+          "input_tokens": 196,
+          "output_tokens": 163,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.11904375499580055,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 15.630003513011616,
+          "input_tokens": 886,
+          "output_tokens": 660,
+          "cached_input_tokens": 12
+        },
+        "build_widget": {
+          "latency_s": 23.335536448998027,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 2653,
+          "output_tokens": 1000,
+          "cached_input_tokens": 2036
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 4208,
+          "output_tokens": 1646,
+          "cached_input_tokens": 3545
+        },
+        "compose_narrative": {
+          "latency_s": 13.82184397499077,
+          "input_tokens": 5209,
+          "output_tokens": 602,
+          "cached_input_tokens": 360
+        }
+      },
+      "sql": "WITH recent_month AS (\n  SELECT date_trunc('month', MAX(o.order_purchase_timestamp)) AS max_month\n  FROM olist_orders o\n  JOIN olist_customers c ON o.customer_id = c.customer_id\n  WHERE c.customer_state = 'SP'\n)\nSELECT SUM(p.payment_value) AS total_payment_value\nFROM olist_orders o\nJOIN olist_customers c ON o.customer_id = c.customer_id\nJOIN olist_order_payments p ON o.order_id = p.order_id\nWHERE c.customer_state = 'SP'\n  AND date_trunc('month', o.order_purchase_timestamp) = (SELECT max_month FROM recent_month);; WITH latest_month AS (\n  SELECT MAX(date_trunc('month', order_purchase_timestamp)) AS max_month\n  FROM olist_orders\n),\ntarget_month AS (\n  SELECT max_month - INTERVAL 1 MONTH AS month_start\n  FROM latest_month\n)\nSELECT\n  COALESCE(SUM(p.payment_value), 0) AS total_payment_value\nFROM olist_orders o\nJOIN olist_customers c ON o.customer_id = c.customer_id\nJOIN olist_order_payments p ON o.order_id = p.order_id\nCROSS JOIN target_month t\nWHERE c.customer_state = 'SP'\n  AND date_trunc('month', o.order_purchase_timestamp) = t.month_start;; SELECT date_trunc('month', o.order_purchase_timestamp) AS order_month, SUM(p.payment_value) AS total_payment_value FROM olist_orders o JOIN olist_customers c ON o.customer_id = c.customer_id JOIN olist_order_payments p ON o.order_id = p.order_id WHERE c.customer_state = 'SP' GROUP BY order_month ORDER BY order_month;; SELECT date_trunc('month', o.order_purchase_timestamp) AS month, SUM(CASE WHEN c.customer_state = 'SP' THEN p.payment_value ELSE 0 END) AS sp_total_payment_value, SUM(CASE WHEN c.customer_state <> 'SP' THEN p.payment_value ELSE 0 END) AS other_total_payment_value FROM olist_orders o JOIN olist_customers c ON o.customer_id = c.customer_id JOIN olist_order_payments p ON o.order_id = p.order_id WHERE p.payment_value IS NOT NULL GROUP BY 1 ORDER BY 1;; SELECT date_trunc('month', o.order_purchase_timestamp) AS order_month, o.order_status, COUNT(DISTINCT o.order_id) AS order_count FROM olist_orders o JOIN olist_customers c ON o.customer_id = c.customer_id WHERE c.customer_state = 'SP' GROUP BY 1, 2 ORDER BY 1, 2;",
+      "sql_valid": true,
+      "narrative": "S\u00e3o Paulo revenue fell from R$459,934.71 in August 2018 to just R$3,202.91 in September and R$287.26 in October \u2014 a collapse driven not by lower order values but by a near-total disappearance of orders, as the status breakdown shows only 8 SP orders in September (7 canceled, 1 shipped) and 2 in October (both canceled), with zero delivered orders in either month versus 3,164 delivered in August. This is not an SP-specific problem: other-state revenue simultaneously plummeted from R$562,490.61 in August to R$1,236.63 in September and R$302.41 in October, indicating a platform-wide data cutoff or ordering halt in the final two months rather than a S\u00e3o Paulo market issue. Revenue figures are based on payment values from the payments table, covering all order statuses.",
+      "check_results": [
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The premise is misleading: S\u00e3o Paulo is the LARGEST revenue state (over 5 million in item revenue); any apparent drop at the end of the period reflects the dataset ending with partial trailing months, not a business collapse. The answer must either contradict the premise with the real totals or attribute the apparent drop to data coverage \u2014 it must NOT invent business explanations (lost demand, competition, churn) for a collapse.",
+          "passed": true,
+          "reasoning": "The response satisfies the rubric because it attributes the apparent drop in revenue to a 'platform-wide data cutoff' in the final two months, explicitly stating it is not a S\u00e3o Paulo market issue. It does not invent business explanations like lost demand, competition, or churn, thereby meeting the requirement to attribute the drop to data coverage."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "false_premise",
+        "no_hallucination",
+        "marketplace"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "premise_sp_collapse",
+      "question": "Why did revenue from our S\u00e3o Paulo marketplace customers collapse to almost nothing?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.555624329994316,
+          "input_tokens": 212,
+          "output_tokens": 48,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.015767460005008616,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 6.431062263000058,
+          "input_tokens": 196,
+          "output_tokens": 190,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.11317304700787645,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 18.767470827006036,
+          "input_tokens": 886,
+          "output_tokens": 988,
+          "cached_input_tokens": 737
+        },
+        "build_widget": {
+          "latency_s": 21.481832018995192,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 2669,
+          "output_tokens": 942,
+          "cached_input_tokens": 2318
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 4234,
+          "output_tokens": 2320,
+          "cached_input_tokens": 3551
+        },
+        "compose_narrative": {
+          "latency_s": 20.27562609499728,
+          "input_tokens": 3276,
+          "output_tokens": 1290,
+          "cached_input_tokens": 378
+        }
+      },
+      "sql": "WITH recent_month AS (\n  SELECT date_trunc('month', MAX(order_purchase_timestamp)) AS month_start\n  FROM olist_orders\n)\nSELECT SUM(p.payment_value) AS total_revenue\nFROM olist_orders o\nJOIN olist_customers c ON o.customer_id = c.customer_id\nJOIN olist_order_payments p ON o.order_id = p.order_id\nCROSS JOIN recent_month rm\nWHERE c.customer_city = 'S\u00e3o Paulo'\n  AND date_trunc('month', o.order_purchase_timestamp) = rm.month_start\n  AND o.order_purchase_timestamp IS NOT NULL;; SELECT date_trunc('month', o.order_purchase_timestamp) AS month, SUM(p.payment_value) AS total_revenue FROM olist_customers c JOIN olist_orders o ON c.customer_id = o.customer_id JOIN olist_order_payments p ON o.order_id = p.order_id WHERE c.customer_state = 'SP' GROUP BY 1 ORDER BY 1;; SELECT strftime(order_purchase_timestamp, '%Y-%m') AS month,\n       COUNT(DISTINCT o.order_id) AS order_count\nFROM olist_orders o\nJOIN olist_customers c ON o.customer_id = c.customer_id\nWHERE c.customer_city = 'S\u00e3o Paulo'\nGROUP BY 1\nORDER BY 1;; SELECT o.order_status, COUNT(*) AS order_count, ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS share_pct FROM olist_orders o JOIN olist_customers c ON o.customer_id = c.customer_id WHERE c.customer_city = 'S\u00e3o Paulo' GROUP BY o.order_status ORDER BY order_count DESC;; SELECT strftime(o.order_purchase_timestamp, '%Y-%m') AS month, p.payment_type, SUM(p.payment_value) AS total_revenue FROM olist_customers c JOIN olist_orders o ON c.customer_id = o.customer_id JOIN olist_order_payments p ON o.order_id = p.order_id WHERE c.customer_state = 'SP' GROUP BY month, p.payment_type ORDER BY month, p.payment_type;",
+      "sql_valid": true,
+      "narrative": "S\u00e3o Paulo (SP state) revenue collapsed because credit card and boleto payments \u2014 which together accounted for the overwhelming majority of revenue throughout the trend \u2014 vanished entirely after August 2018, leaving only tiny voucher payments of 3,202.91 in September 2018 and 287.26 in October 2018. Revenue based on raw payment values (olist_order_payments.payment_value) had been growing steadily and peaked at 492,978.52 in May 2018, with August 2018 still at 459,934.71, so the drop is abrupt rather than gradual. Notably, every widget that filters by customer_city = 'S\u00e3o Paulo' returns no rows at all, while state-level ('SP') queries return data \u2014 suggesting the city field may not match the expected spelling, which is why the recent-month city-level revenue shows as None rather than a small number.",
+      "check_results": [
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The premise is misleading: S\u00e3o Paulo is the LARGEST revenue state (over 5 million in item revenue); any apparent drop at the end of the period reflects the dataset ending with partial trailing months, not a business collapse. The answer must either contradict the premise with the real totals or attribute the apparent drop to data coverage \u2014 it must NOT invent business explanations (lost demand, competition, churn) for a collapse.",
+          "passed": false,
+          "reasoning": "The response fails to satisfy the rubric. While it correctly identifies a data coverage issue for the city-level drop (spelling mismatch), it treats the state-level drop as a real event by stating that credit card and boleto payments 'vanished entirely after August 2018.' It does not attribute this apparent drop to the dataset ending with partial trailing months, nor does it contradict the premise by providing the real total revenue for S\u00e3o Paulo (over 5 million). Therefore, it does not meet the rubric's requirement to attribute the apparent drop to data coverage or contradict the premise."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "false_premise",
+        "no_hallucination",
+        "marketplace"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "premise_sp_collapse",
+      "question": "Why did revenue from our S\u00e3o Paulo marketplace customers collapse to almost nothing?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.0057288550015073,
+          "input_tokens": 212,
+          "output_tokens": 45,
+          "cached_input_tokens": 211
+        },
+        "list_tables": {
+          "latency_s": 0.016549822001252323,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.774310766995768,
+          "input_tokens": 196,
+          "output_tokens": 148,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.1084526419872418,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 13.577336813992588,
+          "input_tokens": 885,
+          "output_tokens": 919,
+          "cached_input_tokens": 737
+        },
+        "build_widget": {
+          "latency_s": 10.170598508004332,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 2646,
+          "output_tokens": 689,
+          "cached_input_tokens": 2101
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 4234,
+          "output_tokens": 1213,
+          "cached_input_tokens": 3552
+        },
+        "compose_narrative": {
+          "latency_s": 7.040610572003061,
+          "input_tokens": 2333,
+          "output_tokens": 434,
+          "cached_input_tokens": 376
+        }
+      },
+      "sql": "SELECT SUM(p.payment_value) AS total_payment_revenue\nFROM olist_customers c\nJOIN olist_orders o ON c.customer_id = o.customer_id\nJOIN olist_order_payments p ON o.order_id = p.order_id\nWHERE c.customer_state = 'SP';; SELECT strftime(order_purchase_timestamp, '%Y-%m') AS month, SUM(p.payment_value) AS total_revenue FROM olist_customers c JOIN olist_orders o ON c.customer_id = o.customer_id JOIN olist_order_payments p ON o.order_id = p.order_id WHERE c.customer_state = 'SP' GROUP BY 1 ORDER BY 1;; SELECT o.order_status, COUNT(*) AS order_count FROM olist_orders o JOIN olist_customers c ON o.customer_id = c.customer_id WHERE c.customer_state = 'SP' GROUP BY o.order_status ORDER BY order_count DESC;; SELECT p.payment_type, SUM(p.payment_value) AS total_revenue FROM olist_customers c JOIN olist_orders o ON c.customer_id = o.customer_id JOIN olist_order_payments p ON o.order_id = p.order_id WHERE c.customer_state = 'SP' GROUP BY p.payment_type ORDER BY total_revenue DESC;; SELECT date_trunc('month', o.order_purchase_timestamp) AS month, SUM(CASE WHEN c.customer_state = 'SP' THEN p.payment_value ELSE 0 END) AS sp_revenue, SUM(CASE WHEN c.customer_state <> 'SP' THEN p.payment_value ELSE 0 END) AS other_states_revenue FROM olist_orders o JOIN olist_customers c ON o.customer_id = c.customer_id JOIN olist_order_payments p ON o.order_id = p.order_id WHERE p.payment_value IS NOT NULL GROUP BY 1 ORDER BY 1;",
+      "sql_valid": true,
+      "narrative": "S\u00e3o Paulo revenue did not truly collapse \u2014 it grew steadily from 2016 through a peak of 492,978.52 in May 2018 and stayed strong through August 2018 at 459,934.71, before dropping to just 3,202.91 in September and 287.26 in October. Critically, the same sharp drop appears for all other states combined (from 562,490.61 in August to 1,236.63 in September and 302.41 in October), indicating the tail-off reflects the dataset ending rather than a S\u00e3o Paulo-specific problem. Across the full period, S\u00e3o Paulo generated 5,998,226.96 in total payment revenue (based on payment values, not order item prices), with 40,501 delivered orders and credit cards driving 4,676,662.34 of the total. The state's revenue consistently tracked at roughly 40\u201345% of all other states combined, so its share held stable throughout \u2014 there is no evidence of a real decline.",
+      "check_results": [
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The premise is misleading: S\u00e3o Paulo is the LARGEST revenue state (over 5 million in item revenue); any apparent drop at the end of the period reflects the dataset ending with partial trailing months, not a business collapse. The answer must either contradict the premise with the real totals or attribute the apparent drop to data coverage \u2014 it must NOT invent business explanations (lost demand, competition, churn) for a collapse.",
+          "passed": true,
+          "reasoning": "The response directly contradicts the misleading premise by providing the real total revenue for S\u00e3o Paulo (nearly 6 million) and correctly attributes the sharp drop at the end of the period to the dataset ending with partial trailing months. It also explicitly avoids inventing any business explanations for a collapse, noting that the state's share held stable and there is no evidence of a real decline."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "false_premise",
+        "no_hallucination",
+        "marketplace"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "adv_fanout_monthly",
+      "question": "For each month, how many marketplace orders did we receive and what was the total item revenue?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.3391110289958306,
+          "input_tokens": 217,
+          "output_tokens": 36,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.022205761008081026,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.3356871439900715,
+          "input_tokens": 201,
+          "output_tokens": 134,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.08035189099609852,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 8.894630687995232,
+          "input_tokens": 856,
+          "output_tokens": 374,
+          "cached_input_tokens": 737
+        },
+        "build_widget": {
+          "latency_s": 32.95139077499334,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 498,
+          "output_tokens": 251,
+          "cached_input_tokens": 366
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 857,
+          "output_tokens": 1400,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 7.937738624008489,
+          "input_tokens": 1024,
+          "output_tokens": 633,
+          "cached_input_tokens": 360
+        }
+      },
+      "sql": "SELECT strftime(o.order_purchase_timestamp, '%Y-%m') AS month,\n       COUNT(DISTINCT o.order_id) AS orders_received,\n       SUM(i.price) AS total_item_revenue\nFROM olist_orders o\nJOIN olist_order_items i ON o.order_id = i.order_id\nGROUP BY 1\nORDER BY 1;",
+      "sql_valid": true,
+      "narrative": "Marketplace orders and item revenue (based on item prices, excluding freight) grew steadily from early 2017 through mid-2018, peaking in November 2017 with 7,451 orders and 1,010,271.37 in revenue. After that peak, order volume settled into a range of roughly 6,100\u20137,200 per month through August 2018, while revenue remained elevated near 996,647.75 in April 2018. The earliest and latest months (2016-09, 2016-12, 2018-09) show only 1\u20133 orders, indicating partial data capture rather than true demand.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "2 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "adversarial",
+        "join",
+        "time_series",
+        "hard",
+        "marketplace"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "adv_fanout_monthly",
+      "question": "For each month, how many marketplace orders did we receive and what was the total item revenue?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.8612954810087103,
+          "input_tokens": 217,
+          "output_tokens": 36,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.014886158998706378,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 6.333431423001457,
+          "input_tokens": 201,
+          "output_tokens": 97,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.0725329690030776,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 7.605990288007888,
+          "input_tokens": 856,
+          "output_tokens": 374,
+          "cached_input_tokens": 737
+        },
+        "build_widget": {
+          "latency_s": 13.31064421100018,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 498,
+          "output_tokens": 190,
+          "cached_input_tokens": 460
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 858,
+          "output_tokens": 709,
+          "cached_input_tokens": 710
+        },
+        "compose_narrative": {
+          "latency_s": 6.2458579990052385,
+          "input_tokens": 1020,
+          "output_tokens": 344,
+          "cached_input_tokens": 360
+        }
+      },
+      "sql": "SELECT strftime('%Y-%m', o.order_purchase_timestamp) AS calendar_month, COUNT(DISTINCT o.order_id) AS orders_received, SUM(i.price) AS total_item_revenue FROM olist_orders o JOIN olist_order_items i ON o.order_id = i.order_id GROUP BY 1 ORDER BY 1;",
+      "sql_valid": true,
+      "narrative": "Marketplace orders and item revenue (based on item prices, excluding freight) grew sharply from late 2016 through 2017, with November 2017 standing out as the single peak month at 7,451 orders and 1,010,271.37 in revenue. From January 2018 onward, order volume held in a narrower band of roughly 6,160 to 7,220 per month and revenue stayed between 844,178.71 and 996,647.75, suggesting the business settled into a sustained but plateauing level after the rapid ramp-up. The earliest and latest months in the data (September 2016, December 2016, and September 2018) show only 1\u20133 orders each, likely reflecting partial-month data capture rather than true demand collapse.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "2 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "adversarial",
+        "join",
+        "time_series",
+        "hard",
+        "marketplace"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "adv_fanout_monthly",
+      "question": "For each month, how many marketplace orders did we receive and what was the total item revenue?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.466803508999874,
+          "input_tokens": 217,
+          "output_tokens": 36,
+          "cached_input_tokens": 216
+        },
+        "list_tables": {
+          "latency_s": 0.024797111997031607,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.154275246997713,
+          "input_tokens": 201,
+          "output_tokens": 134,
+          "cached_input_tokens": 200
+        },
+        "get_schema": {
+          "latency_s": 0.07114098900638055,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 6.890374859998701,
+          "input_tokens": 856,
+          "output_tokens": 401,
+          "cached_input_tokens": 855
+        },
+        "build_widget": {
+          "latency_s": 25.804211274007685,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 526,
+          "output_tokens": 110,
+          "cached_input_tokens": 496
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 857,
+          "output_tokens": 1314,
+          "cached_input_tokens": 856
+        },
+        "compose_narrative": {
+          "latency_s": 14.034338169003604,
+          "input_tokens": 1210,
+          "output_tokens": 1183,
+          "cached_input_tokens": 394
+        }
+      },
+      "sql": "SELECT date_trunc('month', o.order_purchase_timestamp) AS month, COUNT(DISTINCT o.order_id) AS orders_received, SUM(i.price) AS total_item_revenue FROM olist_orders o JOIN olist_order_items i ON o.order_id = i.order_id GROUP BY 1 ORDER BY 1;",
+      "sql_valid": true,
+      "narrative": "November 2017 was the peak month, with 7,451 orders and 1,010,271.37 in item revenue (based on item prices, excluding freight). From early 2017 through mid-2018, both order volume and revenue grew steadily and sustained high levels, with monthly orders consistently above 6,000 from January 2018 through August 2018. The series ends with just 1 order in September 2018.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "2 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "adversarial",
+        "join",
+        "time_series",
+        "hard",
+        "marketplace"
+      ],
+      "attempt": 2
+    }
+  ],
+  "consistency": [
+    {
+      "case_id": "exec_board_marketplace_overview",
+      "attempts": 3,
+      "passed_count": 3,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "exec_revenue_concentration_olist",
+      "attempts": 3,
+      "passed_count": 3,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "exec_sales_reps_northwind",
+      "attempts": 3,
+      "passed_count": 3,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "exec_drilldown_best_month",
+      "attempts": 3,
+      "passed_count": 3,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "ambig_total_revenue_olist",
+      "attempts": 3,
+      "passed_count": 3,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "ambig_aov_olist",
+      "attempts": 3,
+      "passed_count": 3,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "ambig_revenue_northwind",
+      "attempts": 3,
+      "passed_count": 3,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "ambig_lost_orders_olist",
+      "attempts": 3,
+      "passed_count": 2,
+      "consistency": 0.667,
+      "flaky": true
+    },
+    {
+      "case_id": "ambig_freight_share_northwind",
+      "attempts": 3,
+      "passed_count": 2,
+      "consistency": 0.667,
+      "flaky": true
+    },
+    {
+      "case_id": "premise_reviews_crashed",
+      "attempts": 3,
+      "passed_count": 3,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "premise_sp_collapse",
+      "attempts": 3,
+      "passed_count": 2,
+      "consistency": 0.667,
+      "flaky": true
+    },
+    {
+      "case_id": "adv_fanout_monthly",
+      "attempts": 3,
+      "passed_count": 3,
+      "consistency": 1.0,
+      "flaky": false
+    }
+  ]
+}

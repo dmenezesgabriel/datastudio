@@ -1,0 +1,1253 @@
+{
+  "run_at": "2026-07-15T10:11:01.174108+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 10,
+    "passed": 6,
+    "failed": 4,
+    "pass_rate": 0.6,
+    "avg_latency_s": 34.732,
+    "p95_latency_s": 58.242,
+    "total_input_tokens": 35509,
+    "total_output_tokens": 16288,
+    "total_cached_input_tokens": 24961,
+    "cache_read_rate": 0.703,
+    "avg_input_tokens": 3550.9,
+    "avg_output_tokens": 1628.8,
+    "cost_usd": 0.0,
+    "view_selection": {
+      "passed": 35,
+      "total": 35,
+      "accuracy": 1.0
+    },
+    "consistency": {
+      "cases": 2,
+      "mean_consistency": 0.6,
+      "reliable": 1,
+      "flaky": 1,
+      "failing": 0
+    },
+    "by_tag": {
+      "window": {
+        "total": 10,
+        "passed": 6
+      },
+      "running_total": {
+        "total": 5,
+        "passed": 5
+      },
+      "time_series": {
+        "total": 5,
+        "passed": 5
+      },
+      "chart": {
+        "total": 5,
+        "passed": 5
+      },
+      "hard": {
+        "total": 10,
+        "passed": 6
+      },
+      "rank": {
+        "total": 5,
+        "passed": 1
+      },
+      "join": {
+        "total": 5,
+        "passed": 1
+      },
+      "expert": {
+        "total": 5,
+        "passed": 1
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "olist_cumulative_gmv",
+      "question": "Show the cumulative gross merchandise value by month as a running total.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.6200744529924123,
+          "input_tokens": 211,
+          "output_tokens": 38,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.030803116998868063,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.9182122869970044,
+          "input_tokens": 145,
+          "output_tokens": 101,
+          "cached_input_tokens": 131
+        },
+        "get_schema": {
+          "latency_s": 0.11985494900727645,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 6.342577856004937,
+          "input_tokens": 819,
+          "output_tokens": 180,
+          "cached_input_tokens": 707
+        },
+        "build_widget": {
+          "latency_s": 12.415714326998568,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 504,
+          "output_tokens": 302,
+          "cached_input_tokens": 421
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 856,
+          "output_tokens": 695,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 4.605165582994232,
+          "input_tokens": 1022,
+          "output_tokens": 307,
+          "cached_input_tokens": 275
+        }
+      },
+      "sql": "WITH monthly AS (\n  SELECT strftime(o.order_purchase_timestamp, '%Y-%m') AS month,\n         SUM(i.price) AS gmv\n  FROM olist_orders o\n  JOIN olist_order_items i ON o.order_id = i.order_id\n  GROUP BY 1\n)\nSELECT month,\n       gmv,\n       SUM(gmv) OVER (ORDER BY month) AS cumulative_gmv\nFROM monthly\nORDER BY month;",
+      "sql_valid": true,
+      "narrative": "Cumulative gross merchandise value reached 13,591,643.70 by September 2018, growing from just 267.36 in September 2016 \u2014 a roughly 50,000-fold increase over two years. Monthly GMV ramped up steadily through 2017, peaking at 1,010,271.37 in November 2017 (likely a holiday surge), and then sustained high levels through mid-2018 with several months near or above 950,000. The final month, September 2018, saw a sharp drop to just 145.00, suggesting either a data cutoff or a significant decline in transaction activity.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "13591643.7",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "ChartJs:line",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A line/area chart is appropriate for a cumulative running total of GMV over time.",
+          "passed": true,
+          "reasoning": "The chosen line chart is an appropriate visualization for displaying a cumulative running total of GMV over time. The data contains a time dimension (month) and a cumulative measure (cumulative_gmv) across 24 rows, which is well-suited for a line chart to show the trend and progression of the running total over the period."
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "window",
+        "running_total",
+        "time_series",
+        "chart",
+        "hard"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "olist_cumulative_gmv",
+      "question": "Show the cumulative gross merchandise value by month as a running total.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.6266912980063353,
+          "input_tokens": 211,
+          "output_tokens": 38,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.021165285987081006,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.4810830170026748,
+          "input_tokens": 145,
+          "output_tokens": 82,
+          "cached_input_tokens": 132
+        },
+        "get_schema": {
+          "latency_s": 0.10989454999798909,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 6.440977352001937,
+          "input_tokens": 820,
+          "output_tokens": 139,
+          "cached_input_tokens": 725
+        },
+        "build_widget": {
+          "latency_s": 7.1307746740058064,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 494,
+          "output_tokens": 256,
+          "cached_input_tokens": 465
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 850,
+          "output_tokens": 213,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 4.459128810995026,
+          "input_tokens": 945,
+          "output_tokens": 347,
+          "cached_input_tokens": 276
+        }
+      },
+      "sql": "WITH monthly AS (\n  SELECT date_trunc('month', o.order_purchase_timestamp) AS month,\n         SUM(i.price) AS gmv\n  FROM olist_order_items i\n  JOIN olist_orders o ON i.order_id = o.order_id\n  GROUP BY 1\n)\nSELECT month, SUM(gmv) OVER (ORDER BY month) AS cumulative_gmv\nFROM monthly\nORDER BY month;",
+      "sql_valid": true,
+      "narrative": "Cumulative gross merchandise value reached 13,591,643.70 by September 2018, growing from just 267.36 in September 2016. The trajectory was consistently upward, with the pace of accumulation accelerating notably through 2017 \u2014 monthly increments widened from roughly 120,000 in early 2017 to over 1,000,000 by November 2017 (4,451,407.36 to 5,461,678.73). Growth continued strongly through mid-2018 before effectively flattening between August (13,591,498.70) and September (13,591,643.70), indicating minimal new GMV in the final month.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "13591643.7",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "ChartJs:line",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A line/area chart is appropriate for a cumulative running total of GMV over time.",
+          "passed": true,
+          "reasoning": "The chosen line chart is an appropriate visualization for displaying a cumulative running total over time. With 24 months of data, a line chart effectively shows the continuous, monotonically increasing trend of the cumulative GMV, aligning perfectly with the rubric and data-visualization best practices."
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "window",
+        "running_total",
+        "time_series",
+        "chart",
+        "hard"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "olist_cumulative_gmv",
+      "question": "Show the cumulative gross merchandise value by month as a running total.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.000921966988244,
+          "input_tokens": 211,
+          "output_tokens": 37,
+          "cached_input_tokens": 198
+        },
+        "list_tables": {
+          "latency_s": 0.02349182499165181,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 6.929712760000257,
+          "input_tokens": 145,
+          "output_tokens": 94,
+          "cached_input_tokens": 144
+        },
+        "get_schema": {
+          "latency_s": 0.12377067899797112,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.53097954801342,
+          "input_tokens": 819,
+          "output_tokens": 210,
+          "cached_input_tokens": 709
+        },
+        "build_widget": {
+          "latency_s": 13.469074337001075,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 490,
+          "output_tokens": 292,
+          "cached_input_tokens": 423
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 858,
+          "output_tokens": 916,
+          "cached_input_tokens": 731
+        },
+        "compose_narrative": {
+          "latency_s": 4.476657534003607,
+          "input_tokens": 1216,
+          "output_tokens": 273,
+          "cached_input_tokens": 324
+        }
+      },
+      "sql": "SELECT\n  date_trunc('month', o.order_purchase_timestamp) AS purchase_month,\n  SUM(i.price) AS monthly_gmv,\n  SUM(SUM(i.price)) OVER (ORDER BY date_trunc('month', o.order_purchase_timestamp)) AS cumulative_gmv\nFROM olist_order_items i\nJOIN olist_orders o ON o.order_id = i.order_id\nWHERE o.order_purchase_timestamp IS NOT NULL\nGROUP BY date_trunc('month', o.order_purchase_timestamp)\nORDER BY purchase_month;",
+      "sql_valid": true,
+      "narrative": "Cumulative gross merchandise value grew from 267.36 in September 2016 to 13,591,643.70 by September 2018, reflecting a rapid ramp that began in early 2017. The strongest single month was November 2017 at 1,010,271.37, and monthly GMV consistently exceeded 800,000 throughout 2018, indicating sustained scale rather than a one-time spike. The final month (September 2018) contributed just 145.00, suggesting the data window closed early in that period.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "13591643.7",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "ChartJs:line",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A line/area chart is appropriate for a cumulative running total of GMV over time.",
+          "passed": true,
+          "reasoning": "The question asks for a cumulative running total of GMV over time. The data contains 24 monthly rows and includes a 'cumulative_gmv' column. A line chart is an excellent choice for visualizing trends over time, particularly for cumulative values, and aligns perfectly with the rubric's guidance that a line/area chart is appropriate for this scenario."
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "window",
+        "running_total",
+        "time_series",
+        "chart",
+        "hard"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "olist_cumulative_gmv",
+      "question": "Show the cumulative gross merchandise value by month as a running total.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.6144257569976617,
+          "input_tokens": 211,
+          "output_tokens": 38,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.023831640006392263,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.9711234620044706,
+          "input_tokens": 145,
+          "output_tokens": 101,
+          "cached_input_tokens": 131
+        },
+        "get_schema": {
+          "latency_s": 0.09806155199476052,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 5.3026525220047915,
+          "input_tokens": 819,
+          "output_tokens": 180,
+          "cached_input_tokens": 707
+        },
+        "build_widget": {
+          "latency_s": 15.89389300699986,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 490,
+          "output_tokens": 222,
+          "cached_input_tokens": 421
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 858,
+          "output_tokens": 1022,
+          "cached_input_tokens": 715
+        },
+        "compose_narrative": {
+          "latency_s": 4.841027507005492,
+          "input_tokens": 1024,
+          "output_tokens": 284,
+          "cached_input_tokens": 300
+        }
+      },
+      "sql": "SELECT strftime(o.order_purchase_timestamp, '%Y-%m') AS purchase_month, SUM(i.price) AS monthly_gmv, SUM(SUM(i.price)) OVER (ORDER BY strftime(o.order_purchase_timestamp, '%Y-%m')) AS cumulative_gmv FROM olist_orders o JOIN olist_order_items i ON o.order_id = i.order_id GROUP BY strftime(o.order_purchase_timestamp, '%Y-%m') ORDER BY purchase_month",
+      "sql_valid": true,
+      "narrative": "Cumulative gross merchandise value grew from just 267.36 in September 2016 to 13,591,643.70 by September 2018, reflecting a rapid scale-up over two years. The strongest single month was November 2017 at 1,010,271.37, and monthly GMV generally stabilized in the 850,000\u20131,000,000 range throughout 2018, indicating sustained transaction volume rather than continued acceleration. The final month (September 2018) recorded only 145.00, suggesting the period may capture a partial month or a sharp drop-off at the end of the data window.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "13591643.7",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "ChartJs:line",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A line/area chart is appropriate for a cumulative running total of GMV over time.",
+          "passed": true,
+          "reasoning": "The chosen line chart is an appropriate visualization for displaying a cumulative running total over time. The data contains a time dimension (`purchase_month`) and a cumulative measure (`cumulative_gmv`) across 24 months, which is well-suited for a line chart to show the trend and progression of the running total."
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "window",
+        "running_total",
+        "time_series",
+        "chart",
+        "hard"
+      ],
+      "attempt": 3
+    },
+    {
+      "case_id": "olist_cumulative_gmv",
+      "question": "Show the cumulative gross merchandise value by month as a running total.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.272840357996756,
+          "input_tokens": 211,
+          "output_tokens": 37,
+          "cached_input_tokens": 197
+        },
+        "list_tables": {
+          "latency_s": 0.019793277999269776,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.978597595996689,
+          "input_tokens": 145,
+          "output_tokens": 82,
+          "cached_input_tokens": 144
+        },
+        "get_schema": {
+          "latency_s": 0.12480527500156313,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 6.731567829992855,
+          "input_tokens": 820,
+          "output_tokens": 168,
+          "cached_input_tokens": 709
+        },
+        "build_widget": {
+          "latency_s": 27.006609033007408,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 493,
+          "output_tokens": 294,
+          "cached_input_tokens": 460
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 857,
+          "output_tokens": 722,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 4.336671293989639,
+          "input_tokens": 1023,
+          "output_tokens": 299,
+          "cached_input_tokens": 303
+        }
+      },
+      "sql": "WITH monthly AS (\n  SELECT strftime(o.order_purchase_timestamp, '%Y-%m') AS purchase_month,\n         SUM(i.price) AS gmv\n  FROM olist_order_items i\n  JOIN olist_orders o ON i.order_id = o.order_id\n  GROUP BY 1\n)\nSELECT purchase_month,\n       gmv,\n       SUM(gmv) OVER (ORDER BY purchase_month) AS cumulative_gmv\nFROM monthly\nORDER BY purchase_month;",
+      "sql_valid": true,
+      "narrative": "Cumulative gross merchandise value reached 13,591,643.70 by September 2018, growing from just 267.36 in September 2016 \u2014 a roughly 50,000-fold increase over two years. Monthly GMV accelerated sharply in 2018, with every month from January through August exceeding 844,000.00 and several months approaching or surpassing 990,000.00, compared to 2017 where monthly values mostly ranged between 350,000.00 and 750,000.00. The single largest month was November 2017 at 1,010,271.37, likely reflecting holiday-season demand, while September 2018 contributed only 145.00, suggesting the month was still in progress when the data was captured.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "result_set",
+          "value": "13591643.7",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "ChartJs:line",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A line/area chart is appropriate for a cumulative running total of GMV over time.",
+          "passed": true,
+          "reasoning": "The request asks for a cumulative running total of GMV by month. The data contains 24 monthly rows with a dedicated `cumulative_gmv` column, representing a continuous time series. A line chart is an appropriate choice for visualizing cumulative trends over time, and the rubric explicitly endorses a line/area chart for this use case."
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "window",
+        "running_total",
+        "time_series",
+        "chart",
+        "hard"
+      ],
+      "attempt": 4
+    },
+    {
+      "case_id": "olist_top_category_per_state",
+      "question": "For each customer state, what is the top product category by revenue?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.513673767010914,
+          "input_tokens": 212,
+          "output_tokens": 56,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.024983379000332206,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 8.986850253000739,
+          "input_tokens": 146,
+          "output_tokens": 290,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.16687513698707335,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 9.482100351990084,
+          "input_tokens": 907,
+          "output_tokens": 209,
+          "cached_input_tokens": 707
+        },
+        "build_widget": {
+          "latency_s": 12.3596648620005,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 596,
+          "output_tokens": 340,
+          "cached_input_tokens": 392
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 823,
+          "output_tokens": 175,
+          "cached_input_tokens": 710
+        },
+        "compose_narrative": {
+          "latency_s": 13.201382950006519,
+          "input_tokens": 829,
+          "output_tokens": 530,
+          "cached_input_tokens": 291
+        }
+      },
+      "sql": "WITH state_category_revenue AS (\n  SELECT\n    c.customer_state,\n    p.product_category_name,\n    SUM(oi.price) AS total_revenue\n  FROM olist_customers c\n  JOIN olist_orders o ON c.customer_id = o.customer_id\n  JOIN olist_order_items oi ON o.order_id = oi.order_id\n  JOIN olist_products p ON oi.product_id = p.product_id\n  WHERE p.product_category_name IS NOT NULL\n  GROUP BY c.customer_state, p.product_category_name\n),\nranked AS (\n  SELECT\n    customer_state,\n    product_category_name,\n    total_revenue,\n    ROW_NUMBER() OVER (PARTITION BY customer_state ORDER BY total_revenue DESC) AS rn\n  FROM state_category_revenue\n)\nSELECT\n  customer_state,\n  product_category_name AS top_product_category,\n  total_revenue\nFROM ranked\nWHERE rn = 1\nORDER BY customer_state;",
+      "sql_valid": true,
+      "narrative": "Beleza_saude is the top product category by revenue in 15 of 27 customer states, making it the most broadly dominant category across the country. The largest single state-category combination is SP with cama_mesa_banho at 478,284.52, far exceeding the next-highest state, RJ, where relogios_presentes leads at 185,379.65. Relogios_presentes is the top category in 6 states \u2014 concentrated in the South/Southeast and Center-West (DF, ES, GO, PR, RJ, TO) \u2014 while cama_mesa_banho tops only SP and RS, and esporte_lazer leads in three smaller-revenue states (AC, RR, SC).",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "WITH r AS (SELECT c.customer_state AS state, t.product_category_name_english AS category, SUM(i.price) AS rev, ROW_NUMBER() OVER(PARTITION BY c.customer_state ORDER BY SUM(i.price) DESC) AS rk FROM olist_orders o JOIN olist_customers c ON o.customer_id=c.customer_id JOIN olist_order_items i ON o.order_id=i.order_id JOIN olist_products p ON i.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1,2) SELECT state, category, ROUND(rev,2) AS revenue FROM r WHERE rk=1 ORDER BY state",
+          "passed": false,
+          "reasoning": "no widget matched 27 gold row(s); got [27]"
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A per-state top-category listing is a detail table (one row per state), never a pie or a single KPI.",
+          "passed": true,
+          "reasoning": "The chosen view is a DataTable, which aligns perfectly with the rubric. A per-state top-category listing is best presented as a detail table with one row per state, and the data shape (27 rows with state, category, and revenue) fits this perfectly. It avoids inappropriate visualizations like pies or single KPIs."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "window",
+        "rank",
+        "join",
+        "expert",
+        "hard"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "olist_top_category_per_state",
+      "question": "For each customer state, what is the top product category by revenue?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.386441152993939,
+          "input_tokens": 212,
+          "output_tokens": 57,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.017090724999434315,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 5.06312207999872,
+          "input_tokens": 146,
+          "output_tokens": 179,
+          "cached_input_tokens": 145
+        },
+        "get_schema": {
+          "latency_s": 0.19697477499721572,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.933039056995767,
+          "input_tokens": 907,
+          "output_tokens": 197,
+          "cached_input_tokens": 707
+        },
+        "build_widget": {
+          "latency_s": 9.938463486003457,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 576,
+          "output_tokens": 275,
+          "cached_input_tokens": 413
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 923,
+          "output_tokens": 321,
+          "cached_input_tokens": 710
+        },
+        "compose_narrative": {
+          "latency_s": 6.778976578993024,
+          "input_tokens": 829,
+          "output_tokens": 510,
+          "cached_input_tokens": 275
+        }
+      },
+      "sql": "WITH state_category_revenue AS (\n  SELECT\n    c.customer_state,\n    p.product_category_name,\n    SUM(oi.price) AS total_revenue\n  FROM olist_customers c\n  JOIN olist_orders o ON c.customer_id = o.customer_id\n  JOIN olist_order_items oi ON o.order_id = oi.order_id\n  JOIN olist_products p ON oi.product_id = p.product_id\n  WHERE p.product_category_name IS NOT NULL\n  GROUP BY c.customer_state, p.product_category_name\n),\nranked AS (\n  SELECT\n    customer_state,\n    product_category_name,\n    total_revenue,\n    ROW_NUMBER() OVER (\n      PARTITION BY customer_state\n      ORDER BY total_revenue DESC\n    ) AS rn\n  FROM state_category_revenue\n)\nSELECT\n  customer_state,\n  product_category_name AS top_product_category,\n  total_revenue\nFROM ranked\nWHERE rn = 1\nORDER BY customer_state;",
+      "sql_valid": true,
+      "narrative": "Beleza_saude is the top product category by revenue in 15 of 27 customer states, making it the most common leading category, with its strongest showing in MG at 157,558.30. The highest single-state revenue, however, comes from SP, where cama_mesa_banh leads at 478,284.52, followed by RJ with relogios_presentes at 185,379.65. Relogios_presentes is the top category in 6 states, concentrated primarily in the Southeast and Center-West (DF, ES, GO, PR, RJ, TO), while the remaining states are led by esporte_lazer (3 states), cama_mesa_banho (2 states), and informatica_acessorios (1 state).",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "WITH r AS (SELECT c.customer_state AS state, t.product_category_name_english AS category, SUM(i.price) AS rev, ROW_NUMBER() OVER(PARTITION BY c.customer_state ORDER BY SUM(i.price) DESC) AS rk FROM olist_orders o JOIN olist_customers c ON o.customer_id=c.customer_id JOIN olist_order_items i ON o.order_id=i.order_id JOIN olist_products p ON i.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1,2) SELECT state, category, ROUND(rev,2) AS revenue FROM r WHERE rk=1 ORDER BY state",
+          "passed": false,
+          "reasoning": "no widget matched 27 gold row(s); got [27]"
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A per-state top-category listing is a detail table (one row per state), never a pie or a single KPI.",
+          "passed": true,
+          "reasoning": "The chosen view is a DataTable, which aligns perfectly with the rubric. A per-state top-category listing is best presented as a detail table with one row per state, and the data shape (27 rows with state, category, and revenue) fits this perfectly. It avoids inappropriate visualizations like pies or single KPIs."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "window",
+        "rank",
+        "join",
+        "expert",
+        "hard"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "olist_top_category_per_state",
+      "question": "For each customer state, what is the top product category by revenue?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.4340401939989533,
+          "input_tokens": 212,
+          "output_tokens": 38,
+          "cached_input_tokens": 211
+        },
+        "list_tables": {
+          "latency_s": 0.025267108998377807,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.281454751995625,
+          "input_tokens": 146,
+          "output_tokens": 320,
+          "cached_input_tokens": 145
+        },
+        "get_schema": {
+          "latency_s": 0.2077560649922816,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.145897904993035,
+          "input_tokens": 908,
+          "output_tokens": 132,
+          "cached_input_tokens": 773
+        },
+        "build_widget": {
+          "latency_s": 8.57620826200582,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 596,
+          "output_tokens": 336,
+          "cached_input_tokens": 415
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 823,
+          "output_tokens": 124,
+          "cached_input_tokens": 710
+        },
+        "compose_narrative": {
+          "latency_s": 5.734685517993057,
+          "input_tokens": 829,
+          "output_tokens": 464,
+          "cached_input_tokens": 306
+        }
+      },
+      "sql": "WITH state_category_revenue AS (\n  SELECT\n    c.customer_state,\n    p.product_category_name,\n    SUM(oi.price) AS total_revenue\n  FROM olist_order_items oi\n  JOIN olist_orders o ON oi.order_id = o.order_id\n  JOIN olist_customers c ON o.customer_id = c.customer_id\n  JOIN olist_products p ON oi.product_id = p.product_id\n  WHERE p.product_category_name IS NOT NULL\n  GROUP BY c.customer_state, p.product_category_name\n),\nranked AS (\n  SELECT\n    customer_state,\n    product_category_name,\n    total_revenue,\n    ROW_NUMBER() OVER (PARTITION BY customer_state ORDER BY total_revenue DESC) AS rn\n  FROM state_category_revenue\n)\nSELECT\n  customer_state,\n  product_category_name,\n  total_revenue\nFROM ranked\nWHERE rn = 1\nORDER BY customer_state;",
+      "sql_valid": true,
+      "narrative": "**beleza_saude** is the top revenue category in 15 of 27 customer states, making it the most common leading category, with its strongest showing in MG at 157,558.30. The two highest-revenue states overall are SP (478,284.52) and RJ (185,379.65), but they are led by different categories \u2014 cama_mesa_banho in SP and relogios_presentes in RJ \u2014 highlighting that the dominant category varies even among the largest markets. relogios_presentes is the top category in 6 states, while cama_mesa_banho, esporte_lazer, and informatica_acessorios lead in a smaller handful of states.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "WITH r AS (SELECT c.customer_state AS state, t.product_category_name_english AS category, SUM(i.price) AS rev, ROW_NUMBER() OVER(PARTITION BY c.customer_state ORDER BY SUM(i.price) DESC) AS rk FROM olist_orders o JOIN olist_customers c ON o.customer_id=c.customer_id JOIN olist_order_items i ON o.order_id=i.order_id JOIN olist_products p ON i.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1,2) SELECT state, category, ROUND(rev,2) AS revenue FROM r WHERE rk=1 ORDER BY state",
+          "passed": false,
+          "reasoning": "no widget matched 27 gold row(s); got [27]"
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A per-state top-category listing is a detail table (one row per state), never a pie or a single KPI.",
+          "passed": true,
+          "reasoning": "The rubric explicitly calls for a detail table (one row per state) to show the top product category by revenue per state. The chosen views include a DataTable, which is the correct view type for this data shape and question. A WidgetFrame simply serves as the container for the table. No pie chart or single KPI is used, aligning perfectly with the rubric."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "window",
+        "rank",
+        "join",
+        "expert",
+        "hard"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "olist_top_category_per_state",
+      "question": "For each customer state, what is the top product category by revenue?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.6224952449992998,
+          "input_tokens": 212,
+          "output_tokens": 38,
+          "cached_input_tokens": 211
+        },
+        "list_tables": {
+          "latency_s": 0.021347182992030866,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 30.849492234003264,
+          "input_tokens": 146,
+          "output_tokens": 433,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.21828208400984295,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.020658605004428,
+          "input_tokens": 926,
+          "output_tokens": 240,
+          "cached_input_tokens": 773
+        },
+        "build_widget": {
+          "latency_s": 11.169473677990027,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 623,
+          "output_tokens": 773,
+          "cached_input_tokens": 413
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 825,
+          "output_tokens": 128,
+          "cached_input_tokens": 710
+        },
+        "compose_narrative": {
+          "latency_s": 10.340564186000847,
+          "input_tokens": 797,
+          "output_tokens": 603,
+          "cached_input_tokens": 291
+        }
+      },
+      "sql": "WITH state_cat_rev AS (\n  SELECT\n    c.customer_state,\n    t.product_category_name_english,\n    SUM(i.price) AS total_revenue\n  FROM olist_customers c\n  JOIN olist_orders o ON c.customer_id = o.customer_id\n  JOIN olist_order_items i ON o.order_id = i.order_id\n  JOIN olist_products p ON i.product_id = p.product_id\n  LEFT JOIN olist_category_translation t ON p.product_category_name = t.product_category_name\n  WHERE t.product_category_name_english IS NOT NULL\n  GROUP BY c.customer_state, t.product_category_name_english\n),\nranked AS (\n  SELECT\n    customer_state,\n    product_category_name_english,\n    total_revenue,\n    ROW_NUMBER() OVER (PARTITION BY customer_state ORDER BY total_revenue DESC) AS rn\n  FROM state_cat_rev\n)\nSELECT\n  customer_state,\n  product_category_name_english,\n  total_revenue\nFROM ranked\nWHERE rn = 1\nORDER BY customer_state;",
+      "sql_valid": true,
+      "narrative": "Health and beauty is the top revenue category in 15 of 27 customer states, making it the most common leader, while watches and gifts leads in 6 states\u2014most notably RJ at 185,379.65\u2014and bed, bath, and table tops in just 2 states but includes the single largest figure, SP at 478,284.52. The highest-revenue states are concentrated in the Southeast and South, with SP, RJ, and MG together accounting for the three largest category totals across the dataset. Smaller states such as AC, AP, and RR show comparatively modest top-category revenues, all below 2,200.00.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "WITH r AS (SELECT c.customer_state AS state, t.product_category_name_english AS category, SUM(i.price) AS rev, ROW_NUMBER() OVER(PARTITION BY c.customer_state ORDER BY SUM(i.price) DESC) AS rk FROM olist_orders o JOIN olist_customers c ON o.customer_id=c.customer_id JOIN olist_order_items i ON o.order_id=i.order_id JOIN olist_products p ON i.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1,2) SELECT state, category, ROUND(rev,2) AS revenue FROM r WHERE rk=1 ORDER BY state",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A per-state top-category listing is a detail table (one row per state), never a pie or a single KPI.",
+          "passed": true,
+          "reasoning": "The question asks for a per-state top-category listing, and the rubric explicitly states this should be a detail table with one row per state. The chosen DataTable is the correct view type for this data shape (27 rows, one per state), and it avoids the prohibited pie or single KPI approaches. The WidgetFrame is simply a container and does not conflict with the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "window",
+        "rank",
+        "join",
+        "expert",
+        "hard"
+      ],
+      "attempt": 3
+    },
+    {
+      "case_id": "olist_top_category_per_state",
+      "question": "For each customer state, what is the top product category by revenue?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.47313234199828,
+          "input_tokens": 212,
+          "output_tokens": 59,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.016658910011756234,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.8114095900091343,
+          "input_tokens": 146,
+          "output_tokens": 179,
+          "cached_input_tokens": 145
+        },
+        "get_schema": {
+          "latency_s": 0.1751045040000463,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.693465952994302,
+          "input_tokens": 907,
+          "output_tokens": 155,
+          "cached_input_tokens": 755
+        },
+        "build_widget": {
+          "latency_s": 9.572706517996266,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 592,
+          "output_tokens": 515,
+          "cached_input_tokens": 395
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 820,
+          "output_tokens": 137,
+          "cached_input_tokens": 740
+        },
+        "compose_narrative": {
+          "latency_s": 5.787690573997679,
+          "input_tokens": 826,
+          "output_tokens": 506,
+          "cached_input_tokens": 307
+        }
+      },
+      "sql": "WITH state_cat_rev AS (\n    SELECT\n        c.customer_state,\n        p.product_category_name,\n        SUM(oi.price) AS total_revenue\n    FROM olist_customers c\n    JOIN olist_orders o ON c.customer_id = o.customer_id\n    JOIN olist_order_items oi ON o.order_id = oi.order_id\n    JOIN olist_products p ON oi.product_id = p.product_id\n    WHERE p.product_category_name IS NOT NULL\n    GROUP BY c.customer_state, p.product_category_name\n),\nranked AS (\n    SELECT\n        customer_state,\n        product_category_name,\n        total_revenue,\n        ROW_NUMBER() OVER (\n            PARTITION BY customer_state\n            ORDER BY total_revenue DESC\n        ) AS rn\n    FROM state_cat_rev\n)\nSELECT\n    customer_state,\n    product_category_name AS top_category,\n    total_revenue AS revenue\nFROM ranked\nWHERE rn = 1\nORDER BY customer_state;",
+      "sql_valid": true,
+      "narrative": "Beleza_saude is the top revenue category in 15 of 27 customer states, making it the most common leader, while relogios_presentes leads in 6 states and cama_mesa_banho, esporte_lazer, and informatica_acessorios round out the remaining top spots. The largest single-state revenue figure comes from SP, where cama_mesa_banho generates 478,284.52 \u2014 roughly 2.6 times the next-highest state, RJ at 185,379.65 in relogios_presentes. Notably, beleza_saude's strongest state is MG at 157,558.30, and the category tends to dominate in northeastern and northern states, whereas relogios_presentes and cama_mesa_banho lead in several southern and southeastern states.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "WITH r AS (SELECT c.customer_state AS state, t.product_category_name_english AS category, SUM(i.price) AS rev, ROW_NUMBER() OVER(PARTITION BY c.customer_state ORDER BY SUM(i.price) DESC) AS rk FROM olist_orders o JOIN olist_customers c ON o.customer_id=c.customer_id JOIN olist_order_items i ON o.order_id=i.order_id JOIN olist_products p ON i.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1,2) SELECT state, category, ROUND(rev,2) AS revenue FROM r WHERE rk=1 ORDER BY state",
+          "passed": false,
+          "reasoning": "no widget matched 27 gold row(s); got [27]"
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A per-state top-category listing is a detail table (one row per state), never a pie or a single KPI.",
+          "passed": true,
+          "reasoning": "The data is a 27-row, one-record-per-state listing of top category and revenue. The rubric explicitly calls for a detail table in this scenario, and the chosen DataTable satisfies that requirement. WidgetFrame is merely a container and does not conflict with the table choice. No pie or single KPI is used, so the presentation follows best practices."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "window",
+        "rank",
+        "join",
+        "expert",
+        "hard"
+      ],
+      "attempt": 4
+    }
+  ],
+  "consistency": [
+    {
+      "case_id": "olist_cumulative_gmv",
+      "attempts": 5,
+      "passed_count": 5,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "olist_top_category_per_state",
+      "attempts": 5,
+      "passed_count": 1,
+      "consistency": 0.2,
+      "flaky": true
+    }
+  ]
+}

@@ -1,0 +1,1258 @@
+{
+  "run_at": "2026-07-16T10:32:46.978953+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 12,
+    "passed": 10,
+    "failed": 2,
+    "pass_rate": 0.833,
+    "avg_latency_s": 43.637,
+    "p95_latency_s": 63.944,
+    "total_input_tokens": 35229,
+    "total_output_tokens": 19033,
+    "total_cached_input_tokens": 28883,
+    "cache_read_rate": 0.82,
+    "avg_input_tokens": 2935.8,
+    "avg_output_tokens": 1586.1,
+    "cost_usd": 0.0,
+    "view_selection": {
+      "passed": 17,
+      "total": 18,
+      "accuracy": 0.944
+    },
+    "consistency": {
+      "cases": 4,
+      "mean_consistency": 0.834,
+      "reliable": 2,
+      "flaky": 2,
+      "failing": 0
+    },
+    "by_tag": {
+      "group_by": {
+        "total": 6,
+        "passed": 5
+      },
+      "ranking": {
+        "total": 6,
+        "passed": 5
+      },
+      "medium": {
+        "total": 3,
+        "passed": 2
+      },
+      "resilience": {
+        "total": 3,
+        "passed": 2
+      },
+      "out_of_scope": {
+        "total": 3,
+        "passed": 2
+      },
+      "no_hallucination": {
+        "total": 3,
+        "passed": 2
+      },
+      "having": {
+        "total": 3,
+        "passed": 3
+      },
+      "join": {
+        "total": 3,
+        "passed": 3
+      },
+      "hard": {
+        "total": 3,
+        "passed": 3
+      },
+      "exec_scenario": {
+        "total": 3,
+        "passed": 3
+      },
+      "trading": {
+        "total": 3,
+        "passed": 3
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "olist_top_customer_state",
+      "question": "Which Brazilian state has the highest number of registered customers?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.2126881449949,
+          "input_tokens": 209,
+          "output_tokens": 31,
+          "cached_input_tokens": 197
+        },
+        "list_tables": {
+          "latency_s": 0.02607766300207004,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.7049360280070687,
+          "input_tokens": 193,
+          "output_tokens": 90,
+          "cached_input_tokens": 182
+        },
+        "get_schema": {
+          "latency_s": 0.06308694000472315,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.296037719002925,
+          "input_tokens": 780,
+          "output_tokens": 197,
+          "cached_input_tokens": 738
+        },
+        "build_widget": {
+          "latency_s": 6.862060608997126,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 417,
+          "output_tokens": 70,
+          "cached_input_tokens": 392
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 812,
+          "output_tokens": 133,
+          "cached_input_tokens": 710
+        },
+        "compose_narrative": {
+          "latency_s": 8.090459611004917,
+          "input_tokens": 433,
+          "output_tokens": 228,
+          "cached_input_tokens": 361
+        }
+      },
+      "sql": "SELECT customer_state, COUNT(*) AS customer_count FROM olist_customers GROUP BY customer_state ORDER BY customer_count DESC LIMIT 1",
+      "sql_valid": true,
+      "narrative": "S\u00e3o Paulo (SP) has the highest number of registered customers among Brazilian states, with 41,746 customer records. This count reflects all customer account entries in the dataset rather than deduplicated individuals. The concentration in SP suggests the platform's customer base is heavily skewed toward Brazil's most populous state, which likely represents a key market for the business.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT customer_state FROM olist_customers GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should name a Brazilian state abbreviation or full name and associate it with the largest customer concentration.",
+          "passed": true,
+          "reasoning": "The response explicitly names the Brazilian state 'S\u00e3o Paulo (SP)' and associates it with having the highest number of registered customers, which aligns perfectly with the rubric's requirement to name a state and associate it with the largest customer concentration."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A single top-state answer is one value: a KPI or a one-row table, never a chart or pie.",
+          "passed": true,
+          "reasoning": "The question asks for a single top state, and the data contains exactly one row. The rubric explicitly allows a KPI or a one-row table for this scenario. The chosen DataTable correctly presents the single top-state answer without unnecessary charting, aligning with best practices."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "olist_top_customer_state",
+      "question": "Which Brazilian state has the highest number of registered customers?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.217741724001826,
+          "input_tokens": 209,
+          "output_tokens": 31,
+          "cached_input_tokens": 197
+        },
+        "list_tables": {
+          "latency_s": 0.014618973989854567,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.6680761680036085,
+          "input_tokens": 193,
+          "output_tokens": 42,
+          "cached_input_tokens": 192
+        },
+        "get_schema": {
+          "latency_s": 0.03715669900702778,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 9.040490796003724,
+          "input_tokens": 780,
+          "output_tokens": 369,
+          "cached_input_tokens": 737
+        },
+        "build_widget": {
+          "latency_s": 32.24311294499785,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 415,
+          "output_tokens": 47,
+          "cached_input_tokens": 406
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 912,
+          "output_tokens": 1152,
+          "cached_input_tokens": 712
+        },
+        "compose_narrative": {
+          "latency_s": 3.6684223230113275,
+          "input_tokens": 433,
+          "output_tokens": 194,
+          "cached_input_tokens": 361
+        }
+      },
+      "sql": "SELECT customer_state, COUNT(*) AS customer_count FROM olist_customers GROUP BY customer_state ORDER BY customer_count DESC LIMIT 1",
+      "sql_valid": true,
+      "narrative": "S\u00e3o Paulo (SP) has the highest number of registered customers among Brazilian states, with 41,746 customer records. This count reflects the number of customer account entries in the dataset rather than deduplicated unique individuals. The concentration in SP points to the state being the primary customer base, likely reflecting its larger population and economic activity.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT customer_state FROM olist_customers GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should name a Brazilian state abbreviation or full name and associate it with the largest customer concentration.",
+          "passed": true,
+          "reasoning": "The response explicitly names the Brazilian state 'S\u00e3o Paulo (SP)' and associates it with having the highest number of registered customers, which perfectly aligns with the rubric's requirement to name a state and associate it with the largest customer concentration."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A single top-state answer is one value: a KPI or a one-row table, never a chart or pie.",
+          "passed": true,
+          "reasoning": "The question asks for a single top state, and the data contains exactly one row. The rubric allows a KPI or a one-row table for this type of answer. The chosen DataTable will display this single row appropriately, following the data-visualization best practices outlined in the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "olist_top_customer_state",
+      "question": "Which Brazilian state has the highest number of registered customers?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.9432801560033113,
+          "input_tokens": 209,
+          "output_tokens": 49,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.0182542449911125,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.8905361749930307,
+          "input_tokens": 193,
+          "output_tokens": 42,
+          "cached_input_tokens": 181
+        },
+        "get_schema": {
+          "latency_s": 0.0545978610025486,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 10.620031849000952,
+          "input_tokens": 780,
+          "output_tokens": 332,
+          "cached_input_tokens": 738
+        },
+        "build_widget": {
+          "latency_s": 15.563961748004658,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 431,
+          "output_tokens": 78,
+          "cached_input_tokens": 394
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 911,
+          "output_tokens": 482,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 8.587831159995403,
+          "input_tokens": 432,
+          "output_tokens": 211,
+          "cached_input_tokens": 373
+        }
+      },
+      "sql": "SELECT customer_state, COUNT(*) AS customer_count FROM olist_customers GROUP BY customer_state ORDER BY customer_count DESC LIMIT 1",
+      "sql_valid": true,
+      "narrative": "S\u00e3o Paulo (SP) has the highest number of registered customers among Brazilian states, with 41,746 customer records. This count reflects customer accounts registered in the dataset rather than unique individuals. The concentration in SP points to the state being the primary customer base, likely reflecting its larger population and economic activity compared with other states.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT customer_state FROM olist_customers GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should name a Brazilian state abbreviation or full name and associate it with the largest customer concentration.",
+          "passed": true,
+          "reasoning": "The response explicitly names the Brazilian state 'S\u00e3o Paulo (SP)' and associates it with having the highest number of registered customers, which aligns perfectly with the rubric's requirement to name a state and associate it with the largest customer concentration."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A single top-state answer is one value: a KPI or a one-row table, never a chart or pie.",
+          "passed": false,
+          "reasoning": "The data contains only a single row representing the top state. According to the rubric, a single value should be presented as a KPI or a one-row table, not a bar chart. A bar chart with one bar is unnecessary and does not follow best practices for this data shape."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "resilience_impossible_profit",
+      "question": "What is the average profit margin per order on our marketplace?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.603815266003949,
+          "input_tokens": 210,
+          "output_tokens": 153,
+          "cached_input_tokens": 204
+        },
+        "list_tables": {
+          "latency_s": 0.023887667994131334,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 16.274906127000577,
+          "input_tokens": 194,
+          "output_tokens": 500,
+          "cached_input_tokens": 184
+        },
+        "get_schema": {
+          "latency_s": 0.07752086401160341,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 11.834353939004359,
+          "input_tokens": 849,
+          "output_tokens": 488,
+          "cached_input_tokens": 740
+        },
+        "answer_text": {
+          "latency_s": 7.377006113529205e-06,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        }
+      },
+      "sql": "",
+      "sql_valid": false,
+      "narrative": "I can\u2019t calculate average profit margin per order with the available schema. The tables include order item price and freight value, but they don\u2019t contain cost of goods sold, seller costs, or any profit/cost fields needed to derive a profit margin. If you\u2019d like, I can instead show average order value, average freight cost per order, or average freight as a percentage of item price.",
+      "check_results": [
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The dataset has no cost or profit information, so profit margin cannot be computed. The answer must make clear this cannot be derived from the available data and must NOT fabricate a margin or any specific number.",
+          "passed": true,
+          "reasoning": "The response explicitly states that the average profit margin cannot be calculated with the available schema because the necessary cost/profit fields are missing. It does not fabricate any margin or specific number, and it offers alternative metrics that can be computed. This fully satisfies the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "resilience",
+        "out_of_scope",
+        "no_hallucination"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "resilience_impossible_profit",
+      "question": "What is the average profit margin per order on our marketplace?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.3458263620123034,
+          "input_tokens": 210,
+          "output_tokens": 49,
+          "cached_input_tokens": 209
+        },
+        "list_tables": {
+          "latency_s": 0.027479505995870568,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 9.204052749992115,
+          "input_tokens": 194,
+          "output_tokens": 426,
+          "cached_input_tokens": 193
+        },
+        "get_schema": {
+          "latency_s": 0.10666330000094604,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 10.732476171993767,
+          "input_tokens": 892,
+          "output_tokens": 430,
+          "cached_input_tokens": 737
+        },
+        "answer_text": {
+          "latency_s": 1.190199691336602e-05,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        }
+      },
+      "sql": "",
+      "sql_valid": false,
+      "narrative": "I can\u2019t calculate average profit margin per order with the current schema. Profit margin requires cost data (e.g., cost of goods sold, seller costs, fees), but the available tables only include selling price, freight value, and payment amounts\u2014no cost fields. If you can provide cost data or a cost table, I can compute it. Alternatively, I can calculate average order value, average payment value, or average freight cost per order from the existing data.",
+      "check_results": [
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The dataset has no cost or profit information, so profit margin cannot be computed. The answer must make clear this cannot be derived from the available data and must NOT fabricate a margin or any specific number.",
+          "passed": true,
+          "reasoning": "The response clearly states that the average profit margin cannot be calculated with the current schema because the necessary cost data is missing. It does not fabricate any margin or specific number, and it correctly explains why the calculation is impossible with the available data."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "resilience",
+        "out_of_scope",
+        "no_hallucination"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "resilience_impossible_profit",
+      "question": "What is the average profit margin per order on our marketplace?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.361053439002717,
+          "input_tokens": 210,
+          "output_tokens": 49,
+          "cached_input_tokens": 199
+        },
+        "list_tables": {
+          "latency_s": 0.015830288000870496,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 17.839190902013797,
+          "input_tokens": 194,
+          "output_tokens": 642,
+          "cached_input_tokens": 184
+        },
+        "get_schema": {
+          "latency_s": 0.07563662600296084,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 13.394804879004369,
+          "input_tokens": 848,
+          "output_tokens": 597,
+          "cached_input_tokens": 745
+        },
+        "build_widget": {
+          "latency_s": 10.545943643010105,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 522,
+          "output_tokens": 362,
+          "cached_input_tokens": 421
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 822,
+          "output_tokens": 142,
+          "cached_input_tokens": 821
+        },
+        "compose_narrative": {
+          "latency_s": 18.564844578999327,
+          "input_tokens": 475,
+          "output_tokens": 917,
+          "cached_input_tokens": 364
+        }
+      },
+      "sql": "SELECT AVG((total_price - total_freight) / total_price) * 100 AS avg_profit_margin_pct FROM (SELECT order_id, SUM(price) AS total_price, SUM(freight_value) AS total_freight FROM olist_order_items GROUP BY order_id) WHERE total_price IS NOT NULL AND total_price > 0",
+      "sql_valid": true,
+      "narrative": "The average profit margin per order across the marketplace is 69.16113128026136%, based on item prices net of freight values. This indicates that freight costs consume roughly 31% of item revenue on a typical order, leaving a substantial margin before other cost considerations.",
+      "check_results": [
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The dataset has no cost or profit information, so profit margin cannot be computed. The answer must make clear this cannot be derived from the available data and must NOT fabricate a margin or any specific number.",
+          "passed": false,
+          "reasoning": "The response fabricates a specific profit margin percentage (69.16113128026136%) and fails to state that profit margin cannot be derived from the available data, directly violating the rubric's requirement not to fabricate a margin or any specific number."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "resilience",
+        "out_of_scope",
+        "no_hallucination"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "olist_high_volume_premium_categories",
+      "question": "Which product categories sold more than 1,000 items and have an average item price above 100 reais?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.079721975998837,
+          "input_tokens": 221,
+          "output_tokens": 63,
+          "cached_input_tokens": 197
+        },
+        "list_tables": {
+          "latency_s": 0.02227770800527651,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 7.2508567290060455,
+          "input_tokens": 205,
+          "output_tokens": 389,
+          "cached_input_tokens": 181
+        },
+        "get_schema": {
+          "latency_s": 0.08004501400864683,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.8296219399926485,
+          "input_tokens": 876,
+          "output_tokens": 134,
+          "cached_input_tokens": 875
+        },
+        "build_widget": {
+          "latency_s": 9.212584602995776,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 520,
+          "output_tokens": 140,
+          "cached_input_tokens": 481
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 829,
+          "output_tokens": 118,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 11.134307711996371,
+          "input_tokens": 810,
+          "output_tokens": 907,
+          "cached_input_tokens": 362
+        }
+      },
+      "sql": "SELECT t.product_category_name_english AS category, COUNT(*) AS total_items_sold, AVG(i.price) AS average_item_price FROM olist_order_items i JOIN olist_products p ON i.product_id = p.product_id JOIN olist_category_translation t ON p.product_category_name = t.product_category_name GROUP BY t.product_category_name_english HAVING COUNT(*) > 1000 AND AVG(i.price) > 100;",
+      "sql_valid": true,
+      "narrative": "Fourteen product categories sold more than 1,000 items at an average price above R$100.00, based on item prices excluding freight. Health and beauty leads in volume with 9,670 items sold, while watches and gifts commands the highest average price at R$ 201.14. Other high-volume categories include sports and leisure (8,641 items) and computers and accessories (7,827 items), with cool stuff also standing out for its premium average price of R$ 167.36.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "2 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A filtered ranking of categories should be a bar chart or a table, never a pie chart or a single KPI.",
+          "passed": true,
+          "reasoning": "The question asks for a filtered ranking of product categories based on two conditions. The chosen view is a DataTable, which is explicitly allowed by the rubric for a filtered ranking of categories. Therefore, the choice of view type follows data-visualization best practices."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "having",
+        "join",
+        "group_by",
+        "hard"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "olist_high_volume_premium_categories",
+      "question": "Which product categories sold more than 1,000 items and have an average item price above 100 reais?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.024379795999266,
+          "input_tokens": 221,
+          "output_tokens": 38,
+          "cached_input_tokens": 197
+        },
+        "list_tables": {
+          "latency_s": 0.014950368989957497,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.6026763469999423,
+          "input_tokens": 205,
+          "output_tokens": 158,
+          "cached_input_tokens": 204
+        },
+        "get_schema": {
+          "latency_s": 0.0884383840020746,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.6387516879913164,
+          "input_tokens": 876,
+          "output_tokens": 130,
+          "cached_input_tokens": 739
+        },
+        "build_widget": {
+          "latency_s": 4.60990113200387,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 518,
+          "output_tokens": 129,
+          "cached_input_tokens": 503
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 830,
+          "output_tokens": 120,
+          "cached_input_tokens": 733
+        },
+        "compose_narrative": {
+          "latency_s": 7.770476332996623,
+          "input_tokens": 818,
+          "output_tokens": 329,
+          "cached_input_tokens": 401
+        }
+      },
+      "sql": "SELECT t.product_category_name_english AS category_name, COUNT(*) AS total_items_sold, AVG(i.price) AS average_item_price FROM olist_order_items i JOIN olist_products p ON i.product_id = p.product_id JOIN olist_category_translation t ON p.product_category_name = t.product_category_name GROUP BY t.product_category_name_english HAVING COUNT(*) > 1000 AND AVG(i.price) > 100 ORDER BY total_items_sold DESC;",
+      "sql_valid": true,
+      "narrative": "Fourteen product categories meet both thresholds, with health_beauty leading in volume at 9,670 items sold (average item price R$130.16, based on item prices excluding freight), followed by sports_leisure (8,641 items) and computers_accessories (7,827 items). Volume is concentrated in the top three categories, which together account for roughly 26,000 of the total items across the qualifying set. On price, watches_gifts stands out with the highest average at R$201.14 among categories exceeding 1,000 items, well above cool_stuff (R$167.36) and office_furniture (R$162.01), indicating that premium pricing is not limited to the highest-volume categories.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "2 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A filtered ranking of categories should be a bar chart or a table, never a pie chart or a single KPI.",
+          "passed": true,
+          "reasoning": "The question asks for a filtered ranking of product categories based on two conditions. The chosen view is a DataTable, which is explicitly allowed by the rubric for a filtered ranking. A table is an appropriate choice for displaying this underlying data shape (3 columns, 14 rows) and allows users to easily see the exact values for total items sold and average item price."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "having",
+        "join",
+        "group_by",
+        "hard"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "olist_high_volume_premium_categories",
+      "question": "Which product categories sold more than 1,000 items and have an average item price above 100 reais?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.4918794550030725,
+          "input_tokens": 221,
+          "output_tokens": 63,
+          "cached_input_tokens": 220
+        },
+        "list_tables": {
+          "latency_s": 0.017843449997599237,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 7.021924988002866,
+          "input_tokens": 205,
+          "output_tokens": 429,
+          "cached_input_tokens": 181
+        },
+        "get_schema": {
+          "latency_s": 0.07682764100900386,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 5.382887607003795,
+          "input_tokens": 876,
+          "output_tokens": 217,
+          "cached_input_tokens": 737
+        },
+        "build_widget": {
+          "latency_s": 6.017189324993524,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 548,
+          "output_tokens": 147,
+          "cached_input_tokens": 502
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 830,
+          "output_tokens": 120,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 38.723606553990976,
+          "input_tokens": 824,
+          "output_tokens": 1119,
+          "cached_input_tokens": 360
+        }
+      },
+      "sql": "SELECT t.product_category_name_english AS category_name, COUNT(*) AS total_items_sold, AVG(i.price) AS average_item_price FROM olist_order_items i JOIN olist_products p ON i.product_id = p.product_id JOIN olist_category_translation t ON p.product_category_name = t.product_category_name WHERE i.price IS NOT NULL GROUP BY t.product_category_name_english HAVING COUNT(*) > 1000 AND AVG(i.price) > 100 ORDER BY total_items_sold DESC;",
+      "sql_valid": true,
+      "narrative": "Fourteen product categories sold more than 1,000 items at an average price above 100 reais, based on item prices excluding freight. Health_beauty leads the group with 9,670 items sold at an average of 130.16 reais, followed by sports_leisure and computers_accessories in volume. Notably, watches_gifts commands the highest average price in this set at 201.14 reais across 5,991 items, highlighting a concentration of premium-value sales.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match_any",
+          "value": "2 gold options",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A filtered ranking of categories should be a bar chart or a table, never a pie chart or a single KPI.",
+          "passed": true,
+          "reasoning": "The question asks for a filtered list of product categories based on two conditions. The chosen view is a DataTable, which is explicitly allowed by the rubric for a filtered ranking of categories. A table is well-suited to display the exact values of 'total_items_sold' and 'average_item_price' for the 14 categories, allowing users to easily identify the ones meeting the criteria."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "having",
+        "join",
+        "group_by",
+        "hard"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "exec_top_category_northwind",
+      "question": "Which product line is the backbone of our trading revenue?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.7276165399962338,
+          "input_tokens": 209,
+          "output_tokens": 51,
+          "cached_input_tokens": 198
+        },
+        "list_tables": {
+          "latency_s": 0.017253445999813266,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.692423480009893,
+          "input_tokens": 193,
+          "output_tokens": 190,
+          "cached_input_tokens": 181
+        },
+        "get_schema": {
+          "latency_s": 0.05130840200581588,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 11.136603320992435,
+          "input_tokens": 1030,
+          "output_tokens": 403,
+          "cached_input_tokens": 739
+        },
+        "build_widget": {
+          "latency_s": 17.88782715900743,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 678,
+          "output_tokens": 110,
+          "cached_input_tokens": 366
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 812,
+          "output_tokens": 192,
+          "cached_input_tokens": 711
+        },
+        "compose_narrative": {
+          "latency_s": 7.170690831990214,
+          "input_tokens": 483,
+          "output_tokens": 219,
+          "cached_input_tokens": 374
+        }
+      },
+      "sql": "SELECT c.categoryName, SUM(od.unitPrice * od.quantity * (1 - od.discount)) AS total_revenue FROM northwind_order_details od JOIN northwind_products p ON od.productID = p.productID JOIN northwind_categories c ON p.categoryID = c.categoryID GROUP BY c.categoryName ORDER BY total_revenue DESC LIMIT 1",
+      "sql_valid": true,
+      "narrative": "Beverages is the backbone of our trading revenue, generating 267,868.18 in total revenue based on item prices net of discounts. As the top-ranked product line, it outpaces every other category and stands out as the primary driver of our sales performance.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer names Beverages as the top revenue category of the trading business and attaches a revenue figure to it.",
+          "passed": true,
+          "reasoning": "The response explicitly identifies Beverages as the backbone of the trading revenue and the top-ranked product line. It also includes a specific revenue figure of 267,868.18. This perfectly aligns with the rubric's requirements."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "exec_scenario",
+        "trading",
+        "ranking"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "exec_top_category_northwind",
+      "question": "Which product line is the backbone of our trading revenue?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.146758603004855,
+          "input_tokens": 209,
+          "output_tokens": 50,
+          "cached_input_tokens": 208
+        },
+        "list_tables": {
+          "latency_s": 0.025542835996020585,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 5.2924875220051035,
+          "input_tokens": 193,
+          "output_tokens": 190,
+          "cached_input_tokens": 192
+        },
+        "get_schema": {
+          "latency_s": 0.050489791989093646,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 8.711790255998494,
+          "input_tokens": 1020,
+          "output_tokens": 330,
+          "cached_input_tokens": 771
+        },
+        "build_widget": {
+          "latency_s": 34.879690961999586,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 692,
+          "output_tokens": 123,
+          "cached_input_tokens": 384
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 911,
+          "output_tokens": 957,
+          "cached_input_tokens": 710
+        },
+        "compose_narrative": {
+          "latency_s": 7.970001811001566,
+          "input_tokens": 482,
+          "output_tokens": 440,
+          "cached_input_tokens": 362
+        }
+      },
+      "sql": "SELECT c.categoryName, SUM(od.unitPrice * od.quantity * (1 - od.discount)) AS total_revenue FROM northwind_order_details od JOIN northwind_products p ON od.productID = p.productID JOIN northwind_categories c ON p.categoryID = c.categoryID GROUP BY c.categoryName ORDER BY total_revenue DESC LIMIT 1;",
+      "sql_valid": true,
+      "narrative": "Beverages is the single largest contributor to trading revenue, generating 267,868.18. This figure reflects item prices multiplied by order quantities and net of discounts, excluding freight. As the top-ranked product line, Beverages anchors the revenue base and warrants continued focus in sourcing and sales efforts.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer names Beverages as the top revenue category of the trading business and attaches a revenue figure to it.",
+          "passed": true,
+          "reasoning": "The response explicitly identifies Beverages as the top revenue category for the trading business and provides the specific revenue figure of 267,868.18, satisfying both conditions of the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "exec_scenario",
+        "trading",
+        "ranking"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "exec_top_category_northwind",
+      "question": "Which product line is the backbone of our trading revenue?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.2727130060084164,
+          "input_tokens": 209,
+          "output_tokens": 51,
+          "cached_input_tokens": 198
+        },
+        "list_tables": {
+          "latency_s": 0.02303734300949145,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 30.7484414359933,
+          "input_tokens": 193,
+          "output_tokens": 151,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.04840860399417579,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 7.013941174009233,
+          "input_tokens": 1030,
+          "output_tokens": 396,
+          "cached_input_tokens": 753
+        },
+        "build_widget": {
+          "latency_s": 15.872275501009426,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 695,
+          "output_tokens": 583,
+          "cached_input_tokens": 393
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 910,
+          "output_tokens": 716,
+          "cached_input_tokens": 722
+        },
+        "compose_narrative": {
+          "latency_s": 8.96560724399751,
+          "input_tokens": 485,
+          "output_tokens": 598,
+          "cached_input_tokens": 373
+        }
+      },
+      "sql": "SELECT c.categoryName, SUM(od.unitPrice * od.quantity * (1 - od.discount)) AS totalRevenue\nFROM northwind_order_details od\nJOIN northwind_products p ON od.productID = p.productID\nJOIN northwind_categories c ON p.categoryID = c.categoryID\nGROUP BY c.categoryName\nORDER BY totalRevenue DESC\nLIMIT 1",
+      "sql_valid": true,
+      "narrative": "Beverages is the backbone of our trading revenue, generating $267,868.18 in total revenue based on item prices net of discounts. As the top-ranked product category, it stands out as the primary driver of our sales performance, underscoring the importance of this segment to overall revenue generation.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer names Beverages as the top revenue category of the trading business and attaches a revenue figure to it.",
+          "passed": true,
+          "reasoning": "The response explicitly identifies Beverages as the backbone of the trading revenue and the top-ranked product category. It also attaches a specific revenue figure to it, $267,868.18. Therefore, it fully satisfies the conditions of the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "exec_scenario",
+        "trading",
+        "ranking"
+      ],
+      "attempt": 2
+    }
+  ],
+  "consistency": [
+    {
+      "case_id": "olist_top_customer_state",
+      "attempts": 3,
+      "passed_count": 2,
+      "consistency": 0.667,
+      "flaky": true
+    },
+    {
+      "case_id": "resilience_impossible_profit",
+      "attempts": 3,
+      "passed_count": 2,
+      "consistency": 0.667,
+      "flaky": true
+    },
+    {
+      "case_id": "olist_high_volume_premium_categories",
+      "attempts": 3,
+      "passed_count": 3,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "exec_top_category_northwind",
+      "attempts": 3,
+      "passed_count": 3,
+      "consistency": 1.0,
+      "flaky": false
+    }
+  ]
+}

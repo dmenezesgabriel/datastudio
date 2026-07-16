@@ -1,0 +1,1955 @@
+{
+  "run_at": "2026-07-14T22:39:44.487424+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 17,
+    "passed": 17,
+    "failed": 0,
+    "pass_rate": 1.0,
+    "avg_latency_s": 14.278,
+    "p95_latency_s": 25.571,
+    "total_input_tokens": 47091,
+    "total_output_tokens": 12367,
+    "total_cached_input_tokens": 27213,
+    "cache_read_rate": 0.578,
+    "avg_input_tokens": 2770.1,
+    "avg_output_tokens": 727.5,
+    "cost_usd": 0.0,
+    "view_selection": {
+      "passed": 40,
+      "total": 40,
+      "accuracy": 1.0
+    },
+    "consistency": {
+      "cases": 17,
+      "mean_consistency": 1.0,
+      "reliable": 17,
+      "flaky": 0,
+      "failing": 0
+    },
+    "by_tag": {
+      "percentage": {
+        "total": 1,
+        "passed": 1
+      },
+      "filter": {
+        "total": 6,
+        "passed": 6
+      },
+      "medium": {
+        "total": 3,
+        "passed": 3
+      },
+      "multi-turn": {
+        "total": 1,
+        "passed": 1
+      },
+      "memory": {
+        "total": 1,
+        "passed": 1
+      },
+      "edit": {
+        "total": 5,
+        "passed": 5
+      },
+      "restyle": {
+        "total": 3,
+        "passed": 3
+      },
+      "chart": {
+        "total": 2,
+        "passed": 2
+      },
+      "kpi": {
+        "total": 1,
+        "passed": 1
+      },
+      "reanalyze": {
+        "total": 2,
+        "passed": 2
+      },
+      "add_widget": {
+        "total": 1,
+        "passed": 1
+      },
+      "preservation": {
+        "total": 1,
+        "passed": 1
+      },
+      "resilience": {
+        "total": 3,
+        "passed": 3
+      },
+      "out_of_scope": {
+        "total": 1,
+        "passed": 1
+      },
+      "no_hallucination": {
+        "total": 1,
+        "passed": 1
+      },
+      "robustness": {
+        "total": 2,
+        "passed": 2
+      },
+      "edge": {
+        "total": 1,
+        "passed": 1
+      },
+      "intent": {
+        "total": 3,
+        "passed": 3
+      },
+      "aggregation": {
+        "total": 3,
+        "passed": 3
+      },
+      "chitchat": {
+        "total": 2,
+        "passed": 2
+      },
+      "text": {
+        "total": 2,
+        "passed": 2
+      },
+      "null": {
+        "total": 1,
+        "passed": 1
+      },
+      "having": {
+        "total": 1,
+        "passed": 1
+      },
+      "join": {
+        "total": 1,
+        "passed": 1
+      },
+      "group_by": {
+        "total": 1,
+        "passed": 1
+      },
+      "hard": {
+        "total": 1,
+        "passed": 1
+      },
+      "easy": {
+        "total": 1,
+        "passed": 1
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "olist_credit_card_payment_share",
+      "question": "What percentage of payment transactions on the platform were made using credit card?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.019216018001316,
+          "input_tokens": 212,
+          "output_tokens": 37,
+          "cached_input_tokens": 8
+        },
+        "list_tables": {
+          "latency_s": 0.020892924003419466,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.954934580004192,
+          "input_tokens": 146,
+          "output_tokens": 86,
+          "cached_input_tokens": 131
+        },
+        "get_schema": {
+          "latency_s": 0.03812582200043835,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.40163592499448,
+          "input_tokens": 626,
+          "output_tokens": 124,
+          "cached_input_tokens": 13
+        },
+        "build_widget": {
+          "latency_s": 4.5047061369987205,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 261,
+          "output_tokens": 131,
+          "cached_input_tokens": 18
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 817,
+          "output_tokens": 135,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 4.462641170001007,
+          "input_tokens": 321,
+          "output_tokens": 371,
+          "cached_input_tokens": 275
+        }
+      },
+      "sql": "SELECT 100.0 * SUM(CASE WHEN payment_type = 'credit_card' THEN 1 ELSE 0 END) / COUNT(*) AS pct_credit_card FROM olist_order_payments WHERE payment_type IS NOT NULL",
+      "sql_valid": true,
+      "narrative": "Credit cards accounted for 73.92237645110987% of payment transactions on the platform, making them the dominant payment method by a wide margin. This indicates that the vast majority of users rely on credit cards, suggesting that any changes to credit card processing\u2014such as fees, acceptance networks, or fraud controls\u2014would have a broad impact on overall transaction volume.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE payment_type='credit_card')/COUNT(*),2) FROM olist_order_payments",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage and reference credit card as the payment method.",
+          "passed": true,
+          "reasoning": "The response explicitly states the percentage of payment transactions made using credit cards (73.92237645110987%) and directly references credit cards as the payment method. This perfectly aligns with the rubric's requirements."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "percentage",
+        "filter",
+        "medium"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "taxi_followup_credit_card_share",
+      "question": "What is the total number of taxi trips recorded in the dataset?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.2469594530120958,
+          "input_tokens": 486,
+          "output_tokens": 97,
+          "cached_input_tokens": 23
+        },
+        "list_tables": {
+          "latency_s": 0.022732598008587956,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.322120441007428,
+          "input_tokens": 354,
+          "output_tokens": 252,
+          "cached_input_tokens": 30
+        },
+        "get_schema": {
+          "latency_s": 0.03089666999585461,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.6791814339958364,
+          "input_tokens": 1462,
+          "output_tokens": 173,
+          "cached_input_tokens": 564
+        },
+        "build_widget": {
+          "latency_s": 4.005212061005295,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 668,
+          "output_tokens": 61,
+          "cached_input_tokens": 564
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 1637,
+          "output_tokens": 365,
+          "cached_input_tokens": 719
+        },
+        "compose_narrative": {
+          "latency_s": 3.0055743909906596,
+          "input_tokens": 697,
+          "output_tokens": 260,
+          "cached_input_tokens": 25
+        }
+      },
+      "sql": "SELECT COUNT(*) AS credit_card_trips\nFROM nyc_taxi\nWHERE payment_type = 1;",
+      "sql_valid": true,
+      "narrative": "Of the 7,475,949 total taxi trips, 5,353,975 were paid by credit card, making it the dominant payment method in the dataset. This means the vast majority of trips relied on card payment rather than cash or other options, highlighting a strong customer preference for electronic transactions.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM nyc_taxi",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM nyc_taxi WHERE payment_type = 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer states the number of taxi trips paid by credit card (payment type 1), correctly treating 'those' as the taxi trips from the previous turn rather than an unrelated set.",
+          "passed": true,
+          "reasoning": "The response correctly identifies the number of taxi trips paid by credit card (5,353,975) and explicitly references the total taxi trips, demonstrating that it correctly interpreted 'those' as the taxi trips from the previous turn."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "multi-turn",
+        "memory",
+        "filter"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "taxi_edit_restyle_to_bar",
+      "question": "How many taxi trips occurred during each hour of the day?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.990380997012835,
+          "input_tokens": 210,
+          "output_tokens": 41,
+          "cached_input_tokens": 10
+        },
+        "list_tables": {
+          "latency_s": 0.015244733993313275,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.305505123003968,
+          "input_tokens": 144,
+          "output_tokens": 38,
+          "cached_input_tokens": 12
+        },
+        "get_schema": {
+          "latency_s": 0.04050151599221863,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 1.6560683879943099,
+          "input_tokens": 698,
+          "output_tokens": 94,
+          "cached_input_tokens": 12
+        },
+        "build_widget": {
+          "latency_s": 6.078530760991271,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 334,
+          "output_tokens": 54,
+          "cached_input_tokens": 12
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 870,
+          "output_tokens": 159,
+          "cached_input_tokens": 10
+        },
+        "compose_narrative": {
+          "latency_s": 3.995976281003095,
+          "input_tokens": 535,
+          "output_tokens": 258,
+          "cached_input_tokens": 13
+        },
+        "classify_edit": {
+          "latency_s": 1.9360942509956658,
+          "input_tokens": 206,
+          "output_tokens": 77,
+          "cached_input_tokens": 13
+        },
+        "author_edit_patches": {
+          "latency_s": 2.0461444789980305,
+          "input_tokens": 1298,
+          "output_tokens": 71,
+          "cached_input_tokens": 705
+        }
+      },
+      "sql": "",
+      "sql_valid": false,
+      "narrative": "",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "ChartJs",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "edit_mode",
+          "value": "restyle",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_kind",
+          "value": "ChartJs:bar",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widgets_preserved",
+          "value": "widget-0",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "edit",
+        "restyle",
+        "chart"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "taxi_edit_restyle_kpi_title",
+      "question": "What is the total revenue from all taxi trips?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.007010885005002,
+          "input_tokens": 208,
+          "output_tokens": 39,
+          "cached_input_tokens": 10
+        },
+        "list_tables": {
+          "latency_s": 0.014433919001021422,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.512249856998096,
+          "input_tokens": 142,
+          "output_tokens": 69,
+          "cached_input_tokens": 8
+        },
+        "get_schema": {
+          "latency_s": 0.03337725400342606,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.9263504300033674,
+          "input_tokens": 696,
+          "output_tokens": 70,
+          "cached_input_tokens": 570
+        },
+        "build_widget": {
+          "latency_s": 5.077548725006636,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 328,
+          "output_tokens": 23,
+          "cached_input_tokens": 18
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 815,
+          "output_tokens": 178,
+          "cached_input_tokens": 8
+        },
+        "compose_narrative": {
+          "latency_s": 3.1220333520032,
+          "input_tokens": 314,
+          "output_tokens": 158,
+          "cached_input_tokens": 13
+        },
+        "classify_edit": {
+          "latency_s": 2.749560479001957,
+          "input_tokens": 206,
+          "output_tokens": 98,
+          "cached_input_tokens": 13
+        },
+        "author_edit_patches": {
+          "latency_s": 1.7398912299977383,
+          "input_tokens": 1204,
+          "output_tokens": 97,
+          "cached_input_tokens": 8
+        }
+      },
+      "sql": "",
+      "sql_valid": false,
+      "narrative": "",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "edit_mode",
+          "value": "restyle",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_kind",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widgets_preserved",
+          "value": "widget-0",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "edit",
+        "restyle",
+        "kpi"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "olist_edit_reanalyze_monthly",
+      "question": "What is the total gross merchandise value across all orders?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.140335149000748,
+          "input_tokens": 209,
+          "output_tokens": 35,
+          "cached_input_tokens": 200
+        },
+        "list_tables": {
+          "latency_s": 0.017331419003312476,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.4140179339883616,
+          "input_tokens": 365,
+          "output_tokens": 224,
+          "cached_input_tokens": 136
+        },
+        "get_schema": {
+          "latency_s": 0.08155790399177931,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.4553184700052952,
+          "input_tokens": 617,
+          "output_tokens": 136,
+          "cached_input_tokens": 0
+        },
+        "build_widget": {
+          "latency_s": 4.280843836997519,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 574,
+          "output_tokens": 197,
+          "cached_input_tokens": 397
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 1686,
+          "output_tokens": 278,
+          "cached_input_tokens": 720
+        },
+        "compose_narrative": {
+          "latency_s": 2.4940207930048928,
+          "input_tokens": 318,
+          "output_tokens": 150,
+          "cached_input_tokens": 274
+        },
+        "classify_edit": {
+          "latency_s": 4.009248707006918,
+          "input_tokens": 208,
+          "output_tokens": 147,
+          "cached_input_tokens": 13
+        }
+      },
+      "sql": "SELECT strftime(olist_orders.order_purchase_timestamp, '%Y-%m') AS month, SUM(olist_order_items.price) AS gmv FROM olist_order_items JOIN olist_orders ON olist_order_items.order_id = olist_orders.order_id GROUP BY month ORDER BY month;",
+      "sql_valid": true,
+      "narrative": "",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "edit_mode",
+          "value": "reanalyze",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "ChartJs:line",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "Monthly gross merchandise value over time is an ordered series; it must be a line chart, not a bar chart, pie chart, or KPI.",
+          "passed": true,
+          "reasoning": "The chosen view is a line chart, which perfectly matches the rubric's requirement for an ordered series over time. The data shape (24 rows of month and gmv) is well-suited for a line chart, and the choice avoids inappropriate alternatives like bar, pie, or KPI views."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "edit",
+        "reanalyze",
+        "chart"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "olist_edit_reanalyze_add_status",
+      "question": "Show the total number of orders as a single KPI.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.368570765000186,
+          "input_tokens": 210,
+          "output_tokens": 38,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.014115202997345477,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.377815317013301,
+          "input_tokens": 339,
+          "output_tokens": 82,
+          "cached_input_tokens": 196
+        },
+        "get_schema": {
+          "latency_s": 0.042762865996337496,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.7164264890016057,
+          "input_tokens": 640,
+          "output_tokens": 73,
+          "cached_input_tokens": 566
+        },
+        "build_widget": {
+          "latency_s": 5.2652004760020645,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 541,
+          "output_tokens": 62,
+          "cached_input_tokens": 412
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 1681,
+          "output_tokens": 410,
+          "cached_input_tokens": 1419
+        },
+        "compose_narrative": {
+          "latency_s": 1.7614781470037997,
+          "input_tokens": 309,
+          "output_tokens": 65,
+          "cached_input_tokens": 274
+        },
+        "classify_edit": {
+          "latency_s": 3.0991326890070923,
+          "input_tokens": 205,
+          "output_tokens": 95,
+          "cached_input_tokens": 13
+        }
+      },
+      "sql": "SELECT order_status, COUNT(*) AS order_count FROM olist_orders GROUP BY order_status ORDER BY order_count DESC",
+      "sql_valid": true,
+      "narrative": "",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "edit_mode",
+          "value": "reanalyze",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widgets_preserved",
+          "value": "widget-0",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "edit",
+        "reanalyze",
+        "add_widget"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "taxi_edit_preserve_two_kpis",
+      "question": "Give me the total number of taxi trips and the total revenue as two KPI cards.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.8003855839924654,
+          "input_tokens": 216,
+          "output_tokens": 40,
+          "cached_input_tokens": 13
+        },
+        "list_tables": {
+          "latency_s": 0.017992322013014928,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.748052964991075,
+          "input_tokens": 150,
+          "output_tokens": 65,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.03057732900197152,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.296045672992477,
+          "input_tokens": 704,
+          "output_tokens": 132,
+          "cached_input_tokens": 13
+        },
+        "build_widget": {
+          "latency_s": 3.855956083993078,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 673,
+          "output_tokens": 51,
+          "cached_input_tokens": 514
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 1632,
+          "output_tokens": 313,
+          "cached_input_tokens": 1420
+        },
+        "compose_narrative": {
+          "latency_s": 2.7016112959972816,
+          "input_tokens": 348,
+          "output_tokens": 160,
+          "cached_input_tokens": 272
+        },
+        "classify_edit": {
+          "latency_s": 2.9607159279985353,
+          "input_tokens": 220,
+          "output_tokens": 89,
+          "cached_input_tokens": 180
+        },
+        "author_edit_patches": {
+          "latency_s": 1.5815159500052687,
+          "input_tokens": 1312,
+          "output_tokens": 80,
+          "cached_input_tokens": 705
+        }
+      },
+      "sql": "",
+      "sql_valid": false,
+      "narrative": "",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_count",
+          "value": "2",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "2",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "edit_mode",
+          "value": "restyle",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widgets_preserved",
+          "value": "widget-0,widget-1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "edit",
+        "restyle",
+        "preservation"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "resilience_impossible_profit",
+      "question": "What is the average profit margin per order?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.631513394007925,
+          "input_tokens": 207,
+          "output_tokens": 54,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.023935986013384536,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.315645996000967,
+          "input_tokens": 141,
+          "output_tokens": 280,
+          "cached_input_tokens": 133
+        },
+        "get_schema": {
+          "latency_s": 0.03991483000572771,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.471107154007768,
+          "input_tokens": 615,
+          "output_tokens": 288,
+          "cached_input_tokens": 569
+        },
+        "answer_text": {
+          "latency_s": 4.026005626656115e-06,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        }
+      },
+      "sql": "",
+      "sql_valid": false,
+      "narrative": "I can't calculate the average profit margin per order with the available schema. The `olist_order_items` table only has `price` and `freight_value`, but profit margin requires cost of goods sold (or a profit/cost field), which isn't present. If you can provide a cost or profit column (or a related table), I can compute it as average((price - cost) / price) per order.",
+      "check_results": [
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The dataset has no cost or profit information, so profit margin cannot be computed. The answer must make clear this cannot be derived from the available data and must NOT fabricate a margin or any specific number.",
+          "passed": true,
+          "reasoning": "The response correctly identifies that the available schema lacks cost or profit information, making the calculation of profit margin impossible. It explicitly states that this cannot be derived from the available data and does not fabricate any margin or specific number. It also offers a helpful suggestion on what additional data would be needed to perform the calculation."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "resilience",
+        "out_of_scope",
+        "no_hallucination"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "resilience_gibberish",
+      "question": "asdkfj qwpoei zzz plz",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 5.532699675008189,
+          "input_tokens": 210,
+          "output_tokens": 176,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.015165514996624552,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.9436607629904756,
+          "input_tokens": 144,
+          "output_tokens": 57,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.3226971200056141,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.4540102769969963,
+          "input_tokens": 1268,
+          "output_tokens": 110,
+          "cached_input_tokens": 566
+        },
+        "answer_text": {
+          "latency_s": 8.521004929207265e-06,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        }
+      },
+      "sql": "",
+      "sql_valid": false,
+      "narrative": "I didn't quite catch that \u2014 your message looks like random text. Could you rephrase your question? For example, you can ask about car fuel efficiency, movie ratings and grosses, NYC taxi trips, Olist orders/reviews, or Seattle weather.",
+      "check_results": [
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The request is unintelligible. The answer should ask for clarification or say it could not understand the request, and must not fabricate data values, numbers, or a chart.",
+          "passed": true,
+          "reasoning": "The user's input is random, unintelligible text. The system response correctly identifies this and asks for clarification. It does not fabricate any data, numbers, or charts, fully satisfying the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "resilience",
+        "robustness"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "resilience_negative_fares",
+      "question": "How many taxi trips have a negative recorded fare amount?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.8443037450051634,
+          "input_tokens": 209,
+          "output_tokens": 40,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.019471766005153768,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.7850459920009598,
+          "input_tokens": 143,
+          "output_tokens": 50,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.03043091800645925,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 1.5366944730049,
+          "input_tokens": 697,
+          "output_tokens": 88,
+          "cached_input_tokens": 566
+        },
+        "build_widget": {
+          "latency_s": 5.191490248995251,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 336,
+          "output_tokens": 38,
+          "cached_input_tokens": 314
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 821,
+          "output_tokens": 145,
+          "cached_input_tokens": 705
+        },
+        "compose_narrative": {
+          "latency_s": 1.7428394629969262,
+          "input_tokens": 314,
+          "output_tokens": 92,
+          "cached_input_tokens": 278
+        }
+      },
+      "sql": "SELECT COUNT(*) AS negative_fare_trips\nFROM nyc_taxi\nWHERE fare_amount < 0;",
+      "sql_valid": true,
+      "narrative": "There are 11,986 taxi trips with a negative recorded fare amount, indicating a notable volume of anomalous fare entries in the dataset. This suggests potential data-quality issues\u2014such as refunds, corrections, or recording errors\u2014that warrant review before fares are used in revenue or pricing analysis.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM nyc_taxi WHERE fare_amount < 0",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "resilience",
+        "edge",
+        "filter"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "intent_casual_data",
+      "question": "so, how many orders did we get in total?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.638066728002741,
+          "input_tokens": 209,
+          "output_tokens": 39,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.020460354004171677,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.6010099749983056,
+          "input_tokens": 143,
+          "output_tokens": 30,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.0794897790037794,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 1.7633567349985242,
+          "input_tokens": 640,
+          "output_tokens": 65,
+          "cached_input_tokens": 566
+        },
+        "build_widget": {
+          "latency_s": 3.7090909000107786,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 273,
+          "output_tokens": 25,
+          "cached_input_tokens": 218
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 814,
+          "output_tokens": 152,
+          "cached_input_tokens": 813
+        },
+        "compose_narrative": {
+          "latency_s": 1.7150697040051455,
+          "input_tokens": 308,
+          "output_tokens": 66,
+          "cached_input_tokens": 274
+        }
+      },
+      "sql": "SELECT COUNT(*) AS total_orders FROM olist_orders",
+      "sql_valid": true,
+      "narrative": "We received a total of 99,441 orders. This gives us a clear baseline for understanding overall demand and evaluating how order volume breaks down across periods, regions, or product categories.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM olist_orders",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "intent",
+        "robustness",
+        "aggregation"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "intent_praise_chart",
+      "question": "thanks, that revenue chart looks great!",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.7290443899983075,
+          "input_tokens": 206,
+          "output_tokens": 69,
+          "cached_input_tokens": 196
+        },
+        "answer_text": {
+          "latency_s": 5.827998393215239e-06,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        }
+      },
+      "sql": "",
+      "sql_valid": false,
+      "narrative": "You're welcome! Glad the revenue chart turned out well. Let me know if you'd like to dig deeper into any of the numbers or explore other views.",
+      "check_results": [
+        {
+          "type": "text_answer",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "A brief, friendly acknowledgement of the thanks. It must not run a query, fabricate data values, or return a chart or table.",
+          "passed": true,
+          "reasoning": "The response is a brief and friendly acknowledgement of the user's thanks. It does not run a query, fabricate data, or return a chart/table, perfectly adhering to the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "intent",
+        "chitchat",
+        "text"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "intent_signoff",
+      "question": "ok cool, that's all I needed for now!",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.6405079949909123,
+          "input_tokens": 209,
+          "output_tokens": 56,
+          "cached_input_tokens": 196
+        },
+        "answer_text": {
+          "latency_s": 3.6080018617212772e-06,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        }
+      },
+      "sql": "",
+      "sql_valid": false,
+      "narrative": "Glad I could help! Feel free to come back anytime you have more questions. Have a great day! \ud83d\ude0a",
+      "check_results": [
+        {
+          "type": "text_answer",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "A brief, friendly sign-off. It must not run a query, fabricate data values, or return a chart or table.",
+          "passed": true,
+          "reasoning": "The response is a brief and friendly sign-off, appropriately acknowledging the end of the conversation. It does not run a query, fabricate data, or return a chart or table."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "intent",
+        "chitchat",
+        "text"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "olist_orders_missing_delivery_date",
+      "question": "How many orders have no recorded delivery date?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.1148591759992996,
+          "input_tokens": 207,
+          "output_tokens": 62,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.018580389994895086,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.1287027030048193,
+          "input_tokens": 141,
+          "output_tokens": 44,
+          "cached_input_tokens": 13
+        },
+        "get_schema": {
+          "latency_s": 0.04192392100230791,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.5172745610034326,
+          "input_tokens": 638,
+          "output_tokens": 127,
+          "cached_input_tokens": 568
+        },
+        "build_widget": {
+          "latency_s": 5.3235021569998935,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 275,
+          "output_tokens": 42,
+          "cached_input_tokens": 196
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 818,
+          "output_tokens": 177,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 6.001016407986754,
+          "input_tokens": 310,
+          "output_tokens": 521,
+          "cached_input_tokens": 274
+        }
+      },
+      "sql": "SELECT COUNT(*) AS null_delivery_count\nFROM olist_orders\nWHERE order_delivered_customer_date IS NULL;",
+      "sql_valid": true,
+      "narrative": "A total of 2,965 orders currently have no recorded delivery date. This volume highlights a notable gap in delivery tracking that could impact fulfillment visibility and customer order status reporting.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM olist_orders WHERE order_delivered_customer_date IS NULL",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "null",
+        "filter",
+        "medium"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "olist_high_volume_premium_categories",
+      "question": "Which product categories sold more than 1,000 items and have an average item price above 100 reais?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.3062665089964867,
+          "input_tokens": 221,
+          "output_tokens": 36,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.021606276000966318,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.482166554007563,
+          "input_tokens": 155,
+          "output_tokens": 324,
+          "cached_input_tokens": 12
+        },
+        "get_schema": {
+          "latency_s": 0.07610433599620592,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.621539946994744,
+          "input_tokens": 705,
+          "output_tokens": 202,
+          "cached_input_tokens": 566
+        },
+        "build_widget": {
+          "latency_s": 10.748951519999537,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 357,
+          "output_tokens": 141,
+          "cached_input_tokens": 198
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 887,
+          "output_tokens": 427,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 4.314042808997328,
+          "input_tokens": 638,
+          "output_tokens": 359,
+          "cached_input_tokens": 274
+        }
+      },
+      "sql": "SELECT ct.product_category_name_english AS category_name, COUNT(*) AS total_items_sold, AVG(oi.price) AS average_item_price FROM olist_order_items oi JOIN olist_products p ON oi.product_id = p.product_id JOIN olist_category_translation ct ON p.product_category_name = ct.product_category_name GROUP BY ct.product_category_name_english HAVING COUNT(*) > 1000 AND AVG(oi.price) > 100 ORDER BY total_items_sold DESC;",
+      "sql_valid": true,
+      "narrative": "Fourteen product categories surpassed 1,000 items sold while maintaining an average item price above R$100, with health_beauty leading in volume at 9,670 items sold (avg price R$130.16) and watches_gifts commanding the highest average price at R$201.14 across 5,991 items sold. The qualifying categories span a broad range\u2014from high-volume sellers like sports_leisure (8,641 items, avg R$114.34) and computers_accessories (7,827 items, avg R$116.51) to smaller-but-premium categories such as office_furniture (1,691 items, avg R$162.01) and cool_stuff (3,796 items, avg R$167.36)\u2014indicating that strong average pricing is not concentrated in a single sector but distributed across health, leisure, technology, home, and lifestyle goods.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT t.product_category_name_english AS category, COUNT(*) AS items, ROUND(AVG(i.price),2) AS avg_price FROM olist_order_items i JOIN olist_products p ON i.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1 HAVING COUNT(*)>1000 AND AVG(i.price)>100 ORDER BY items DESC",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A filtered ranking of categories should be a bar chart or a table, never a pie chart or a single KPI.",
+          "passed": true,
+          "reasoning": "The chosen view is a DataTable, which is explicitly allowed by the rubric for a filtered ranking of categories. A table is well-suited for displaying the 14 rows of data and allows users to easily identify the specific categories that meet the filtering criteria (more than 1,000 items sold and average item price above 100 reais)."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "having",
+        "join",
+        "group_by",
+        "hard"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "seattle_avg_wind_on_rainy_days",
+      "question": "What is the average wind speed on rainy days in Seattle?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.5232930479978677,
+          "input_tokens": 210,
+          "output_tokens": 34,
+          "cached_input_tokens": 199
+        },
+        "list_tables": {
+          "latency_s": 0.02419241399911698,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.260926417002338,
+          "input_tokens": 144,
+          "output_tokens": 97,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.014152204996207729,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.409488268996938,
+          "input_tokens": 618,
+          "output_tokens": 81,
+          "cached_input_tokens": 566
+        },
+        "build_widget": {
+          "latency_s": 3.3556765760004055,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 258,
+          "output_tokens": 37,
+          "cached_input_tokens": 196
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 820,
+          "output_tokens": 135,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 2.532987674989272,
+          "input_tokens": 325,
+          "output_tokens": 158,
+          "cached_input_tokens": 277
+        }
+      },
+      "sql": "SELECT AVG(wind) AS avg_wind_speed FROM seattle_weather WHERE weather = 'rain' AND wind IS NOT NULL;",
+      "sql_valid": true,
+      "narrative": "The average wind speed on rainy days in Seattle is 3.6698907956318254. This indicates that precipitation in Seattle tends to occur under relatively calm wind conditions, with average speeds well below what would be considered windy.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(AVG(wind),2) FROM seattle_weather WHERE weather='rain'",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a numeric average wind speed and reference rainy days.",
+          "passed": true,
+          "reasoning": "The response explicitly states a numeric average wind speed (3.6698907956318254) and directly references rainy days ('on rainy days in Seattle')."
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "filter",
+        "medium"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "cars_avg_horsepower_8cyl",
+      "question": "What is the average horsepower of cars with 8 cylinders?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.7500975170114543,
+          "input_tokens": 210,
+          "output_tokens": 38,
+          "cached_input_tokens": 200
+        },
+        "list_tables": {
+          "latency_s": 0.016514870992978103,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.9274567289976403,
+          "input_tokens": 144,
+          "output_tokens": 108,
+          "cached_input_tokens": 134
+        },
+        "get_schema": {
+          "latency_s": 0.018771748000290245,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 1.2518647499964572,
+          "input_tokens": 636,
+          "output_tokens": 73,
+          "cached_input_tokens": 567
+        },
+        "build_widget": {
+          "latency_s": 5.48562691200641,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 267,
+          "output_tokens": 36,
+          "cached_input_tokens": 196
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 822,
+          "output_tokens": 215,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 6.143769322996377,
+          "input_tokens": 326,
+          "output_tokens": 435,
+          "cached_input_tokens": 274
+        }
+      },
+      "sql": "SELECT AVG(Horsepower) AS avg_horsepower FROM cars WHERE Cylinders = 8 AND Horsepower IS NOT NULL;",
+      "sql_valid": true,
+      "narrative": "The average horsepower of 8-cylinder cars is 158.4537037037037, indicating that vehicles in this category tend to have moderately high power output. This figure suggests that 8-cylinder engines, while not the most extreme in horsepower, consistently deliver performance above what smaller engine configurations would typically produce.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(AVG(Horsepower),1) FROM cars WHERE Cylinders=8",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a numeric horsepower value for 8-cylinder cars.",
+          "passed": true,
+          "reasoning": "The response explicitly states that the average horsepower of 8-cylinder cars is 158.4537037037037. This directly satisfies the rubric's requirement to state a numeric horsepower value for 8-cylinder cars."
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "aggregation",
+        "filter",
+        "easy"
+      ],
+      "attempt": 0
+    }
+  ],
+  "consistency": [
+    {
+      "case_id": "olist_credit_card_payment_share",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "taxi_followup_credit_card_share",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "taxi_edit_restyle_to_bar",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "taxi_edit_restyle_kpi_title",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "olist_edit_reanalyze_monthly",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "olist_edit_reanalyze_add_status",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "taxi_edit_preserve_two_kpis",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "resilience_impossible_profit",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "resilience_gibberish",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "resilience_negative_fares",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "intent_casual_data",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "intent_praise_chart",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "intent_signoff",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "olist_orders_missing_delivery_date",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "olist_high_volume_premium_categories",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "seattle_avg_wind_on_rainy_days",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "cars_avg_horsepower_8cyl",
+      "attempts": 1,
+      "passed_count": 1,
+      "consistency": 1.0,
+      "flaky": false
+    }
+  ]
+}

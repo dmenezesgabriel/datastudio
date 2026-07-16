@@ -1,0 +1,2986 @@
+{
+  "run_at": "2026-07-15T09:50:48.080910+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 25,
+    "passed": 9,
+    "failed": 16,
+    "pass_rate": 0.36,
+    "avg_latency_s": 22.888,
+    "p95_latency_s": 31.235,
+    "total_input_tokens": 82156,
+    "total_output_tokens": 33110,
+    "total_cached_input_tokens": 60217,
+    "cache_read_rate": 0.733,
+    "avg_input_tokens": 3286.2,
+    "avg_output_tokens": 1324.4,
+    "cost_usd": 0.0,
+    "view_selection": {
+      "passed": 73,
+      "total": 80,
+      "accuracy": 0.912
+    },
+    "consistency": {
+      "cases": 5,
+      "mean_consistency": 0.36,
+      "reliable": 1,
+      "flaky": 2,
+      "failing": 2
+    },
+    "by_tag": {
+      "group_by": {
+        "total": 10,
+        "passed": 3
+      },
+      "ranking": {
+        "total": 10,
+        "passed": 3
+      },
+      "medium": {
+        "total": 15,
+        "passed": 3
+      },
+      "join": {
+        "total": 5,
+        "passed": 1
+      },
+      "conditional_aggregation": {
+        "total": 5,
+        "passed": 1
+      },
+      "date": {
+        "total": 10,
+        "passed": 1
+      },
+      "comparison": {
+        "total": 5,
+        "passed": 1
+      },
+      "chart": {
+        "total": 5,
+        "passed": 1
+      },
+      "hard": {
+        "total": 10,
+        "passed": 6
+      },
+      "dashboard": {
+        "total": 5,
+        "passed": 5
+      },
+      "overview": {
+        "total": 5,
+        "passed": 5
+      },
+      "drilldown": {
+        "total": 5,
+        "passed": 5
+      },
+      "table": {
+        "total": 5,
+        "passed": 5
+      },
+      "paraphrase": {
+        "total": 5,
+        "passed": 0
+      },
+      "robustness": {
+        "total": 5,
+        "passed": 0
+      },
+      "percentage": {
+        "total": 5,
+        "passed": 0
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "taxi_dominant_payment_type",
+      "question": "What is the most commonly used payment type code for taxi trips?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.9855976389953867,
+          "input_tokens": 211,
+          "output_tokens": 44,
+          "cached_input_tokens": 8
+        },
+        "list_tables": {
+          "latency_s": 0.0202014560054522,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.4090111300029093,
+          "input_tokens": 145,
+          "output_tokens": 48,
+          "cached_input_tokens": 8
+        },
+        "get_schema": {
+          "latency_s": 0.03967587399529293,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 1.457402487998479,
+          "input_tokens": 840,
+          "output_tokens": 98,
+          "cached_input_tokens": 839
+        },
+        "build_widget": {
+          "latency_s": 9.298971852011164,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 468,
+          "output_tokens": 57,
+          "cached_input_tokens": 458
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 869,
+          "output_tokens": 469,
+          "cached_input_tokens": 10
+        },
+        "compose_narrative": {
+          "latency_s": 6.043177733998164,
+          "input_tokens": 323,
+          "output_tokens": 187,
+          "cached_input_tokens": 13
+        }
+      },
+      "sql": "SELECT payment_type, COUNT(*) AS trip_count FROM nyc_taxi WHERE payment_type IS NOT NULL GROUP BY payment_type ORDER BY trip_count DESC LIMIT 1;",
+      "sql_valid": true,
+      "narrative": "Payment type code 1 is the most commonly used payment type for taxi trips, with 5,353,975 trips recorded under this code. This single code accounts for the entirety of the top result, indicating it is the dominant payment method among riders. The concentration of trips under code 1 suggests that whatever payment method it represents is overwhelmingly preferred over all other payment types in the dataset.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT payment_type FROM nyc_taxi GROUP BY payment_type ORDER BY COUNT(*) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A single 'which is the most common' answer is one value: present it as a KPI or a one-row table, never as a chart or pie.",
+          "passed": true,
+          "reasoning": "The question asks for a single 'most common' value, and the data contains exactly one row. The rubric explicitly allows a one-row table for this scenario, and the chosen DataTable fits that requirement perfectly. No unnecessary chart or pie is used."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "taxi_dominant_payment_type",
+      "question": "What is the most commonly used payment type code for taxi trips?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.6884043559985003,
+          "input_tokens": 211,
+          "output_tokens": 44,
+          "cached_input_tokens": 10
+        },
+        "list_tables": {
+          "latency_s": 0.024892518995329738,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.154978149003,
+          "input_tokens": 145,
+          "output_tokens": 37,
+          "cached_input_tokens": 12
+        },
+        "get_schema": {
+          "latency_s": 0.029785439008264802,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 1.9849902739952086,
+          "input_tokens": 840,
+          "output_tokens": 138,
+          "cached_input_tokens": 13
+        },
+        "build_widget": {
+          "latency_s": 9.087872580988915,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 488,
+          "output_tokens": 74,
+          "cached_input_tokens": 18
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 868,
+          "output_tokens": 544,
+          "cached_input_tokens": 10
+        },
+        "compose_narrative": {
+          "latency_s": 6.154601955000544,
+          "input_tokens": 322,
+          "output_tokens": 241,
+          "cached_input_tokens": 300
+        }
+      },
+      "sql": "SELECT payment_type, COUNT(*) AS trip_count\nFROM nyc_taxi\nWHERE payment_type IS NOT NULL\nGROUP BY payment_type\nORDER BY trip_count DESC\nLIMIT 1;",
+      "sql_valid": true,
+      "narrative": "Payment type code 1 is the most commonly used payment type for taxi trips, with 5,353,975 trips recorded under this code. This single payment type accounts for the entirety of the most-common category, indicating a strong concentration of trips toward one payment method over any alternatives.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT payment_type FROM nyc_taxi GROUP BY payment_type ORDER BY COUNT(*) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A single 'which is the most common' answer is one value: present it as a KPI or a one-row table, never as a chart or pie.",
+          "passed": false,
+          "reasoning": "The question asks for a single 'most common' value, and the data contains only one row. The rubric explicitly states that such answers should be presented as a KPI or a one-row table, never as a chart. The chosen view is a bar chart, which violates this best practice."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "taxi_dominant_payment_type",
+      "question": "What is the most commonly used payment type code for taxi trips?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.690979758001049,
+          "input_tokens": 211,
+          "output_tokens": 44,
+          "cached_input_tokens": 10
+        },
+        "list_tables": {
+          "latency_s": 0.011757446001865901,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.1501615529996343,
+          "input_tokens": 145,
+          "output_tokens": 37,
+          "cached_input_tokens": 12
+        },
+        "get_schema": {
+          "latency_s": 0.038908843009267,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 1.982184208012768,
+          "input_tokens": 840,
+          "output_tokens": 138,
+          "cached_input_tokens": 13
+        },
+        "build_widget": {
+          "latency_s": 8.512031436999678,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 488,
+          "output_tokens": 50,
+          "cached_input_tokens": 8
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 868,
+          "output_tokens": 422,
+          "cached_input_tokens": 10
+        },
+        "compose_narrative": {
+          "latency_s": 3.189424004012835,
+          "input_tokens": 322,
+          "output_tokens": 145,
+          "cached_input_tokens": 13
+        }
+      },
+      "sql": "SELECT payment_type, COUNT(*) AS trip_count FROM nyc_taxi WHERE payment_type IS NOT NULL GROUP BY payment_type ORDER BY trip_count DESC LIMIT 1",
+      "sql_valid": true,
+      "narrative": "Payment type code 1 is the most commonly used payment type for taxi trips, with 5,353,975 trips recorded. This single code dominates the dataset, indicating that the vast majority of riders use this payment method over any alternative.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT payment_type FROM nyc_taxi GROUP BY payment_type ORDER BY COUNT(*) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A single 'which is the most common' answer is one value: present it as a KPI or a one-row table, never as a chart or pie.",
+          "passed": false,
+          "reasoning": "The question asks for the single most common payment type, and the data contains only one row. The rubric explicitly states that a single 'which is the most common' answer should be presented as a KPI or a one-row table, never as a chart. The chosen view is a bar chart, which violates this best practice."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "taxi_dominant_payment_type",
+      "question": "What is the most commonly used payment type code for taxi trips?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.689093478009454,
+          "input_tokens": 211,
+          "output_tokens": 44,
+          "cached_input_tokens": 10
+        },
+        "list_tables": {
+          "latency_s": 0.021889798998017795,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.706261697006994,
+          "input_tokens": 145,
+          "output_tokens": 48,
+          "cached_input_tokens": 8
+        },
+        "get_schema": {
+          "latency_s": 0.03647165901202243,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 5.870664845002466,
+          "input_tokens": 840,
+          "output_tokens": 573,
+          "cached_input_tokens": 13
+        },
+        "build_widget": {
+          "latency_s": 4.613548693989287,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 466,
+          "output_tokens": 61,
+          "cached_input_tokens": 12
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 819,
+          "output_tokens": 164,
+          "cached_input_tokens": 10
+        },
+        "compose_narrative": {
+          "latency_s": 2.7007805289904354,
+          "input_tokens": 310,
+          "output_tokens": 73,
+          "cached_input_tokens": 13
+        }
+      },
+      "sql": "SELECT payment_type FROM nyc_taxi WHERE payment_type IS NOT NULL GROUP BY payment_type ORDER BY COUNT(*) DESC LIMIT 1",
+      "sql_valid": true,
+      "narrative": "The most commonly used payment type code for taxi trips is **1**. This indicates that the majority of riders pay using the payment method associated with code 1, which typically corresponds to credit card payments in standard taxi datasets.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT payment_type FROM nyc_taxi GROUP BY payment_type ORDER BY COUNT(*) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A single 'which is the most common' answer is one value: present it as a KPI or a one-row table, never as a chart or pie.",
+          "passed": true,
+          "reasoning": "The question asks for a single 'most common' value, and the data contains exactly one row with the payment_type. The chosen KpiStat view correctly presents this as a KPI, matching the rubric's requirement to present a single value as a KPI or one-row table rather than a chart."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ],
+      "attempt": 3
+    },
+    {
+      "case_id": "taxi_dominant_payment_type",
+      "question": "What is the most commonly used payment type code for taxi trips?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.711304144002497,
+          "input_tokens": 211,
+          "output_tokens": 44,
+          "cached_input_tokens": 210
+        },
+        "list_tables": {
+          "latency_s": 0.02078214100038167,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 0.9722152869944694,
+          "input_tokens": 145,
+          "output_tokens": 48,
+          "cached_input_tokens": 144
+        },
+        "get_schema": {
+          "latency_s": 0.050002700998447835,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.425503342994489,
+          "input_tokens": 840,
+          "output_tokens": 98,
+          "cached_input_tokens": 13
+        },
+        "build_widget": {
+          "latency_s": 6.7922086589969695,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 468,
+          "output_tokens": 53,
+          "cached_input_tokens": 378
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 869,
+          "output_tokens": 415,
+          "cached_input_tokens": 713
+        },
+        "compose_narrative": {
+          "latency_s": 2.5176735280110734,
+          "input_tokens": 323,
+          "output_tokens": 164,
+          "cached_input_tokens": 322
+        }
+      },
+      "sql": "SELECT payment_type, COUNT(*) AS trip_count FROM nyc_taxi WHERE payment_type IS NOT NULL GROUP BY payment_type ORDER BY trip_count DESC LIMIT 1",
+      "sql_valid": true,
+      "narrative": "Payment type code 1 is the most commonly used payment type for taxi trips, with 5,353,975 trips recorded under this code. This single payment type dominates the dataset, indicating that the vast majority of taxi riders use this payment method over any other available option.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT payment_type FROM nyc_taxi GROUP BY payment_type ORDER BY COUNT(*) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A single 'which is the most common' answer is one value: present it as a KPI or a one-row table, never as a chart or pie.",
+          "passed": true,
+          "reasoning": "The question asks for a single 'most common' value, and the data contains exactly one row. The rubric explicitly allows a one-row table for this scenario, and the chosen DataTable fits that requirement perfectly. No unnecessary chart or pie is used."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ],
+      "attempt": 4
+    },
+    {
+      "case_id": "olist_top_customer_state",
+      "question": "Which Brazilian state has the highest number of registered customers?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.2066976049973164,
+          "input_tokens": 209,
+          "output_tokens": 49,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.02340479400299955,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.9223616250092164,
+          "input_tokens": 143,
+          "output_tokens": 76,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.07835154299391434,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.509591752997949,
+          "input_tokens": 750,
+          "output_tokens": 186,
+          "cached_input_tokens": 707
+        },
+        "build_widget": {
+          "latency_s": 6.766180577993509,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 379,
+          "output_tokens": 60,
+          "cached_input_tokens": 328
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 869,
+          "output_tokens": 285,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 7.317169708010624,
+          "input_tokens": 318,
+          "output_tokens": 554,
+          "cached_input_tokens": 274
+        }
+      },
+      "sql": "SELECT customer_state, COUNT(*) AS customer_count FROM olist_customers GROUP BY customer_state ORDER BY customer_count DESC LIMIT 1",
+      "sql_valid": true,
+      "narrative": "S\u00e3o Paulo (SP) has the highest number of registered customers among Brazilian states, with a total of 41,746. This indicates that the customer base is most concentrated in this state, highlighting it as the primary geographic market for the business.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT customer_state FROM olist_customers GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should name a Brazilian state abbreviation or full name and associate it with the largest customer concentration.",
+          "passed": true,
+          "reasoning": "The response explicitly names the Brazilian state 'S\u00e3o Paulo (SP)', providing both the full name and abbreviation, and associates it with having the highest number of registered customers and the most concentrated customer base, perfectly satisfying the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A single top-state answer is one value: a KPI or a one-row table, never a chart or pie.",
+          "passed": false,
+          "reasoning": "The data consists of a single row representing the top state and its customer count. According to the rubric, a single value or one-row answer should be presented as a KPI or a one-row table, not a chart. The chosen bar chart is inappropriate for this data shape and violates the specified best practices."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "olist_top_customer_state",
+      "question": "Which Brazilian state has the highest number of registered customers?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.8152227920072619,
+          "input_tokens": 209,
+          "output_tokens": 49,
+          "cached_input_tokens": 12
+        },
+        "list_tables": {
+          "latency_s": 0.02137870399747044,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.54614131199196,
+          "input_tokens": 143,
+          "output_tokens": 212,
+          "cached_input_tokens": 18
+        },
+        "get_schema": {
+          "latency_s": 0.05616150499554351,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.395617303001927,
+          "input_tokens": 750,
+          "output_tokens": 221,
+          "cached_input_tokens": 707
+        },
+        "build_widget": {
+          "latency_s": 8.096498342012637,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 377,
+          "output_tokens": 50,
+          "cached_input_tokens": 18
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 869,
+          "output_tokens": 603,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 5.227091343011125,
+          "input_tokens": 318,
+          "output_tokens": 331,
+          "cached_input_tokens": 288
+        }
+      },
+      "sql": "SELECT customer_state, COUNT(*) AS customer_count FROM olist_customers GROUP BY customer_state ORDER BY customer_count DESC LIMIT 1",
+      "sql_valid": true,
+      "narrative": "S\u00e3o Paulo (SP) is the top Brazilian state for registered customers, with a total of 41,746. This concentration highlights SP as the dominant market for the business's customer base.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT customer_state FROM olist_customers GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should name a Brazilian state abbreviation or full name and associate it with the largest customer concentration.",
+          "passed": true,
+          "reasoning": "The response explicitly names the Brazilian state 'S\u00e3o Paulo (SP)', providing both the full name and abbreviation, and associates it with the largest customer concentration by stating it is the 'top Brazilian state for registered customers' and the 'dominant market'."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A single top-state answer is one value: a KPI or a one-row table, never a chart or pie.",
+          "passed": false,
+          "reasoning": "The data contains only a single row representing the top state, so a KPI or a one-row table is the appropriate view. A bar chart for a single value violates the rubric and is not a best practice."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "olist_top_customer_state",
+      "question": "Which Brazilian state has the highest number of registered customers?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.4081679140072083,
+          "input_tokens": 209,
+          "output_tokens": 30,
+          "cached_input_tokens": 208
+        },
+        "list_tables": {
+          "latency_s": 0.01742283400380984,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.563338790991111,
+          "input_tokens": 143,
+          "output_tokens": 212,
+          "cached_input_tokens": 142
+        },
+        "get_schema": {
+          "latency_s": 0.07742558800964616,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.833429808000801,
+          "input_tokens": 750,
+          "output_tokens": 171,
+          "cached_input_tokens": 749
+        },
+        "build_widget": {
+          "latency_s": 6.53523305800627,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 382,
+          "output_tokens": 61,
+          "cached_input_tokens": 328
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 869,
+          "output_tokens": 527,
+          "cached_input_tokens": 10
+        },
+        "compose_narrative": {
+          "latency_s": 6.402934087993344,
+          "input_tokens": 318,
+          "output_tokens": 615,
+          "cached_input_tokens": 274
+        }
+      },
+      "sql": "SELECT customer_state, COUNT(*) AS customer_count FROM olist_customers GROUP BY customer_state ORDER BY customer_count DESC LIMIT 1",
+      "sql_valid": true,
+      "narrative": "S\u00e3o Paulo (SP) has the highest number of registered customers among Brazilian states, with a total of 41,746. This concentration highlights that the customer base is heavily focused in this specific region, making it the primary market within the dataset.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT customer_state FROM olist_customers GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should name a Brazilian state abbreviation or full name and associate it with the largest customer concentration.",
+          "passed": true,
+          "reasoning": "The response explicitly names the Brazilian state 'S\u00e3o Paulo (SP)' and associates it with having the highest number of registered customers, which aligns perfectly with the rubric's requirement to name a state and associate it with the largest customer concentration."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A single top-state answer is one value: a KPI or a one-row table, never a chart or pie.",
+          "passed": false,
+          "reasoning": "The data contains a single row representing the top state, but the chosen view is a bar chart. According to the rubric, a single value should be presented as a KPI or a one-row table, not a chart."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "olist_top_customer_state",
+      "question": "Which Brazilian state has the highest number of registered customers?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.554647410986945,
+          "input_tokens": 209,
+          "output_tokens": 42,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.015852311000344343,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.4398714830022072,
+          "input_tokens": 143,
+          "output_tokens": 202,
+          "cached_input_tokens": 142
+        },
+        "get_schema": {
+          "latency_s": 0.06071519300166983,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.1145311949949246,
+          "input_tokens": 750,
+          "output_tokens": 221,
+          "cached_input_tokens": 749
+        },
+        "build_widget": {
+          "latency_s": 13.15908984100679,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 377,
+          "output_tokens": 59,
+          "cached_input_tokens": 369
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 869,
+          "output_tokens": 345,
+          "cached_input_tokens": 710
+        },
+        "compose_narrative": {
+          "latency_s": 2.7665165860089473,
+          "input_tokens": 318,
+          "output_tokens": 99,
+          "cached_input_tokens": 317
+        }
+      },
+      "sql": "SELECT customer_state, COUNT(*) AS customer_count FROM olist_customers GROUP BY customer_state ORDER BY customer_count DESC LIMIT 1",
+      "sql_valid": true,
+      "narrative": "S\u00e3o Paulo (SP) has the highest number of registered customers among Brazilian states, with 41,746 registered customers. This indicates that the customer base is most concentrated in Brazil's most populous state, making it the primary market for the business.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT customer_state FROM olist_customers GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should name a Brazilian state abbreviation or full name and associate it with the largest customer concentration.",
+          "passed": true,
+          "reasoning": "The response explicitly names the Brazilian state 'S\u00e3o Paulo (SP)', providing both the full name and abbreviation, and clearly associates it with having the highest number of registered customers and the largest customer concentration. This perfectly satisfies the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A single top-state answer is one value: a KPI or a one-row table, never a chart or pie.",
+          "passed": false,
+          "reasoning": "The data contains only a single row representing the top state. According to the rubric, a single value should be presented as a KPI or a one-row table, not a bar chart. A bar chart for a single data point is unnecessary and violates data-visualization best practices."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ],
+      "attempt": 3
+    },
+    {
+      "case_id": "olist_top_customer_state",
+      "question": "Which Brazilian state has the highest number of registered customers?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.9299448590027168,
+          "input_tokens": 209,
+          "output_tokens": 49,
+          "cached_input_tokens": 208
+        },
+        "list_tables": {
+          "latency_s": 0.018396920000668615,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.4803002110129455,
+          "input_tokens": 143,
+          "output_tokens": 123,
+          "cached_input_tokens": 142
+        },
+        "get_schema": {
+          "latency_s": 0.07145348000631202,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.4832168529974297,
+          "input_tokens": 750,
+          "output_tokens": 171,
+          "cached_input_tokens": 749
+        },
+        "build_widget": {
+          "latency_s": 9.298932441000943,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 382,
+          "output_tokens": 48,
+          "cached_input_tokens": 369
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 869,
+          "output_tokens": 170,
+          "cached_input_tokens": 868
+        },
+        "compose_narrative": {
+          "latency_s": 4.196580393007025,
+          "input_tokens": 318,
+          "output_tokens": 405,
+          "cached_input_tokens": 317
+        }
+      },
+      "sql": "SELECT customer_state, COUNT(*) AS customer_count FROM olist_customers GROUP BY customer_state ORDER BY customer_count DESC LIMIT 1",
+      "sql_valid": true,
+      "narrative": "S\u00e3o Paulo (SP) leads all Brazilian states with 41,746 registered customers. This concentration indicates that the state is the primary market for the business, suggesting that customer acquisition and engagement efforts are most heavily driven by this region.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT customer_state FROM olist_customers GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should name a Brazilian state abbreviation or full name and associate it with the largest customer concentration.",
+          "passed": true,
+          "reasoning": "The response explicitly names the Brazilian state 'S\u00e3o Paulo (SP)', providing both the full name and the abbreviation. It also associates this state with the largest customer concentration by stating it 'leads all Brazilian states with 41,746 registered customers' and is the 'primary market'. This perfectly satisfies the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A single top-state answer is one value: a KPI or a one-row table, never a chart or pie.",
+          "passed": false,
+          "reasoning": "The data contains only a single row representing the top state. According to the rubric, a single value should be presented as a KPI or a one-row table, not a bar chart. A bar chart for a single data point is unnecessary and violates data-visualization best practices."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "group_by",
+        "ranking",
+        "medium"
+      ],
+      "attempt": 4
+    },
+    {
+      "case_id": "olist_delivery_delay_vs_satisfaction",
+      "question": "Do late deliveries hurt customer satisfaction? Show the average review score for on-time deliveries and for late deliveries as two separate rows.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.122496308002155,
+          "input_tokens": 223,
+          "output_tokens": 47,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.010450568996020593,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.6093148159998236,
+          "input_tokens": 157,
+          "output_tokens": 103,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.15281037498789374,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.669059938998544,
+          "input_tokens": 834,
+          "output_tokens": 183,
+          "cached_input_tokens": 12
+        },
+        "build_widget": {
+          "latency_s": 5.007576042000437,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 501,
+          "output_tokens": 125,
+          "cached_input_tokens": 328
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 817,
+          "output_tokens": 119,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 6.133886034003808,
+          "input_tokens": 363,
+          "output_tokens": 316,
+          "cached_input_tokens": 274
+        }
+      },
+      "sql": "SELECT\n    CASE\n        WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date THEN 'on-time'\n        ELSE 'late'\n    END AS delivery_status,\n    AVG(r.review_score) AS avg_review_score\nFROM olist_orders o\nJOIN olist_order_reviews r ON o.order_id = r.order_id\nWHERE o.order_delivered_customer_date IS NOT NULL\nGROUP BY delivery_status;",
+      "sql_valid": true,
+      "narrative": "Late deliveries clearly hurt customer satisfaction: the average review score drops from 4.29 for on-time deliveries to 2.57 when deliveries are late \u2014 a gap of roughly 1.7 points. This suggests that meeting delivery commitments is strongly tied to how customers rate their experience, and reducing late deliveries could meaningfully improve overall review scores.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT CASE WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date THEN 'on_time' ELSE 'late' END AS delivery, ROUND(AVG(r.review_score),2) AS avg_score FROM olist_orders o JOIN olist_order_reviews r ON o.order_id=r.order_id WHERE o.order_delivered_customer_date IS NOT NULL GROUP BY 1 ORDER BY 1",
+          "passed": false,
+          "reasoning": "no widget matched 2 gold row(s); got [2]"
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should compare on-time versus late deliveries and make clear that late deliveries receive substantially lower review scores.",
+          "passed": true,
+          "reasoning": "The response explicitly compares on-time deliveries (average review score of 4.29) with late deliveries (average review score of 2.57) and highlights the substantial drop in review scores for late deliveries. This perfectly aligns with the rubric's requirement to compare the two and make clear that late deliveries receive substantially lower review scores."
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A two-group comparison (on-time vs late average review score) should be a bar chart or a table, not a single KPI.",
+          "passed": true,
+          "reasoning": "The data has two rows comparing on-time vs. late average review scores. The chosen view is a DataTable, which presents this two-group comparison as two separate rows, exactly as requested and consistent with the rubric (a table is an acceptable choice for a two-group comparison)."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "join",
+        "conditional_aggregation",
+        "date",
+        "comparison",
+        "chart",
+        "hard"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "olist_delivery_delay_vs_satisfaction",
+      "question": "Do late deliveries hurt customer satisfaction? Show the average review score for on-time deliveries and for late deliveries as two separate rows.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.047378012997797,
+          "input_tokens": 223,
+          "output_tokens": 47,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.018408490999718197,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.2778790520096663,
+          "input_tokens": 157,
+          "output_tokens": 90,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.12984940499882214,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 7.147042758006137,
+          "input_tokens": 833,
+          "output_tokens": 182,
+          "cached_input_tokens": 707
+        },
+        "build_widget": {
+          "latency_s": 6.701697583004716,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 482,
+          "output_tokens": 513,
+          "cached_input_tokens": 330
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 817,
+          "output_tokens": 133,
+          "cached_input_tokens": 816
+        },
+        "compose_narrative": {
+          "latency_s": 5.627928158995928,
+          "input_tokens": 365,
+          "output_tokens": 385,
+          "cached_input_tokens": 274
+        }
+      },
+      "sql": "SELECT\n  CASE\n    WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date THEN 'on-time'\n    ELSE 'late'\n  END AS delivery_status,\n  AVG(r.review_score) AS avg_review_score\nFROM olist_orders o\nJOIN olist_order_reviews r ON o.order_id = r.order_id\nWHERE o.order_status = 'delivered'\n  AND o.order_delivered_customer_date IS NOT NULL\n  AND o.order_estimated_delivery_date IS NOT NULL\nGROUP BY delivery_status;",
+      "sql_valid": true,
+      "narrative": "Late deliveries are strongly associated with lower customer satisfaction, with an average review score of 2.57 compared to 4.29 for on-time deliveries. This roughly 1.7-point gap indicates that delivery timeliness is a major driver of how customers rate their experience, and reducing late deliveries could meaningfully improve overall review scores.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT CASE WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date THEN 'on_time' ELSE 'late' END AS delivery, ROUND(AVG(r.review_score),2) AS avg_score FROM olist_orders o JOIN olist_order_reviews r ON o.order_id=r.order_id WHERE o.order_delivered_customer_date IS NOT NULL GROUP BY 1 ORDER BY 1",
+          "passed": false,
+          "reasoning": "no widget matched 2 gold row(s); got [2]"
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should compare on-time versus late deliveries and make clear that late deliveries receive substantially lower review scores.",
+          "passed": true,
+          "reasoning": "The response explicitly compares the average review scores for on-time deliveries (4.29) and late deliveries (2.57). It clearly states that late deliveries receive substantially lower review scores, highlighting the roughly 1.7-point gap. This perfectly aligns with the rubric's requirement to compare the two and make clear that late deliveries result in lower scores."
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A two-group comparison (on-time vs late average review score) should be a bar chart or a table, not a single KPI.",
+          "passed": true,
+          "reasoning": "The chosen visualization uses a DataTable to display the two-group comparison (on-time vs late average review score). The rubric explicitly allows a table for this comparison, so the choice of view type follows data-visualization best practices."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "join",
+        "conditional_aggregation",
+        "date",
+        "comparison",
+        "chart",
+        "hard"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "olist_delivery_delay_vs_satisfaction",
+      "question": "Do late deliveries hurt customer satisfaction? Show the average review score for on-time deliveries and for late deliveries as two separate rows.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.0226344090042403,
+          "input_tokens": 223,
+          "output_tokens": 47,
+          "cached_input_tokens": 222
+        },
+        "list_tables": {
+          "latency_s": 0.015487319993553683,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.7759292550035752,
+          "input_tokens": 157,
+          "output_tokens": 103,
+          "cached_input_tokens": 156
+        },
+        "get_schema": {
+          "latency_s": 0.11442806199193001,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.447963914994034,
+          "input_tokens": 834,
+          "output_tokens": 196,
+          "cached_input_tokens": 707
+        },
+        "build_widget": {
+          "latency_s": 7.796211595996283,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 495,
+          "output_tokens": 172,
+          "cached_input_tokens": 330
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 817,
+          "output_tokens": 304,
+          "cached_input_tokens": 816
+        },
+        "compose_narrative": {
+          "latency_s": 7.5946740670042345,
+          "input_tokens": 363,
+          "output_tokens": 442,
+          "cached_input_tokens": 274
+        }
+      },
+      "sql": "SELECT CASE WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date THEN 'on-time' ELSE 'late' END AS delivery_status, AVG(r.review_score) AS avg_review_score FROM olist_orders o JOIN olist_order_reviews r ON o.order_id = r.order_id WHERE o.order_delivered_customer_date IS NOT NULL AND r.review_score IS NOT NULL GROUP BY delivery_status;",
+      "sql_valid": true,
+      "narrative": "Late deliveries are strongly associated with lower customer satisfaction, with an average review score of 2.57 compared to 4.29 for on-time deliveries. This roughly 1.7-point gap indicates that delivery timeliness is a major driver of review outcomes, as customers receiving late shipments rate their experience notably below the on-time baseline.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT CASE WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date THEN 'on_time' ELSE 'late' END AS delivery, ROUND(AVG(r.review_score),2) AS avg_score FROM olist_orders o JOIN olist_order_reviews r ON o.order_id=r.order_id WHERE o.order_delivered_customer_date IS NOT NULL GROUP BY 1 ORDER BY 1",
+          "passed": false,
+          "reasoning": "no widget matched 2 gold row(s); got [2]"
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should compare on-time versus late deliveries and make clear that late deliveries receive substantially lower review scores.",
+          "passed": true,
+          "reasoning": "The response explicitly compares the average review scores for on-time deliveries (4.29) and late deliveries (2.57). It clearly states that late deliveries are strongly associated with lower customer satisfaction and highlights the substantial gap in scores, fulfilling the rubric's requirement."
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A two-group comparison (on-time vs late average review score) should be a bar chart or a table, not a single KPI.",
+          "passed": true,
+          "reasoning": "The rubric explicitly allows a table for a two-group comparison, and the chosen DataTable presents the two rows (on-time vs. late) with their average review scores as requested. This satisfies the requirement and avoids the prohibited single-KPI approach."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "join",
+        "conditional_aggregation",
+        "date",
+        "comparison",
+        "chart",
+        "hard"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "olist_delivery_delay_vs_satisfaction",
+      "question": "Do late deliveries hurt customer satisfaction? Show the average review score for on-time deliveries and for late deliveries as two separate rows.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.083520870990469,
+          "input_tokens": 223,
+          "output_tokens": 47,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.022180372005095705,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.399799870996503,
+          "input_tokens": 157,
+          "output_tokens": 93,
+          "cached_input_tokens": 18
+        },
+        "get_schema": {
+          "latency_s": 0.141027336998377,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.762887328004581,
+          "input_tokens": 833,
+          "output_tokens": 183,
+          "cached_input_tokens": 755
+        },
+        "build_widget": {
+          "latency_s": 4.335530138996546,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 474,
+          "output_tokens": 137,
+          "cached_input_tokens": 348
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 818,
+          "output_tokens": 121,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 2.674014353004168,
+          "input_tokens": 364,
+          "output_tokens": 96,
+          "cached_input_tokens": 302
+        }
+      },
+      "sql": "SELECT\n  CASE WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date THEN 'on_time' ELSE 'late' END AS delivery_status,\n  AVG(r.review_score) AS avg_review_score\nFROM olist_orders o\nJOIN olist_order_reviews r ON o.order_id = r.order_id\nWHERE o.order_delivered_customer_date IS NOT NULL\n  AND o.order_estimated_delivery_date IS NOT NULL\n  AND r.review_score IS NOT NULL\nGROUP BY delivery_status",
+      "sql_valid": true,
+      "narrative": "Late deliveries are strongly associated with lower customer satisfaction, with an average review score of 2.57 compared to 4.29 for on-time deliveries. This roughly 1.7-point gap indicates that delivery timeliness is a major driver of review outcomes, and reducing late deliveries could meaningfully improve overall customer satisfaction.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT CASE WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date THEN 'on_time' ELSE 'late' END AS delivery, ROUND(AVG(r.review_score),2) AS avg_score FROM olist_orders o JOIN olist_order_reviews r ON o.order_id=r.order_id WHERE o.order_delivered_customer_date IS NOT NULL GROUP BY 1 ORDER BY 1",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should compare on-time versus late deliveries and make clear that late deliveries receive substantially lower review scores.",
+          "passed": true,
+          "reasoning": "The response explicitly compares the average review score for late deliveries (2.57) with that of on-time deliveries (4.29). It clearly states that late deliveries are strongly associated with lower customer satisfaction and highlights the substantial gap in scores, which perfectly aligns with the rubric's requirement to compare the two and show that late deliveries receive substantially lower review scores."
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A two-group comparison (on-time vs late average review score) should be a bar chart or a table, not a single KPI.",
+          "passed": true,
+          "reasoning": "The chosen view is a DataTable, which is explicitly allowed by the rubric for a two-group comparison. The data shape (2 rows, 2 columns) is perfectly suited for a table showing the average review score for on-time and late deliveries as separate rows."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "join",
+        "conditional_aggregation",
+        "date",
+        "comparison",
+        "chart",
+        "hard"
+      ],
+      "attempt": 3
+    },
+    {
+      "case_id": "olist_delivery_delay_vs_satisfaction",
+      "question": "Do late deliveries hurt customer satisfaction? Show the average review score for on-time deliveries and for late deliveries as two separate rows.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 4.68227307399502,
+          "input_tokens": 223,
+          "output_tokens": 47,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.014912728991475888,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.9059254269959638,
+          "input_tokens": 157,
+          "output_tokens": 90,
+          "cached_input_tokens": 156
+        },
+        "get_schema": {
+          "latency_s": 0.10972787499486003,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.5468149920052383,
+          "input_tokens": 834,
+          "output_tokens": 190,
+          "cached_input_tokens": 755
+        },
+        "build_widget": {
+          "latency_s": 8.05977511400124,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 474,
+          "output_tokens": 339,
+          "cached_input_tokens": 348
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 817,
+          "output_tokens": 258,
+          "cached_input_tokens": 710
+        },
+        "compose_narrative": {
+          "latency_s": 5.090586293008528,
+          "input_tokens": 363,
+          "output_tokens": 354,
+          "cached_input_tokens": 335
+        }
+      },
+      "sql": "SELECT\n  CASE WHEN o.order_delivered_customer_date > o.order_estimated_delivery_date THEN 'late' ELSE 'on-time' END AS delivery_status,\n  AVG(r.review_score) AS avg_review_score\nFROM olist_orders o\nJOIN olist_order_reviews r ON o.order_id = r.order_id\nWHERE o.order_delivered_customer_date IS NOT NULL\n  AND o.order_estimated_delivery_date IS NOT NULL\n  AND r.review_score IS NOT NULL\nGROUP BY delivery_status;",
+      "sql_valid": true,
+      "narrative": "Late deliveries are strongly associated with lower customer satisfaction, with an average review score of 2.57 compared to 4.29 for on-time deliveries. This roughly 1.7-point gap indicates that delivery timeliness is a major driver of review outcomes, and customers who experience late shipments are substantially less satisfied than those whose orders arrive on time.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT CASE WHEN o.order_delivered_customer_date <= o.order_estimated_delivery_date THEN 'on_time' ELSE 'late' END AS delivery, ROUND(AVG(r.review_score),2) AS avg_score FROM olist_orders o JOIN olist_order_reviews r ON o.order_id=r.order_id WHERE o.order_delivered_customer_date IS NOT NULL GROUP BY 1 ORDER BY 1",
+          "passed": false,
+          "reasoning": "no widget matched 2 gold row(s); got [2]"
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should compare on-time versus late deliveries and make clear that late deliveries receive substantially lower review scores.",
+          "passed": true,
+          "reasoning": "The response explicitly compares the average review scores for on-time deliveries (4.29) and late deliveries (2.57). It clearly states that late deliveries receive substantially lower review scores, highlighting the roughly 1.7-point gap. This perfectly aligns with the rubric's requirement to compare the two and make clear that late deliveries result in lower scores."
+        },
+        {
+          "type": "viz_rubric",
+          "value": "A two-group comparison (on-time vs late average review score) should be a bar chart or a table, not a single KPI.",
+          "passed": true,
+          "reasoning": "The chosen view is a DataTable, which is explicitly allowed by the rubric for a two-group comparison. The question also asks to show the two groups as separate rows, which a table handles perfectly. The choice of view type is appropriate."
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "join",
+        "conditional_aggregation",
+        "date",
+        "comparison",
+        "chart",
+        "hard"
+      ],
+      "attempt": 4
+    },
+    {
+      "case_id": "olist_kpis_with_drilldown_dashboard",
+      "question": "Show an orders overview: the total number of orders and the cancellation rate as headline KPIs, plus a breakdown table of orders by their status.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.20339122400037,
+          "input_tokens": 228,
+          "output_tokens": 43,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.018526350992033258,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.3209590909973485,
+          "input_tokens": 162,
+          "output_tokens": 40,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.05299830800504424,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.302204823005013,
+          "input_tokens": 800,
+          "output_tokens": 203,
+          "cached_input_tokens": 707
+        },
+        "build_widget": {
+          "latency_s": 7.692638442997122,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 1235,
+          "output_tokens": 373,
+          "cached_input_tokens": 1129
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 2445,
+          "output_tokens": 422,
+          "cached_input_tokens": 2127
+        },
+        "compose_narrative": {
+          "latency_s": 12.340702902001794,
+          "input_tokens": 435,
+          "output_tokens": 1194,
+          "cached_input_tokens": 274
+        }
+      },
+      "sql": "SELECT COUNT(*) AS total_orders FROM olist_orders; SELECT AVG(CASE WHEN order_status = 'canceled' THEN 1.0 ELSE 0.0 END) AS cancellation_rate\nFROM olist_orders\nWHERE order_status IS NOT NULL;; SELECT order_status, COUNT(*) AS order_count\nFROM olist_orders\nGROUP BY order_status\nORDER BY order_count DESC;",
+      "sql_valid": true,
+      "narrative": "The order base is highly mature, with 96,478 of 99,441 total orders already in the \"delivered\" status. Cancellations are minimal, with a cancellation rate of 0.006285133898492574 representing just 625 canceled orders. The remaining volume is concentrated in the \"shipped\" stage (1,107 orders), while earlier fulfillment stages like invoiced (314) and processing (301) account for a much smaller share.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_count",
+          "value": "3",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "2",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "DataTable",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "The headline totals (order count, cancellation rate) belong at the top as KPI cards; the orders-by-status breakdown belongs below as a table or bar chart, never as a KPI.",
+          "passed": true,
+          "reasoning": "The chosen views perfectly align with the rubric and data shape. The two single-value metrics (total_orders and cancellation_rate) are presented as KPI cards at the top, while the multi-row breakdown of orders by status is presented as a DataTable below, exactly as the rubric dictates."
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT order_status, COUNT(*) AS orders FROM olist_orders GROUP BY 1 ORDER BY orders DESC",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "dashboard",
+        "overview",
+        "drilldown",
+        "table",
+        "hard"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "olist_kpis_with_drilldown_dashboard",
+      "question": "Show an orders overview: the total number of orders and the cancellation rate as headline KPIs, plus a breakdown table of orders by their status.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.1542125809937716,
+          "input_tokens": 228,
+          "output_tokens": 53,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.016164570988621563,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.5281899550027447,
+          "input_tokens": 162,
+          "output_tokens": 40,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.05684647501038853,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 5.7981802849972155,
+          "input_tokens": 799,
+          "output_tokens": 252,
+          "cached_input_tokens": 707
+        },
+        "build_widget": {
+          "latency_s": 7.674025283995434,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 1222,
+          "output_tokens": 215,
+          "cached_input_tokens": 678
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 2445,
+          "output_tokens": 482,
+          "cached_input_tokens": 1534
+        },
+        "compose_narrative": {
+          "latency_s": 14.23557458500727,
+          "input_tokens": 435,
+          "output_tokens": 1303,
+          "cached_input_tokens": 274
+        }
+      },
+      "sql": "SELECT COUNT(*) AS total_orders FROM olist_orders;; SELECT AVG(CASE WHEN order_status = 'canceled' THEN 1.0 ELSE 0.0 END) AS cancellation_rate FROM olist_orders; SELECT order_status, COUNT(*) AS order_count\nFROM olist_orders\nGROUP BY order_status\nORDER BY order_count DESC;",
+      "sql_valid": true,
+      "narrative": "The dashboard tracks a total of 99,441 orders, with an exceptionally low cancellation rate of 0.006285133898492574%. The vast majority of this volume is concentrated in the delivered status at 96,478 orders, indicating strong fulfillment success. The remaining orders are spread across shipped (1,107), unavailable (609), invoiced (314), and processing (301) statuses, while the created and approved stages show minimal activity with just 5 and 2 orders respectively.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_count",
+          "value": "3",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "2",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "DataTable",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "The headline totals (order count, cancellation rate) belong at the top as KPI cards; the orders-by-status breakdown belongs below as a table or bar chart, never as a KPI.",
+          "passed": true,
+          "reasoning": "The chosen views correctly use KpiStat for the single-value metrics (total_orders and cancellation_rate) and a DataTable for the multi-row breakdown of orders by status. This perfectly aligns with the rubric, which specifies that headline totals should be KPI cards and the status breakdown should be a table or bar chart."
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT order_status, COUNT(*) AS orders FROM olist_orders GROUP BY 1 ORDER BY orders DESC",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "dashboard",
+        "overview",
+        "drilldown",
+        "table",
+        "hard"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "olist_kpis_with_drilldown_dashboard",
+      "question": "Show an orders overview: the total number of orders and the cancellation rate as headline KPIs, plus a breakdown table of orders by their status.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.2778453860082664,
+          "input_tokens": 228,
+          "output_tokens": 44,
+          "cached_input_tokens": 227
+        },
+        "list_tables": {
+          "latency_s": 0.01646184800483752,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.7178064879990416,
+          "input_tokens": 162,
+          "output_tokens": 40,
+          "cached_input_tokens": 161
+        },
+        "get_schema": {
+          "latency_s": 0.05574137800431345,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.193792840000242,
+          "input_tokens": 799,
+          "output_tokens": 189,
+          "cached_input_tokens": 707
+        },
+        "build_widget": {
+          "latency_s": 7.758291095989989,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 1219,
+          "output_tokens": 319,
+          "cached_input_tokens": 1044
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 2445,
+          "output_tokens": 536,
+          "cached_input_tokens": 2235
+        },
+        "compose_narrative": {
+          "latency_s": 9.913510044003488,
+          "input_tokens": 435,
+          "output_tokens": 1063,
+          "cached_input_tokens": 434
+        }
+      },
+      "sql": "SELECT COUNT(*) AS total_orders FROM olist_orders;; SELECT SUM(CASE WHEN order_status = 'canceled' THEN 1 ELSE 0 END) * 1.0 / COUNT(*) AS cancellation_rate FROM olist_orders; SELECT order_status, COUNT(*) AS order_count FROM olist_orders GROUP BY order_status ORDER BY order_count DESC",
+      "sql_valid": true,
+      "narrative": "The total order volume reached 99,441 orders with a very low cancellation rate of 0.006285133898492574. The vast majority of these orders, 96,478, have been successfully delivered, indicating a highly efficient fulfillment process. The remaining volume is concentrated in the shipped (1,107) and unavailable (609) statuses, while canceled orders account for 625 of the total.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_count",
+          "value": "3",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "2",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "DataTable",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "The headline totals (order count, cancellation rate) belong at the top as KPI cards; the orders-by-status breakdown belongs below as a table or bar chart, never as a KPI.",
+          "passed": true,
+          "reasoning": "The chosen views perfectly align with the rubric and data shape. The two single-value metrics (total_orders and cancellation_rate) are presented as KPI cards at the top, while the multi-row breakdown of orders by status is presented as a DataTable below, exactly as the rubric prescribes."
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT order_status, COUNT(*) AS orders FROM olist_orders GROUP BY 1 ORDER BY orders DESC",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "dashboard",
+        "overview",
+        "drilldown",
+        "table",
+        "hard"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "olist_kpis_with_drilldown_dashboard",
+      "question": "Show an orders overview: the total number of orders and the cancellation rate as headline KPIs, plus a breakdown table of orders by their status.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.779716699005803,
+          "input_tokens": 228,
+          "output_tokens": 43,
+          "cached_input_tokens": 227
+        },
+        "list_tables": {
+          "latency_s": 0.021967250999296084,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.811195565998787,
+          "input_tokens": 162,
+          "output_tokens": 38,
+          "cached_input_tokens": 18
+        },
+        "get_schema": {
+          "latency_s": 0.04460197000298649,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.448201061997679,
+          "input_tokens": 799,
+          "output_tokens": 285,
+          "cached_input_tokens": 762
+        },
+        "build_widget": {
+          "latency_s": 11.604609216999961,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 1222,
+          "output_tokens": 338,
+          "cached_input_tokens": 1084
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 2445,
+          "output_tokens": 463,
+          "cached_input_tokens": 1633
+        },
+        "compose_narrative": {
+          "latency_s": 10.52470369799994,
+          "input_tokens": 435,
+          "output_tokens": 869,
+          "cached_input_tokens": 434
+        }
+      },
+      "sql": "SELECT COUNT(*) AS total_orders FROM olist_orders; SELECT SUM(CASE WHEN order_status = 'canceled' THEN 1 ELSE 0 END) * 1.0 / COUNT(order_status) AS cancellation_rate FROM olist_orders WHERE order_status IS NOT NULL; SELECT order_status, COUNT(*) AS order_count\nFROM olist_orders\nGROUP BY order_status\nORDER BY order_count DESC;",
+      "sql_valid": true,
+      "narrative": "The total order volume reached 99,441, accompanied by a remarkably low cancellation rate of 0.006285133898492574. The overwhelming majority of these orders\u201496,478\u2014are in the delivered status, highlighting a highly efficient fulfillment pipeline. The remaining volume is primarily concentrated in the shipped (1,107), canceled (625), and unavailable (609) categories, with minimal orders still in earlier stages such as invoiced (314) and processing (301).",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_count",
+          "value": "3",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "2",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "DataTable",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "The headline totals (order count, cancellation rate) belong at the top as KPI cards; the orders-by-status breakdown belongs below as a table or bar chart, never as a KPI.",
+          "passed": true,
+          "reasoning": "The chosen views perfectly align with the rubric and data shape. The single-row metrics (total_orders and cancellation_rate) are correctly presented as KPI cards (KpiStat) at the top. The multi-row breakdown (order_status and order_count) is correctly presented as a DataTable below the KPIs, satisfying the requirement to use a table or bar chart for the breakdown."
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT order_status, COUNT(*) AS orders FROM olist_orders GROUP BY 1 ORDER BY orders DESC",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "dashboard",
+        "overview",
+        "drilldown",
+        "table",
+        "hard"
+      ],
+      "attempt": 3
+    },
+    {
+      "case_id": "olist_kpis_with_drilldown_dashboard",
+      "question": "Show an orders overview: the total number of orders and the cancellation rate as headline KPIs, plus a breakdown table of orders by their status.",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.5619376829999965,
+          "input_tokens": 228,
+          "output_tokens": 56,
+          "cached_input_tokens": 227
+        },
+        "list_tables": {
+          "latency_s": 0.01672910999332089,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.559724845996243,
+          "input_tokens": 162,
+          "output_tokens": 40,
+          "cached_input_tokens": 161
+        },
+        "get_schema": {
+          "latency_s": 0.05182690400397405,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.771728683001129,
+          "input_tokens": 800,
+          "output_tokens": 192,
+          "cached_input_tokens": 760
+        },
+        "build_widget": {
+          "latency_s": 10.668512661999557,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 1225,
+          "output_tokens": 170,
+          "cached_input_tokens": 1048
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 2445,
+          "output_tokens": 592,
+          "cached_input_tokens": 2335
+        },
+        "compose_narrative": {
+          "latency_s": 9.410531317989808,
+          "input_tokens": 435,
+          "output_tokens": 1143,
+          "cached_input_tokens": 434
+        }
+      },
+      "sql": "SELECT COUNT(*) AS total_orders FROM olist_orders; SELECT\n    COUNT(*) FILTER (WHERE order_status = 'canceled') * 1.0 / COUNT(*) AS cancellation_rate\nFROM olist_orders;; SELECT order_status, COUNT(*) AS order_count FROM olist_orders GROUP BY order_status ORDER BY order_count DESC",
+      "sql_valid": true,
+      "narrative": "The total order volume reached 99,441 orders with a very low cancellation rate of 0.006285133898492574. The vast majority of these orders, 96,478, have been successfully delivered, indicating a highly efficient fulfillment process. The remaining volume is concentrated in the shipped (1,107) and canceled (625) statuses, while other stages like unavailable (609) and invoiced (314) make up a much smaller fraction.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "widget_count",
+          "value": "3",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "2",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "DataTable",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_present",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "wire_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "viz_rubric",
+          "value": "The headline totals (order count, cancellation rate) belong at the top as KPI cards; the orders-by-status breakdown belongs below as a table or bar chart, never as a KPI.",
+          "passed": true,
+          "reasoning": "The chosen views align perfectly with the rubric and data shape. The two single-value metrics (total_orders and cancellation_rate) are presented as KpiStat cards, while the multi-row breakdown of orders by status is presented as a DataTable, exactly as the rubric dictates."
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT order_status, COUNT(*) AS orders FROM olist_orders GROUP BY 1 ORDER BY orders DESC",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "dashboard",
+        "overview",
+        "drilldown",
+        "table",
+        "hard"
+      ],
+      "attempt": 4
+    },
+    {
+      "case_id": "olist_on_time_paraphrase_1",
+      "question": "How reliable are our delivery promises \u2014 what share of delivered orders arrived on or before the estimated date?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.3352549859991996,
+          "input_tokens": 218,
+          "output_tokens": 67,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.01559190999250859,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.8760796300048241,
+          "input_tokens": 152,
+          "output_tokens": 68,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.042129527995712124,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.7483684019971406,
+          "input_tokens": 789,
+          "output_tokens": 167,
+          "cached_input_tokens": 707
+        },
+        "build_widget": {
+          "latency_s": 6.9408887890022015,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 434,
+          "output_tokens": 121,
+          "cached_input_tokens": 350
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 820,
+          "output_tokens": 178,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 8.413970107998466,
+          "input_tokens": 330,
+          "output_tokens": 559,
+          "cached_input_tokens": 274
+        }
+      },
+      "sql": "SELECT\n    COUNT(*) FILTER (WHERE order_delivered_customer_date <= order_estimated_delivery_date) * 1.0\n    / COUNT(*) AS on_time_share\nFROM olist_orders\nWHERE order_status = 'delivered'\n  AND order_delivered_customer_date IS NOT NULL;",
+      "sql_valid": true,
+      "narrative": "Delivery promises are highly reliable, with an on-time share of 0.9188763346117964 \u2014 meaning the vast majority of delivered orders arrived on or before the estimated date. This strong on-time performance indicates that current estimation practices are well-calibrated and customers can generally trust the delivery dates they are quoted.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_delivered_customer_date <= order_estimated_delivery_date)/COUNT(*),2) FROM olist_orders WHERE order_status='delivered' AND order_delivered_customer_date IS NOT NULL",
+          "passed": false,
+          "reasoning": "no widget matched 1 gold row(s); got [1]"
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "paraphrase",
+        "robustness",
+        "percentage",
+        "date",
+        "medium"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "olist_on_time_paraphrase_1",
+      "question": "How reliable are our delivery promises \u2014 what share of delivered orders arrived on or before the estimated date?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.4935602430050494,
+          "input_tokens": 218,
+          "output_tokens": 77,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.023753761008265428,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.4241459390032105,
+          "input_tokens": 152,
+          "output_tokens": 70,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.03848266399290878,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.6919133219926152,
+          "input_tokens": 790,
+          "output_tokens": 173,
+          "cached_input_tokens": 707
+        },
+        "build_widget": {
+          "latency_s": 3.770261388999643,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 428,
+          "output_tokens": 116,
+          "cached_input_tokens": 387
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 820,
+          "output_tokens": 124,
+          "cached_input_tokens": 819
+        },
+        "compose_narrative": {
+          "latency_s": 7.047346061997814,
+          "input_tokens": 330,
+          "output_tokens": 512,
+          "cached_input_tokens": 14
+        }
+      },
+      "sql": "SELECT\n    COUNT(*) FILTER (WHERE order_delivered_customer_date <= order_estimated_delivery_date) * 1.0\n    / NULLIF(COUNT(*), 0) AS on_time_share\nFROM olist_orders\nWHERE order_delivered_customer_date IS NOT NULL;",
+      "sql_valid": true,
+      "narrative": "The on-time delivery share stands at 0.9188710145528421, meaning the vast majority of delivered orders are arriving on or before the estimated date. This high reliability suggests that current delivery promise estimates are well-calibrated, with only a small fraction of orders missing their promised window.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_delivered_customer_date <= order_estimated_delivery_date)/COUNT(*),2) FROM olist_orders WHERE order_status='delivered' AND order_delivered_customer_date IS NOT NULL",
+          "passed": false,
+          "reasoning": "no widget matched 1 gold row(s); got [1]"
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "paraphrase",
+        "robustness",
+        "percentage",
+        "date",
+        "medium"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "olist_on_time_paraphrase_1",
+      "question": "How reliable are our delivery promises \u2014 what share of delivered orders arrived on or before the estimated date?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 0.9428203169954941,
+          "input_tokens": 218,
+          "output_tokens": 45,
+          "cached_input_tokens": 217
+        },
+        "list_tables": {
+          "latency_s": 0.018935392989078537,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.106226741001592,
+          "input_tokens": 152,
+          "output_tokens": 64,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.04965645199990831,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 2.2710614160023397,
+          "input_tokens": 790,
+          "output_tokens": 173,
+          "cached_input_tokens": 750
+        },
+        "build_widget": {
+          "latency_s": 4.905843865999486,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 429,
+          "output_tokens": 109,
+          "cached_input_tokens": 348
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 820,
+          "output_tokens": 132,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 9.548716567005613,
+          "input_tokens": 330,
+          "output_tokens": 682,
+          "cached_input_tokens": 274
+        }
+      },
+      "sql": "SELECT\n    COUNT(*) FILTER (WHERE order_delivered_customer_date <= order_estimated_delivery_date) * 1.0\n    / COUNT(*) AS on_time_share\nFROM olist_orders\nWHERE order_delivered_customer_date IS NOT NULL;",
+      "sql_valid": true,
+      "narrative": "The vast majority of delivered orders are meeting their delivery promises, with an on-time share of 0.9188710145528421 \u2014 meaning roughly 9 out of every 10 orders arrive on or before the estimated date. This indicates that current delivery estimates are generally well-calibrated, though there remains a small portion of orders arriving late that could warrant attention.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_delivered_customer_date <= order_estimated_delivery_date)/COUNT(*),2) FROM olist_orders WHERE order_status='delivered' AND order_delivered_customer_date IS NOT NULL",
+          "passed": false,
+          "reasoning": "no widget matched 1 gold row(s); got [1]"
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "paraphrase",
+        "robustness",
+        "percentage",
+        "date",
+        "medium"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "olist_on_time_paraphrase_1",
+      "question": "How reliable are our delivery promises \u2014 what share of delivered orders arrived on or before the estimated date?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.4216244859999279,
+          "input_tokens": 218,
+          "output_tokens": 85,
+          "cached_input_tokens": 217
+        },
+        "list_tables": {
+          "latency_s": 0.01760588500474114,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.766941191002843,
+          "input_tokens": 152,
+          "output_tokens": 47,
+          "cached_input_tokens": 130
+        },
+        "get_schema": {
+          "latency_s": 0.04506517499976326,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.516203746999963,
+          "input_tokens": 790,
+          "output_tokens": 237,
+          "cached_input_tokens": 789
+        },
+        "build_widget": {
+          "latency_s": 6.45174884100561,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 432,
+          "output_tokens": 111,
+          "cached_input_tokens": 390
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 820,
+          "output_tokens": 132,
+          "cached_input_tokens": 819
+        },
+        "compose_narrative": {
+          "latency_s": 7.449299334009993,
+          "input_tokens": 330,
+          "output_tokens": 458,
+          "cached_input_tokens": 319
+        }
+      },
+      "sql": "SELECT\n  COUNT(*) FILTER (WHERE order_delivered_customer_date <= order_estimated_delivery_date) * 1.0\n  / COUNT(*) AS on_time_share\nFROM olist_orders\nWHERE order_delivered_customer_date IS NOT NULL;",
+      "sql_valid": true,
+      "narrative": "Delivery promises are highly reliable, with an on-time share of 0.9188710145528421 \u2014 meaning the vast majority of delivered orders arrived on or before the estimated date. This strong on-time performance indicates that current estimation practices are well-calibrated, though a small residual gap suggests there is still room to tighten promises for the remaining late deliveries.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_delivered_customer_date <= order_estimated_delivery_date)/COUNT(*),2) FROM olist_orders WHERE order_status='delivered' AND order_delivered_customer_date IS NOT NULL",
+          "passed": false,
+          "reasoning": "no widget matched 1 gold row(s); got [1]"
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "paraphrase",
+        "robustness",
+        "percentage",
+        "date",
+        "medium"
+      ],
+      "attempt": 3
+    },
+    {
+      "case_id": "olist_on_time_paraphrase_1",
+      "question": "How reliable are our delivery promises \u2014 what share of delivered orders arrived on or before the estimated date?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.2093810259975726,
+          "input_tokens": 218,
+          "output_tokens": 45,
+          "cached_input_tokens": 217
+        },
+        "list_tables": {
+          "latency_s": 0.023400245001539588,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.808339925002656,
+          "input_tokens": 152,
+          "output_tokens": 68,
+          "cached_input_tokens": 151
+        },
+        "get_schema": {
+          "latency_s": 0.042893315010587685,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.7780720139999175,
+          "input_tokens": 789,
+          "output_tokens": 136,
+          "cached_input_tokens": 750
+        },
+        "build_widget": {
+          "latency_s": 6.554783589002909,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 418,
+          "output_tokens": 214,
+          "cached_input_tokens": 352
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 823,
+          "output_tokens": 196,
+          "cached_input_tokens": 729
+        },
+        "compose_narrative": {
+          "latency_s": 10.063233059001504,
+          "input_tokens": 333,
+          "output_tokens": 614,
+          "cached_input_tokens": 305
+        }
+      },
+      "sql": "SELECT\n    SUM(CASE WHEN order_delivered_customer_date <= order_estimated_delivery_date THEN 1 ELSE 0 END) * 1.0 / COUNT(*) AS share_on_or_before_estimated\nFROM olist_orders\nWHERE order_status = 'delivered'\n  AND order_delivered_customer_date IS NOT NULL\n  AND order_estimated_delivery_date IS NOT NULL;",
+      "sql_valid": true,
+      "narrative": "Delivery promises are highly reliable: the share of delivered orders arriving on or before the estimated date is 0.9188763346117964, indicating that the vast majority of orders meet or beat the promised timeline. The remaining gap suggests a small portion of deliveries still slip past the estimate, but overall on-time performance is strong and delivery commitments are largely being upheld.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_delivered_customer_date <= order_estimated_delivery_date)/COUNT(*),2) FROM olist_orders WHERE order_status='delivered' AND order_delivered_customer_date IS NOT NULL",
+          "passed": false,
+          "reasoning": "no widget matched 1 gold row(s); got [1]"
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "paraphrase",
+        "robustness",
+        "percentage",
+        "date",
+        "medium"
+      ],
+      "attempt": 4
+    }
+  ],
+  "consistency": [
+    {
+      "case_id": "taxi_dominant_payment_type",
+      "attempts": 5,
+      "passed_count": 3,
+      "consistency": 0.6,
+      "flaky": true
+    },
+    {
+      "case_id": "olist_top_customer_state",
+      "attempts": 5,
+      "passed_count": 0,
+      "consistency": 0.0,
+      "flaky": false
+    },
+    {
+      "case_id": "olist_delivery_delay_vs_satisfaction",
+      "attempts": 5,
+      "passed_count": 1,
+      "consistency": 0.2,
+      "flaky": true
+    },
+    {
+      "case_id": "olist_kpis_with_drilldown_dashboard",
+      "attempts": 5,
+      "passed_count": 5,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "olist_on_time_paraphrase_1",
+      "attempts": 5,
+      "passed_count": 0,
+      "consistency": 0.0,
+      "flaky": false
+    }
+  ]
+}
