@@ -5,8 +5,10 @@ import pytest
 
 from chat.domain.value_objects.widget import WidgetResult
 from chat.infrastructure.eval.checks import (
+    ExecutionMatchAnyCheck,
     ExecutionMatchCheck,
     ResponseIncludesCheck,
+    ResultSetAnyCheck,
     ResultSetCheck,
     RubricCheck,
     SqlValidCheck,
@@ -189,6 +191,150 @@ class TestExecutionMatchCheckMissingResult:
         # assert
         assert result["passed"] is False
         assert "no query result" in result["reasoning"]
+
+
+_GOLD_A = "SELECT SUM(amount) FROM events"
+_GOLD_B = "SELECT SUM(amount + fee) FROM events"
+
+
+def _any_engine(gold_a: QueryResult, gold_b: QueryResult) -> FakeSqlEngine:
+    return FakeSqlEngine(results_by_sql={_GOLD_A: gold_a, _GOLD_B: gold_b})
+
+
+class TestExecutionMatchAnyCheck:
+    """Answer-set tolerance: a candidate matching ANY defensible gold passes."""
+
+    def test_passes_when_candidate_matches_second_gold(self) -> None:
+        # arrange — candidate matches the with-fee definition, not the first gold
+        gold_a = QueryResult(columns=["s"], rows=[(100.0,)], row_count=1)
+        gold_b = QueryResult(columns=["s"], rows=[(115.0,)], row_count=1)
+        check = ExecutionMatchAnyCheck([_GOLD_A, _GOLD_B], _any_engine(gold_a, gold_b))
+        # act
+        result = check.evaluate(_state_with_result(QueryResult(["t"], [(115.0,)], 1)))
+        # assert
+        assert result["passed"] is True
+
+    def test_fails_when_no_gold_matches(self) -> None:
+        # arrange — candidate matches neither definition
+        gold_a = QueryResult(columns=["s"], rows=[(100.0,)], row_count=1)
+        gold_b = QueryResult(columns=["s"], rows=[(115.0,)], row_count=1)
+        check = ExecutionMatchAnyCheck([_GOLD_A, _GOLD_B], _any_engine(gold_a, gold_b))
+        # act
+        result = check.evaluate(_state_with_result(QueryResult(["t"], [(999.0,)], 1)))
+        # assert — reasoning names the gold and candidate row counts
+        assert result["passed"] is False
+        assert "no widget matched any gold" in result["reasoning"]
+
+    def test_fails_without_query_result(self) -> None:
+        # arrange
+        gold = QueryResult(columns=["s"], rows=[(1.0,)], row_count=1)
+        check = ExecutionMatchAnyCheck([_GOLD_A, _GOLD_B], _any_engine(gold, gold))
+        # act
+        result = check.evaluate(cast(ChatState, {"question": "q"}))
+        # assert
+        assert result["passed"] is False
+        assert "no query result" in result["reasoning"]
+
+    def test_label_variant_golds_accept_either_spelling(self) -> None:
+        # arrange — the same two-group comparison with differently-spelled labels
+        gold_a = QueryResult(
+            columns=["g", "v"], rows=[("on_time", 4.2), ("late", 2.3)], row_count=2
+        )
+        gold_b = QueryResult(
+            columns=["g", "v"], rows=[("on-time", 4.2), ("late", 2.3)], row_count=2
+        )
+        check = ExecutionMatchAnyCheck([_GOLD_A, _GOLD_B], _any_engine(gold_a, gold_b))
+        candidate = QueryResult(
+            columns=["g", "v"], rows=[("on-time", 4.2), ("late", 2.3)], row_count=2
+        )
+        # act / assert — the hyphen spelling matches gold_b even though gold_a misses
+        assert check.evaluate(_state_with_result(candidate))["passed"] is True
+
+
+class TestResultSetAnyCheck:
+    """Scalar answer-set tolerance: any expected value found in any cell passes."""
+
+    def test_passes_when_second_option_matches_a_cell(self) -> None:
+        # arrange — the widget holds the with-freight total, not the first option
+        result = QueryResult(
+            columns=["month", "total"], rows=[("2018-09", 15843553.24)], row_count=1
+        )
+        check = ResultSetAnyCheck(expected_value_options=["13591643.7", "15843553.2"])
+        # act / assert
+        assert check.evaluate(_state_with_result(result))["passed"] is True
+
+    def test_fails_when_no_option_matches(self) -> None:
+        # arrange
+        result = QueryResult(columns=["total"], rows=[(1.0,)], row_count=1)
+        check = ResultSetAnyCheck(expected_value_options=["13591643.7", "15843553.2"])
+        # act
+        outcome = check.evaluate(_state_with_result(result))
+        # assert
+        assert outcome["passed"] is False
+        assert "no cell matched" in outcome["reasoning"]
+
+    def test_fails_without_query_result(self) -> None:
+        check = ResultSetAnyCheck(expected_value_options=["1"])
+        outcome = check.evaluate(cast(ChatState, {"question": "q"}))
+        assert outcome["passed"] is False
+        assert "no query result" in outcome["reasoning"]
+
+    def test_restricts_to_named_column(self) -> None:
+        # arrange — the value exists, but only outside the named column
+        result = QueryResult(columns=["a", "b"], rows=[(42, 7)], row_count=1)
+        check = ResultSetAnyCheck(expected_value_options=["42"], column="b")
+        # act / assert
+        assert check.evaluate(_state_with_result(result))["passed"] is False
+
+
+class TestDeserializeResultSetAny:
+    def test_builds_check_with_options_and_column(self) -> None:
+        # arrange
+        spec = {"type": "result_set_any", "expected_value_options": ["1", "2"], "column": "total"}
+        # act
+        check = deserialize_check(
+            cast(dict[str, str], spec),
+            FakeStructuredChatModel(passed=True, reasoning=""),
+            FakeSqlEngine(),
+        )
+        # assert
+        assert isinstance(check, ResultSetAnyCheck)
+        assert check.expected_value_options == ["1", "2"]
+        assert check.column == "total"
+
+
+class TestDeserializeExecutionMatchAny:
+    def test_builds_check_with_all_gold_options_and_engine(self) -> None:
+        # arrange
+        engine = FakeSqlEngine()
+        judge = FakeStructuredChatModel(passed=True, reasoning="")
+        spec = {"type": "execution_match_any", "gold_sql_options": [_GOLD_A, _GOLD_B]}
+        # act
+        check = deserialize_check(cast(dict[str, str], spec), judge, engine)
+        # assert
+        assert isinstance(check, ExecutionMatchAnyCheck)
+        assert check.gold_sql_options == [_GOLD_A, _GOLD_B]
+        assert check.engine is engine
+
+
+class TestDeserializeExecutionMatchOrderMatters:
+    def test_order_matters_flag_reaches_the_check(self) -> None:
+        # arrange — the spec can now opt into ordered comparison
+        engine = FakeSqlEngine()
+        judge = FakeStructuredChatModel(passed=True, reasoning="")
+        spec = {"type": "execution_match", "gold_sql": _GOLD_SQL, "order_matters": True}
+        # act
+        check = deserialize_check(cast(dict[str, str], spec), judge, engine)
+        # assert
+        assert isinstance(check, ExecutionMatchCheck)
+        assert check.order_matters is True
+
+    def test_order_matters_defaults_to_false(self) -> None:
+        engine = FakeSqlEngine()
+        judge = FakeStructuredChatModel(passed=True, reasoning="")
+        check = deserialize_check({"type": "execution_match", "gold_sql": _GOLD_SQL}, judge, engine)
+        assert isinstance(check, ExecutionMatchCheck)
+        assert check.order_matters is False
 
 
 class TestDeserializeExecutionMatch:

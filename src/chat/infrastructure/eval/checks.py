@@ -22,6 +22,12 @@ from chat.infrastructure.eval._check_base import (
     first_result,
 )
 from chat.infrastructure.eval._result_matching import result_sets_match, value_matches
+from chat.infrastructure.eval.edit_checks import (
+    EditModeCheck,
+    ElementRemovedCheck,
+    WidgetKindCheck,
+    WidgetsPreservedCheck,
+)
 from chat.infrastructure.eval.view_checks import (
     ChartFitCheck,
     KpiBandPopulatedCheck,
@@ -35,6 +41,7 @@ from chat.infrastructure.eval.view_checks import (
 from chat.infrastructure.eval.wire_integrity_check import WireIntegrityCheck
 from chat.infrastructure.graph.chat_state import ChatState
 from shared.application.ports.sql_engine_port import SqlEnginePort
+from shared.domain.value_objects.query_result import QueryResult
 
 
 @dataclass
@@ -152,6 +159,87 @@ class ExecutionMatchCheck:
         )
 
 
+@dataclass
+class ResultSetAnyCheck:
+    """Passes when any cell matches ANY of the expected values (answer-set tolerance).
+
+    The multi-gold sibling of ResultSetCheck for scalar answers hiding in a wider result
+    (e.g. the final cumulative total under either of two defensible metric definitions),
+    where full result-set matching would be brittle to axis formatting.
+
+    Example:
+        check = ResultSetAnyCheck(expected_value_options=["1000.5", "1180.2"])
+        result = check.evaluate(state)  # {"type": "result_set_any", "passed": True, ...}
+    """
+
+    expected_value_options: list[str]
+    column: str | None = field(default=None)
+
+    def evaluate(self, state: ChatState) -> CheckResult:
+        """Return passed when any cell in any widget's result matches any expected value."""
+        label = " | ".join(self.expected_value_options)
+        results = all_results(state)
+        if not results:
+            return CheckResult(
+                type="result_set_any", value=label, passed=False, reasoning="no query result"
+            )
+        cells = collect_cells(results, self.column)
+        passed = any(
+            value_matches(cell, expected)
+            for expected in self.expected_value_options
+            for cell in cells
+        )
+        reasoning = "" if passed else "no cell matched any expected value"
+        return CheckResult(type="result_set_any", value=label, passed=passed, reasoning=reasoning)
+
+
+@dataclass
+class ExecutionMatchAnyCheck:
+    """Execution accuracy with answer-set tolerance: any of N gold queries may match.
+
+    Real questions often admit several defensible metric definitions (revenue with or
+    without freight, customers by id vs unique id, labels spelled differently). Each
+    defensible reading gets its own gold query; the answer is correct when ANY widget's
+    result matches ANY gold — so "different-but-valid" stops grading as "wrong" while
+    the comparison itself stays as strict as ExecutionMatchCheck's.
+
+    Example:
+        check = ExecutionMatchAnyCheck(
+            ["SELECT SUM(amount) FROM events", "SELECT SUM(amount + fee) FROM events"],
+            engine,
+        )
+        result = check.evaluate(state)  # {"type": "execution_match_any", "passed": True, ...}
+    """
+
+    gold_sql_options: list[str]
+    engine: SqlEnginePort
+
+    def evaluate(self, state: ChatState) -> CheckResult:
+        """Return passed when any widget's result matches any gold query's result."""
+        label = f"{len(self.gold_sql_options)} gold options"
+        candidates = all_results(state)
+        if not candidates:
+            return CheckResult(
+                type="execution_match_any", value=label, passed=False, reasoning="no query result"
+            )
+        golds = [self.engine.execute_query(sql) for sql in self.gold_sql_options]
+        passed = any(
+            result_sets_match(candidate, gold, order_matters=False)
+            for candidate in candidates
+            for gold in golds
+        )
+        reasoning = "" if passed else self._miss_reasoning(candidates, golds)
+        return CheckResult(
+            type="execution_match_any", value=label, passed=passed, reasoning=reasoning
+        )
+
+    def _miss_reasoning(self, candidates: list[QueryResult], golds: list[QueryResult]) -> str:
+        """Describe the miss: candidate row counts vs each gold's row count."""
+        got = ", ".join(str(c.row_count) for c in candidates)
+        wanted = ", ".join(str(g.row_count) for g in golds)
+        return f"no widget matched any gold (gold row counts [{wanted}]); got [{got}]"
+
+
 _JUDGE_SYSTEM_PROMPT = (
     "You are an evaluation judge. Given a question, a system response, and a rubric, "
     "decide whether the response satisfies the rubric."
@@ -227,7 +315,17 @@ def deserialize_check(
             expected_value=spec["expected_value"], column=spec.get("column")
         ),
         "execution_match": lambda: ExecutionMatchCheck(
-            gold_sql=spec["gold_sql"], engine=sql_engine
+            gold_sql=spec["gold_sql"],
+            engine=sql_engine,
+            order_matters=bool(spec.get("order_matters", False)),
+        ),
+        "execution_match_any": lambda: ExecutionMatchAnyCheck(
+            gold_sql_options=list(cast(list[str], spec["gold_sql_options"])),
+            engine=sql_engine,
+        ),
+        "result_set_any": lambda: ResultSetAnyCheck(
+            expected_value_options=list(cast(list[str], spec["expected_value_options"])),
+            column=spec.get("column"),
         ),
         "rubric": lambda: RubricCheck(model=judge_model, rubric=spec["rubric"]),
         "view_integrity": ViewIntegrityCheck,
@@ -241,6 +339,16 @@ def deserialize_check(
         "widget_count": lambda: WidgetCountCheck(min_widgets=int(spec["min_widgets"])),
         "viz_rubric": lambda: VizRubricCheck(model=judge_model, rubric=spec["rubric"]),
         "wire_integrity": WireIntegrityCheck,
+        "edit_mode": lambda: EditModeCheck(expected_mode=spec["expected_mode"]),
+        "widget_kind": lambda: WidgetKindCheck(
+            widget_id=spec["widget_id"],
+            element_type=spec["element_type"],
+            chart_kind=spec.get("chart_kind"),
+        ),
+        "widgets_preserved": lambda: WidgetsPreservedCheck(
+            widget_ids=cast(list[str], spec["widget_ids"])
+        ),
+        "element_removed": lambda: ElementRemovedCheck(element_id=spec["element_id"]),
     }
     check_type = spec.get("type", "")
     if check_type not in builders:
