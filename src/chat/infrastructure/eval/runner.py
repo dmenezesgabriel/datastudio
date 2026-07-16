@@ -9,25 +9,38 @@ from typing import Literal, cast
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 
-from chat.infrastructure.eval._check_base import widget_results
+from chat.domain.value_objects.render_tree import RenderTree
+from chat.infrastructure.eval._check_base import patch_lines, widget_results
 from chat.infrastructure.eval.checks import Check, CheckResult
 from chat.infrastructure.eval.metrics import EvalCollector, MetricsRecorder, NodeMetrics
 from chat.infrastructure.eval.token_callback import TokenCountingCallback
 from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.types import TypedChatGraph
+from chat.infrastructure.graph.view.render_tree_builder import (
+    apply_patch_lines,
+    compile_render_tree,
+)
 
 
 @dataclass
 class EvalTurn:
-    """One turn within a case: a question and the checks asserted on its answer.
+    """One turn within a case: a build question or an edit instruction, plus its checks.
 
-    Follow-up turns are how short-term memory is graded: a turn whose question only
-    resolves against prior turns (e.g. "now break it down by month") passes only when
+    A turn is a *build* turn (``question`` set) that drives the text2sql graph, or an *edit*
+    turn (``instruction`` set) that reopens the prior turn's dashboard and drives the edit
+    graph. Follow-up turns are also how short-term memory is graded: a turn whose question
+    only resolves against prior turns (e.g. "now break it down by month") passes only when
     the accumulated conversation history reaches the graph.
     """
 
-    question: str
-    checks: list[Check]
+    question: str = ""
+    checks: list[Check] = field(default_factory=list[Check])
+    instruction: str | None = None
+
+    @property
+    def is_edit(self) -> bool:
+        """True when this turn edits the prior dashboard rather than asking a new question."""
+        return bool(self.instruction)
 
 
 @dataclass
@@ -48,7 +61,11 @@ class EvalCase:
 
 @dataclass
 class CaseResult:
-    """Outcome of running one EvalCase through the instrumented graph."""
+    """Outcome of running one EvalCase through the instrumented graph.
+
+    ``attempt`` is the 0-based repetition index: when the runner repeats a case k times
+    the report holds k CaseResults per ``case_id``, aggregated into a CaseConsistency.
+    """
 
     case_id: str
     question: str
@@ -60,6 +77,23 @@ class CaseResult:
     passed: bool
     error: str | None
     tags: list[str] = field(default_factory=list[str])
+    attempt: int = 0
+
+
+@dataclass
+class CaseConsistency:
+    """A case's pass@k reliability across its repeated attempts.
+
+    ``consistency`` is the fraction of attempts that fully passed; ``flaky`` marks a case
+    that neither always passes nor always fails (0 < consistency < 1) — the signal a single
+    run cannot surface. A case clears the SLO gate when consistency ≥ the configured floor.
+    """
+
+    case_id: str
+    attempts: int
+    passed_count: int
+    consistency: float
+    flaky: bool
 
 
 @dataclass
@@ -70,11 +104,26 @@ class EvalReport:
     model: str
     summary: dict[str, object]
     cases: list[CaseResult]
+    consistency: list[CaseConsistency] = field(default_factory=list[CaseConsistency])
 
 
 def _case_turns(case: EvalCase) -> list[EvalTurn]:
     """The case as an ordered turn list: the base question then any follow-ups."""
     return [EvalTurn(case.question, case.checks), *case.follow_ups]
+
+
+def _compile_prior_spec(build_state: dict[str, object]) -> RenderTree:
+    """Compile a completed build turn's state into the RenderTree an edit turn reopens.
+
+    Mirrors the sync/CLI view path: the widgets' SpecStream patch lines plus each widget's
+    SQL are compiled into the same F-layout dashboard the frontend would render, so the edit
+    graph sees a faithful prior dashboard rather than raw graph state.
+    """
+    state = cast(ChatState, build_state)
+    sql_by_widget = {w.widget_id: w.sql for w in widget_results(state)}
+    return compile_render_tree(
+        str(build_state.get("narrative", "")), patch_lines(state), sql_by_widget
+    )
 
 
 def _percentile(values: list[float], pct: float) -> float:
@@ -113,6 +162,38 @@ def _by_tag(cases: list[CaseResult]) -> dict[str, dict[str, int]]:
             bucket["total"] += 1
             bucket["passed"] += int(case.passed)
     return breakdown
+
+
+def aggregate_consistency(cases: list[CaseResult]) -> list[CaseConsistency]:
+    """Collapse per-attempt CaseResults into one CaseConsistency per case id, in first-seen order.
+
+    Example:
+        aggregate_consistency([r_pass, r_fail])  # → [CaseConsistency(consistency=0.5, flaky=True)]
+    """
+    outcomes: dict[str, list[bool]] = {}
+    for case in cases:
+        outcomes.setdefault(case.case_id, []).append(case.passed)
+    records: list[CaseConsistency] = []
+    for case_id, passes in outcomes.items():
+        attempts, passed = len(passes), sum(passes)
+        rate = passed / attempts if attempts else 0.0
+        records.append(
+            CaseConsistency(case_id, attempts, passed, round(rate, 3), 0 < passed < attempts)
+        )
+    return records
+
+
+def _consistency_summary(records: list[CaseConsistency]) -> dict[str, object]:
+    """Mean consistency plus counts of reliable (=1.0) / flaky / always-failing cases."""
+    total = len(records)
+    mean = sum(r.consistency for r in records) / total if total else 0.0
+    return {
+        "cases": total,
+        "mean_consistency": round(mean, 3),
+        "reliable": sum(1 for r in records if r.passed_count == r.attempts and r.attempts > 0),
+        "flaky": sum(1 for r in records if r.flaky),
+        "failing": sum(1 for r in records if r.passed_count == 0),
+    }
 
 
 # The checks that grade "did the agent choose the right response shape" (text vs KPI vs
@@ -180,6 +261,7 @@ def compute_summary(
         "avg_output_tokens": round(output_tokens / total, 1) if total else 0.0,
         "cost_usd": round(cost, 6),
         "view_selection": _view_selection_accuracy(cases),
+        "consistency": _consistency_summary(aggregate_consistency(cases)),
         "by_tag": _by_tag(cases),
     }
 
@@ -208,40 +290,57 @@ class EvalRunner:
         input_price_per_m: float = 0.0,
         output_price_per_m: float = 0.0,
         max_workers: int = 1,
+        repeats: int = 1,
+        edit_graph_factory: Callable[[MetricsRecorder], TypedChatGraph] | None = None,
     ) -> None:
-        """Store the factory, pricing, and concurrency; graphs are built per case in run().
+        """Store the factories, pricing, concurrency, and repetition; graphs build per attempt.
 
-        max_workers > 1 runs cases through a bounded thread pool. Each case
+        max_workers > 1 runs attempts through a bounded thread pool. Each attempt
         already gets its own graph + collector, and the SqlEnginePort opens a
-        fresh read-only connection per call, so cases are isolated — keep the
-        bound modest since the real ceiling is upstream LLM rate limits.
+        fresh read-only connection per call, so attempts are isolated — keep the
+        bound modest since the real ceiling is upstream LLM rate limits. ``repeats``
+        runs every case that many times so per-case consistency (pass@k) is measurable.
+        ``edit_graph_factory`` builds the dashboard-edit graph an edit turn drives; it is
+        required only when a case includes an edit turn.
         """
         self._graph_factory = graph_factory
+        self._edit_graph_factory = edit_graph_factory
         self._model_name = model_name
         self._input_price_per_m = input_price_per_m
         self._output_price_per_m = output_price_per_m
         self._max_workers = max_workers
+        self._repeats = repeats
 
     def run(self, cases: list[EvalCase]) -> EvalReport:
-        """Run all cases and return a consolidated report."""
+        """Run all cases (each ``repeats`` times) and return a consolidated report."""
         results = self._run_cases(cases)
         return EvalReport(
             run_at=datetime.datetime.now(datetime.UTC).isoformat(),
             model=self._model_name,
             summary=compute_summary(results, self._input_price_per_m, self._output_price_per_m),
             cases=results,
+            consistency=aggregate_consistency(results),
         )
 
     def _run_cases(self, cases: list[EvalCase]) -> list[CaseResult]:
-        """Run cases sequentially, or via a thread pool when max_workers > 1.
+        """Run every case ``repeats`` times, sequentially or via a thread pool.
 
-        Results keep input order in both paths (ThreadPoolExecutor.map preserves
-        ordering), so the report is deterministic regardless of completion order.
+        Results keep input order in both paths (attempts of a case stay adjacent, and
+        ThreadPoolExecutor.map preserves ordering), so the report is deterministic
+        regardless of completion order.
         """
+        attempts = [(case, k) for case in cases for k in range(self._repeats)]
         if self._max_workers <= 1:
-            return [self._run_case(case) for case in cases]
+            return [self._run_attempt(item) for item in attempts]
         with ThreadPoolExecutor(max_workers=self._max_workers) as pool:
-            return list(pool.map(self._run_case, cases))
+            return list(pool.map(self._run_attempt, attempts))
+
+    def _run_attempt(self, item: tuple[EvalCase, int]) -> CaseResult:
+        """Run one repetition of a case, stamping the CaseResult with its attempt index."""
+        case, attempt = item
+        result = self._run_case(case)
+        result.attempt = attempt
+        return result
 
     def _run_case(self, case: EvalCase) -> CaseResult:
         # One collector spans all turns so node latency/tokens reflect the whole
@@ -289,15 +388,74 @@ class EvalRunner:
         history: list[BaseMessage] = []
         check_results: list[CheckResult] = []
         state_dict: dict[str, object] = {}
+        prior_build: dict[str, object] | None = None
         for turn in _case_turns(case):
-            graph = self._graph_factory(collector)
-            final_state = graph.invoke(  # pyright: ignore[reportUnknownMemberType]
-                cast(ChatState, {"question": turn.question, "history": list(history)}),
-                config={"callbacks": [callback]},
+            if turn.is_edit:
+                state_dict = self._run_edit_turn(turn, prior_build, collector, callback, history)
+            else:
+                state_dict = self._run_build_turn(turn, collector, callback, history)
+                prior_build = state_dict
+            check_results.extend(
+                check.evaluate(cast(ChatState, state_dict)) for check in turn.checks
             )
-            state = cast(ChatState, final_state)
-            state_dict = cast(dict[str, object], state)
-            check_results.extend(check.evaluate(state) for check in turn.checks)
-            narrative = str(state_dict.get("narrative", ""))
-            history.extend([HumanMessage(content=turn.question), AIMessage(content=narrative)])
+            prompt = turn.instruction or turn.question
+            history.extend(
+                [
+                    HumanMessage(content=prompt),
+                    AIMessage(content=str(state_dict.get("narrative", ""))),
+                ]
+            )
         return check_results, state_dict
+
+    def _run_build_turn(
+        self,
+        turn: EvalTurn,
+        collector: MetricsRecorder,
+        callback: TokenCountingCallback,
+        history: list[BaseMessage],
+    ) -> dict[str, object]:
+        """Drive the text2sql graph for a question turn and return its final state."""
+        graph = self._graph_factory(collector)
+        final_state = graph.invoke(  # pyright: ignore[reportUnknownMemberType]
+            cast(ChatState, {"question": turn.question, "history": list(history)}),
+            config={"callbacks": [callback]},
+        )
+        return cast(dict[str, object], final_state)
+
+    def _run_edit_turn(
+        self,
+        turn: EvalTurn,
+        prior_build: dict[str, object] | None,
+        collector: MetricsRecorder,
+        callback: TokenCountingCallback,
+        history: list[BaseMessage],
+    ) -> dict[str, object]:
+        """Drive the edit graph against the prior turn's dashboard, grading the edited spec.
+
+        Compiles the prior build turn into a RenderTree, runs the edit graph with that as
+        ``prior_spec``, applies the emitted patches, and stashes the resulting tree under
+        ``edited_spec`` so the edit checks can grade the merged dashboard (not raw patches).
+        """
+        if self._edit_graph_factory is None:
+            raise ValueError("edit turn requires an edit_graph_factory; none was provided")
+        if prior_build is None:
+            raise ValueError("edit turn has no prior build turn to seed prior_spec from")
+        prior_spec = _compile_prior_spec(prior_build)
+        graph = self._edit_graph_factory(collector)
+        edit_state = graph.invoke(  # pyright: ignore[reportUnknownMemberType]
+            cast(
+                ChatState,
+                {
+                    "instruction": turn.instruction,
+                    "prior_spec": prior_spec,
+                    "history": list(history),
+                },
+            ),
+            config={"callbacks": [callback]},
+        )
+        edit_dict = cast(dict[str, object], edit_state)
+        edit_dict["prior_spec"] = prior_spec
+        edit_dict["edited_spec"] = apply_patch_lines(
+            prior_spec, patch_lines(cast(ChatState, edit_dict))
+        )
+        return edit_dict

@@ -6,6 +6,7 @@ from chat.infrastructure.eval.runner import (
     _percentile,
     _sum_node_token_attr,
     _view_selection_accuracy,
+    aggregate_consistency,
     compute_summary,
 )
 
@@ -327,6 +328,88 @@ class TestComputeSummaryPrecision:
         summary = compute_summary(cases, input_price_per_m=0.0, output_price_per_m=0.1)
         assert isinstance(summary["cost_usd"], float)
         assert summary["cost_usd"] == round(1_234_567 * 0.1 / 1e6, 6)
+
+
+def _attempt(case_id: str, passed: bool) -> CaseResult:
+    return _case(case_id, passed, 0, 0, [])
+
+
+class TestAggregateConsistency:
+    """aggregate_consistency collapses repeated attempts into one pass@k record per case."""
+
+    def test_one_record_per_case_id_in_first_seen_order(self) -> None:
+        # arrange — two cases, two attempts each, interleaved
+        cases = [
+            _attempt("b", True),
+            _attempt("a", True),
+            _attempt("b", False),
+            _attempt("a", True),
+        ]
+        # act
+        records = aggregate_consistency(cases)
+        # assert — first-seen order (b before a), one record each
+        assert [r.case_id for r in records] == ["b", "a"]
+
+    def test_consistency_is_pass_fraction(self) -> None:
+        # arrange — 1 of 2 attempts passed
+        records = aggregate_consistency([_attempt("a", True), _attempt("a", False)])
+        # assert
+        assert records[0].attempts == 2
+        assert records[0].passed_count == 1
+        assert records[0].consistency == 0.5
+
+    def test_partial_pass_is_flaky(self) -> None:
+        # arrange — mixed outcomes
+        record = aggregate_consistency([_attempt("a", True), _attempt("a", False)])[0]
+        # assert
+        assert record.flaky is True
+
+    def test_all_pass_is_not_flaky(self) -> None:
+        record = aggregate_consistency([_attempt("a", True), _attempt("a", True)])[0]
+        assert record.flaky is False
+        assert record.consistency == 1.0
+
+    def test_all_fail_is_not_flaky(self) -> None:
+        record = aggregate_consistency([_attempt("a", False), _attempt("a", False)])[0]
+        assert record.flaky is False
+        assert record.consistency == 0.0
+
+
+class TestConsistencySummary:
+    """compute_summary surfaces a consistency block: mean plus reliable/flaky/failing counts."""
+
+    def test_counts_reliable_flaky_and_failing(self) -> None:
+        # arrange — reliable(a: 2/2), flaky(b: 1/2), failing(c: 0/2)
+        cases = [
+            _attempt("a", True),
+            _attempt("a", True),
+            _attempt("b", True),
+            _attempt("b", False),
+            _attempt("c", False),
+            _attempt("c", False),
+        ]
+        # act
+        consistency = compute_summary(cases)["consistency"]
+        # assert
+        assert consistency == {
+            "cases": 3,
+            "mean_consistency": round((1.0 + 0.5 + 0.0) / 3, 3),
+            "reliable": 1,
+            "flaky": 1,
+            "failing": 1,
+        }
+
+    def test_empty_cases_yield_zero_mean(self) -> None:
+        # arrange / act
+        consistency = compute_summary([])["consistency"]
+        # assert
+        assert consistency == {
+            "cases": 0,
+            "mean_consistency": 0.0,
+            "reliable": 0,
+            "flaky": 0,
+            "failing": 0,
+        }
 
 
 class TestComputeSummaryByTag:

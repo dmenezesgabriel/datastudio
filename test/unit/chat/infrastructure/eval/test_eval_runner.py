@@ -7,7 +7,9 @@ from typing import Any, cast
 
 import pytest
 
+from chat.domain.value_objects.render_tree import RenderTree
 from chat.domain.value_objects.widget import WidgetResult
+from chat.infrastructure.eval.edit_checks import EditModeCheck
 from chat.infrastructure.eval.metrics import MetricsRecorder
 from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner, EvalTurn
 from chat.infrastructure.graph.chat_state import ChatState
@@ -80,6 +82,22 @@ class _FakeGraph:
         if self._raise is not None:
             raise self._raise
         return _state_for(str(state.get("question", "")), self._response)
+
+
+class _FakeEditGraph:
+    """Fake edit graph that records the seeded state and returns a fixed edit outcome."""
+
+    def __init__(self, edit_mode: str = "restyle") -> None:
+        self._edit_mode = edit_mode
+        self.invoke_calls: list[tuple[Any, Any]] = []
+
+    def invoke(self, state: Any, config: Any = None) -> Mapping[str, object]:
+        """Record the seeded state and return an empty-patch restyle result."""
+        self.invoke_calls.append((state, config))
+        return cast(
+            ChatState,
+            {"widget_patch_lines": [], "edit_mode": self._edit_mode, "narrative": ""},
+        )
 
 
 class TestEvalRunnerMultiTurn:
@@ -564,6 +582,114 @@ class TestEvalRunnerPricing:
         report = runner.run([EvalCase(id="c1", question="q", checks=[])])
         # 1M output tokens × $2/M = $2.0 cost
         assert report.summary["cost_usd"] == pytest.approx(2.0)
+
+
+class TestEvalRunnerRepeats:
+    """repeats > 1 runs each case k times so per-case consistency is measurable."""
+
+    def test_runs_each_case_repeats_times(self) -> None:
+        # arrange — one case, three repetitions
+        runner = EvalRunner(
+            graph_factory=lambda _r: _FakeGraph(), model_name="test-model", repeats=3
+        )
+        # act
+        report = runner.run([EvalCase(id="c1", question="q", checks=[])])
+        # assert — three attempts, indexed 0..2
+        attempts = [c for c in report.cases if c.case_id == "c1"]
+        assert len(attempts) == 3
+        assert sorted(c.attempt for c in attempts) == [0, 1, 2]
+
+    def test_attempts_of_same_case_stay_adjacent(self) -> None:
+        # arrange — two cases, two repetitions each
+        runner = EvalRunner(
+            graph_factory=lambda _r: _FakeGraph(), model_name="test-model", repeats=2
+        )
+        cases = [
+            EvalCase(id="c1", question="q1", checks=[]),
+            EvalCase(id="c2", question="q2", checks=[]),
+        ]
+        # act
+        report = runner.run(cases)
+        # assert — a case's repetitions are contiguous, in input order
+        assert [c.case_id for c in report.cases] == ["c1", "c1", "c2", "c2"]
+
+    def test_report_consistency_has_one_record_per_case(self) -> None:
+        # arrange
+        runner = EvalRunner(
+            graph_factory=lambda _r: _FakeGraph(), model_name="test-model", repeats=2
+        )
+        cases = [
+            EvalCase(id="c1", question="q", checks=[]),
+            EvalCase(id="c2", question="q", checks=[]),
+        ]
+        # act
+        report = runner.run(cases)
+        # assert — one CaseConsistency per case id, each over two attempts
+        assert {r.case_id for r in report.consistency} == {"c1", "c2"}
+        assert all(r.attempts == 2 for r in report.consistency)
+
+    def test_default_repeats_is_one(self) -> None:
+        # kills a default-repeats mutation (repeats=2)
+        runner = EvalRunner(graph_factory=lambda _r: _FakeGraph(), model_name="test-model")
+        assert runner._repeats == 1
+
+
+class TestEvalRunnerEditTurn:
+    """An edit follow-up drives the edit graph against the prior turn's compiled dashboard."""
+
+    def test_edit_turn_seeds_prior_spec_render_tree(self) -> None:
+        # arrange — a build seed then an edit instruction
+        edit = _FakeEditGraph(edit_mode="restyle")
+        runner = EvalRunner(
+            graph_factory=lambda _r: _FakeGraph(response="seed"),
+            edit_graph_factory=lambda _r: edit,
+            model_name="test-model",
+        )
+        case = EvalCase(
+            id="c1",
+            question="seed q",
+            checks=[],
+            follow_ups=[EvalTurn(instruction="make it a bar chart", checks=[])],
+        )
+        # act
+        runner.run([case])
+        # assert — the edit graph received a compiled RenderTree and the instruction
+        seeded = edit.invoke_calls[0][0]
+        assert isinstance(seeded["prior_spec"], RenderTree)
+        assert seeded["instruction"] == "make it a bar chart"
+
+    def test_edit_checks_see_stashed_mode_and_spec(self) -> None:
+        # arrange — the edit turn asserts the classifier mode via EditModeCheck
+        runner = EvalRunner(
+            graph_factory=lambda _r: _FakeGraph(response="seed"),
+            edit_graph_factory=lambda _r: _FakeEditGraph(edit_mode="restyle"),
+            model_name="test-model",
+        )
+        case = EvalCase(
+            id="c1",
+            question="seed q",
+            checks=[],
+            follow_ups=[EvalTurn(instruction="edit", checks=[EditModeCheck("restyle")])],
+        )
+        # act
+        report = runner.run([case])
+        # assert — EditModeCheck read edit_mode + edited_spec off the stashed state
+        assert report.cases[0].passed is True
+
+    def test_edit_turn_without_factory_is_captured_as_error(self) -> None:
+        # arrange — an edit turn but no edit_graph_factory injected
+        runner = EvalRunner(graph_factory=lambda _r: _FakeGraph(), model_name="test-model")
+        case = EvalCase(
+            id="c1",
+            question="seed",
+            checks=[],
+            follow_ups=[EvalTurn(instruction="edit", checks=[])],
+        )
+        # act
+        report = runner.run([case])
+        # assert — the missing factory surfaces as a captured error, not a crash
+        assert report.cases[0].passed is False
+        assert "edit_graph_factory" in (report.cases[0].error or "")
 
 
 class TestEvalRunnerNodeMetrics:

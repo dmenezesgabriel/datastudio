@@ -1,9 +1,10 @@
-"""Builds an instrumented text2sql graph for use in eval runs."""
+"""Builds instrumented build/edit graphs for use in eval runs."""
 
 from langchain_core.language_models import BaseChatModel
 
 from chat.infrastructure.eval.metrics import MetricsRecorder
 from chat.infrastructure.eval.timed_node import TimedNode
+from chat.infrastructure.graph.edit_graph import build_edit_nodes, wire_edit_graph
 from chat.infrastructure.graph.text2sql_graph import (
     build_text2sql_nodes,
     wire_text2sql_graph,
@@ -37,3 +38,28 @@ def build_eval_graph(
         name: TimedNode(name, node, recorder) for name, node in nodes.items()
     }
     return wire_text2sql_graph(timed)
+
+
+def build_edit_eval_graph(
+    chat_model: BaseChatModel,
+    sql_engine: SqlEnginePort,
+    recorder: MetricsRecorder,
+    format_chat_model: BaseChatModel | None = None,
+    api_base: str | None = None,
+) -> TypedChatGraph:
+    """Builds an instrumented dashboard-edit graph with per-node latency timing.
+
+    The edit-graph sibling of ``build_eval_graph``: it wraps ``build_edit_nodes`` (classify →
+    restyle | reanalyze) in ``TimedNode`` and wires them with ``wire_edit_graph``, so an eval
+    edit turn drives the very graph production uses while recording per-node metrics. Keeping
+    the instrumentation here (not in the production builder) stops it leaking into production.
+
+    Example:
+        graph = build_edit_eval_graph(model, engine, EvalCollector())
+        graph.invoke({"instruction": "make it a bar chart", "prior_spec": spec, "history": []})
+    """
+    nodes = build_edit_nodes(chat_model, sql_engine, format_chat_model, api_base)
+    timed: dict[str, TypedChatNode] = {
+        name: TimedNode(name, node, recorder) for name, node in nodes.items()
+    }
+    return wire_edit_graph(timed)
