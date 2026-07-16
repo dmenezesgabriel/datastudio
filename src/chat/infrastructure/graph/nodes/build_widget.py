@@ -146,7 +146,7 @@ class BuildWidget:
     def _author_patch_lines(self, widget: WidgetSpec, result: QueryResult) -> list[str]:
         """Author the widget's namespaced view, reporting a "Building chart" sub-step."""
         with _sub_step(self._reporter, widget.id, "view", "Building chart"):
-            return self._view.author(widget.id, widget.title, widget.role, result)
+            return self._view.author(widget.id, widget.title, widget.role, result, widget.view_hint)
 
     def _result(
         self, widget: WidgetSpec, result: QueryResult, worker_state: Mapping[str, object]

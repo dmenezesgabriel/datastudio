@@ -25,6 +25,17 @@ class TestWidgetSpec:
         spec = WidgetSpec(id="widget-0", title="Total", sub_question="total", role="metric")
         assert spec.role == "metric"
 
+    def test_view_hint_defaults_to_none(self) -> None:
+        # No explicit presentation requested → the view author chooses by data shape.
+        spec = WidgetSpec(id="widget-0", title="t", sub_question="q", role="analysis")
+        assert spec.view_hint is None
+
+    def test_carries_explicit_view_hint(self) -> None:
+        spec = WidgetSpec(
+            id="widget-0", title="t", sub_question="q", role="analysis", view_hint="table"
+        )
+        assert spec.view_hint == "table"
+
     def test_is_frozen(self) -> None:
         spec = WidgetSpec(id="widget-0", title="t", sub_question="q", role="analysis")
         with pytest.raises(dataclasses.FrozenInstanceError):

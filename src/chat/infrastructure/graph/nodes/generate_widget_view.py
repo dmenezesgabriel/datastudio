@@ -18,7 +18,7 @@ from langchain_core.language_models.base import LanguageModelInput
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.runnables import Runnable
 
-from chat.domain.value_objects.widget import WidgetRole
+from chat.domain.value_objects.widget import WidgetRole, WidgetViewHint
 from chat.infrastructure.graph.response_content_extractor import (
     ResponseContentExtractor,
 )
@@ -185,34 +185,60 @@ def _describe_schema(query_result: QueryResult) -> str:
     )
 
 
-def _element_guidance(role: WidgetRole) -> str:
-    """The element the worker must author, constrained by the widget's declared role.
+# An explicit user-requested presentation mandates its component, overriding the data-shape
+# default — the user's stated wish wins (e.g. a "breakdown table" must be a DataTable even
+# when the shape would otherwise suggest a bar chart).
+_VIEW_HINT_GUIDANCE: dict[WidgetViewHint, str] = {
+    "table": (
+        "The user explicitly asked for this as a TABLE: author a DataTable of the result rows."
+    ),
+    "chart": (
+        "The user explicitly asked for this as a CHART: author a ChartJs, choosing the kind "
+        "(line for a time/ordered axis, bar for categories, pie only for a parts-of-a-whole "
+        "breakdown of at most 5 rows) by the data shape above."
+    ),
+    "kpi": (
+        "The user explicitly asked for this as a KPI: author a KpiStat showing the single "
+        "headline value (set valueColumn to that column and label it)."
+    ),
+}
 
-    A ``metric`` widget is a headline number → a KpiStat is mandated (the host already
-    placed it in the KPI band). An ``analysis`` widget picks chart-vs-table by data shape —
-    the worker alone sees the result, so it keeps that judgement.
+
+def _element_guidance(role: WidgetRole, view_hint: WidgetViewHint | None) -> str:
+    """The element the worker must author, from an explicit view hint or the widget's role.
+
+    An explicit ``view_hint`` (the user asked for a table/chart/kpi) mandates that component.
+    Otherwise a ``metric`` widget is a headline number → a KpiStat is mandated (the host already
+    placed it in the KPI band); an ``analysis`` widget picks chart-vs-table by data shape — the
+    worker alone sees the result, so it keeps that judgement.
     """
+    if view_hint is not None:
+        return _VIEW_HINT_GUIDANCE[view_hint]
     if role == "metric":
         return (
             "Author a KpiStat showing this one headline number: set valueColumn to the metric "
             "column and label it. The result is a single row."
         )
     return (
-        "Author ONE visualization element (ChartJs or DataTable) that best presents this "
-        "widget, choosing by the data shape above: a category or time column with a numeric "
-        "series -> ChartJs (line for a time/ordered axis, bar for categories, pie only for a "
+        "Author ONE visualization element that best presents this widget, choosing by the data "
+        "shape above. If the result is a SINGLE row, it is a headline answer, not a series — "
+        "never chart it: author a KpiStat when the value is numeric, or a one-row DataTable "
+        "when it is a label. For MULTIPLE rows: a category or time column with a numeric series "
+        "-> ChartJs (line for a time/ordered axis, bar for categories, pie only for a "
         "parts-of-a-whole breakdown of at most 5 rows); many columns or a long detail list "
         "-> DataTable."
     )
 
 
-def _build_human_content(title: str, role: WidgetRole, query_result: QueryResult) -> str:
-    """Build the widget-authoring prompt: title + schema + role, never the rows themselves."""
+def _build_human_content(
+    title: str, role: WidgetRole, query_result: QueryResult, view_hint: WidgetViewHint | None
+) -> str:
+    """Build the widget-authoring prompt: title + schema + role/hint, never the rows themselves."""
     return (
         f"Widget: {title}\n\n"
         f"Result schema (column: type), {query_result.row_count} rows — values withheld:\n"
         f"{_describe_schema(query_result)}\n\n"
-        f"{_element_guidance(role)} "
+        f"{_element_guidance(role, view_hint)} "
         'Append it to "/elements/root/children/-". Bind its data prop to '
         f'{{"$state":"{_DATA_ROOT}/rows"}} (or {{"$state":"{_DATA_ROOT}"}} for a table) and '
         "reference columns by name. Emit one JSON patch per line and nothing else."
@@ -241,12 +267,21 @@ class GenerateWidgetView:
         self._extractor = content_extractor
 
     def author(
-        self, widget_id: str, title: str, role: WidgetRole, query_result: QueryResult
+        self,
+        widget_id: str,
+        title: str,
+        role: WidgetRole,
+        query_result: QueryResult,
+        view_hint: WidgetViewHint | None = None,
     ) -> list[str]:
-        """Author and namespace one widget's SpecStream patch lines, placed by its role."""
+        """Author and namespace one widget's SpecStream patch lines, placed by its role.
+
+        ``view_hint`` mandates the component when the user asked for one; otherwise the
+        worker chooses by role and data shape.
+        """
         messages = [
             SystemMessage(content=self._system_prompt),
-            HumanMessage(content=_build_human_content(title, role, query_result)),
+            HumanMessage(content=_build_human_content(title, role, query_result, view_hint)),
         ]
         text = self._extractor.extract(self._model.invoke(messages))
         lines = keep_valid_patch_lines(text) or _fallback_table_lines()

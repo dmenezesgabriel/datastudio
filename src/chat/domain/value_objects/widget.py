@@ -17,6 +17,11 @@ from shared.domain.value_objects.query_result import QueryResult
 #   "analysis" — a trend, breakdown, or detail list, shown as a chart/table in the grid.
 WidgetRole = Literal["metric", "analysis"]
 
+# A presentation the user explicitly asked for ("show it as a table/chart/kpi"), captured by
+# the planner and honoured by the view author, overriding its data-shape default. ``None`` when
+# the user named no preference, leaving the choice to the data shape.
+WidgetViewHint = Literal["table", "chart", "kpi"]
+
 
 @dataclass(frozen=True)
 class WidgetSpec:
@@ -24,6 +29,7 @@ class WidgetSpec:
 
     ``role`` is the planner's intent (metric vs analysis); the host maps it to the KPI
     band or the grid, so placement never depends on which element the worker authors.
+    ``view_hint`` is an explicit presentation the user requested (else ``None``).
 
     Example:
         WidgetSpec(id="widget-0", title="Total amount", sub_question="total amount",
@@ -34,6 +40,7 @@ class WidgetSpec:
     title: str
     sub_question: str
     role: WidgetRole
+    view_hint: WidgetViewHint | None = None
 
 
 @dataclass(frozen=True)

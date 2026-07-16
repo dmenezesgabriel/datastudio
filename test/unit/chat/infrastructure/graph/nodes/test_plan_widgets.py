@@ -30,8 +30,10 @@ class FakePlanModel:
         return self._plan
 
 
-def _intent(title: str, sub_question: str, role: str = "analysis") -> SimpleNamespace:
-    return SimpleNamespace(title=title, sub_question=sub_question, role=role)
+def _intent(
+    title: str, sub_question: str, role: str = "analysis", view: str | None = None
+) -> SimpleNamespace:
+    return SimpleNamespace(title=title, sub_question=sub_question, role=role, view=view)
 
 
 def _node(widgets: list[SimpleNamespace], **kwargs: Any) -> PlanWidgets:
@@ -63,6 +65,14 @@ class TestPlanWidgets:
         node = _node([_intent("Total", "total", role="metric"), _intent("Trend", "by month")])
         specs = node(_state())["widget_specs"]
         assert [s.role for s in specs] == ["metric", "analysis"]
+
+    def test_carries_explicit_view_into_view_hint(self) -> None:
+        # an explicit "as a table" request rides into the spec's view_hint; absent → None
+        node = _node(
+            [_intent("Status", "orders by status", view="table"), _intent("Trend", "trend")]
+        )
+        specs = node(_state())["widget_specs"]
+        assert [s.view_hint for s in specs] == ["table", None]
 
     def test_caps_widget_count(self) -> None:
         node = _node([_intent(f"W{i}", f"q{i}") for i in range(8)], max_widgets=3)

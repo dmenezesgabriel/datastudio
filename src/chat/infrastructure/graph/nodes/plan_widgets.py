@@ -51,11 +51,21 @@ _SYSTEM_PROMPT = (
     "or a bare table/subject name). Business users want an overview even when they don't say "
     "'dashboard' — serve it. Lead with 2-4 separate 'metric' widgets (each a single headline "
     "number), then the 'analysis' widgets — the primary trend or breakdown, then supporting "
-    "breakdowns or a detail list — each a distinct, non-overlapping sub_question.\n"
+    "breakdowns or a detail list — each a distinct, non-overlapping sub_question. A dashboard "
+    "must ALWAYS include at least one 'analysis' widget (a trend over time or a breakdown); "
+    "headline numbers alone do not tell the story.\n"
     "- When unsure, prefer a small dashboard (2-3 widgets) for a vague question and a single "
     "widget for a precise one.\n"
     "- Give each widget a short title, its role, and a precise, self-contained sub_question. "
     "Never propose data the schema does not support.\n"
+    "- Each sub_question must PRESERVE every qualifier and scope the user stated (a named "
+    "status, subset, category, or time range) and whether the ask expects ONE answer or "
+    "several. 'Which single X is the highest/most/top/dominant' expects ONE answer — frame "
+    "it as a single-winner lookup, not an open ranking.\n"
+    "- If the user explicitly names how a widget should be shown ('as a table', 'as a bar/"
+    "line/pie chart', 'as a KPI'), set that widget's `view` to 'table', 'chart', or 'kpi'. "
+    "Leave `view` null when they state no preference — the visualizer then picks by data "
+    "shape.\n"
     "- Earlier conversation turns, when present, are context for follow-ups (e.g. 'break "
     "it down by month'): resolve references against them, but plan for the CURRENT question."
 )
@@ -65,6 +75,9 @@ class _WidgetIntent(BaseModel):
     title: str
     sub_question: str
     role: Literal["metric", "analysis"] = "analysis"
+    # Set ONLY when the user explicitly names a presentation ("as a table/chart/kpi");
+    # null otherwise, leaving the visualizer to choose by data shape.
+    view: Literal["table", "chart", "kpi"] | None = None
 
 
 class _WidgetPlan(BaseModel):
@@ -119,6 +132,7 @@ class PlanWidgets:
                 title=intent.title,
                 sub_question=intent.sub_question,
                 role=intent.role,
+                view_hint=intent.view,
             )
             for index, intent in enumerate(intents)
         ]

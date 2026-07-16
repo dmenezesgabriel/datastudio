@@ -58,6 +58,35 @@ class TestBuildWidget:
         assert widget_results[0].result is result
         assert widget_results[0].sql == "SELECT 1"
 
+    def test_forwards_view_hint_to_the_view_author(self) -> None:
+        # Arrange — a widget the user asked to see as a table
+        result = QueryResult(columns=["status", "orders"], rows=[("delivered", 5)], row_count=1)
+        engine = FakeSqlEngine(query_result=result)
+        view_model = FakeViewModel(
+            '{"op":"add","path":"/elements/t","value":{"type":"DataTable"}}\n'
+            '{"op":"add","path":"/elements/root/children/-","value":"t"}'
+        )
+        worker = BuildWidget(
+            cast(object, FakeStructuredChatModel(sql="SELECT 1")),  # type: ignore[arg-type]
+            engine,
+            cast(object, view_model),  # type: ignore[arg-type]
+            "prompt",
+            PlainTextExtractor(),
+            NullProgressReporter(),
+        )
+        widget = WidgetSpec(
+            id="widget-0",
+            title="By status",
+            sub_question="orders by status",
+            role="analysis",
+            view_hint="table",
+        )
+        # Act
+        worker(_state(widget))
+        # Assert — the hint reached the view author's prompt as a DataTable mandate
+        human = str(view_model.received[-1].content)
+        assert "TABLE" in human and "DataTable" in human
+
     def test_runs_repair_loop_on_failure_then_recovers(self) -> None:
         # Arrange — first SQL errors, the repaired SQL succeeds
         good = QueryResult(columns=["n"], rows=[(1,)], row_count=1)

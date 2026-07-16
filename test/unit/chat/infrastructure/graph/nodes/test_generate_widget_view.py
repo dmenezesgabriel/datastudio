@@ -161,3 +161,44 @@ class TestGenerateWidgetView:
         )  # type: ignore[arg-type]
         human = str(model.received[-1].content)
         assert "KpiStat" in human and "valueColumn" in human
+
+
+class TestExplicitViewHint:
+    """An explicit view_hint overrides the data-shape default and mandates a component."""
+
+    def test_table_hint_mandates_a_datatable(self) -> None:
+        # The user asked for a table → the worker is told to author a DataTable, even though
+        # a two-column result would otherwise suggest a chart.
+        model = FakeViewModel('{"op":"add","path":"/elements/x","value":{"type":"DataTable"}}')
+        GenerateWidgetView(model, "prompt", PlainTextExtractor()).author(
+            "widget-0", "Orders by status", "analysis", _result(), "table"
+        )  # type: ignore[arg-type]
+        human = str(model.received[-1].content)
+        assert "DataTable" in human and "TABLE" in human
+
+    def test_hint_overrides_metric_role_guidance(self) -> None:
+        # A chart hint wins over the role's default KpiStat guidance.
+        model = FakeViewModel('{"op":"add","path":"/elements/x","value":{"type":"ChartJs"}}')
+        GenerateWidgetView(model, "prompt", PlainTextExtractor()).author(
+            "widget-0", "Total", "metric", _result(), "chart"
+        )  # type: ignore[arg-type]
+        human = str(model.received[-1].content)
+        assert "CHART" in human and "ChartJs" in human
+
+    def test_no_hint_leaves_role_guidance_unchanged(self) -> None:
+        # Without a hint an analysis widget keeps its data-shape choice (ChartJs vs DataTable).
+        model = FakeViewModel('{"op":"add","path":"/elements/x","value":{"type":"ChartJs"}}')
+        GenerateWidgetView(model, "prompt", PlainTextExtractor()).author(
+            "widget-0", "Trend", "analysis", _result()
+        )  # type: ignore[arg-type]
+        human = str(model.received[-1].content)
+        assert "ChartJs" in human and "DataTable" in human
+
+    def test_analysis_guidance_forbids_charting_a_single_row(self) -> None:
+        # A single-row analysis result is a headline answer → the worker is told not to chart it.
+        model = FakeViewModel('{"op":"add","path":"/elements/x","value":{"type":"KpiStat"}}')
+        GenerateWidgetView(model, "prompt", PlainTextExtractor()).author(
+            "widget-0", "Top state", "analysis", _result()
+        )  # type: ignore[arg-type]
+        human = str(model.received[-1].content)
+        assert "SINGLE row" in human and "never chart it" in human

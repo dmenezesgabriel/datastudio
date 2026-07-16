@@ -46,7 +46,7 @@ _EXPECTED_EDGES = frozenset(
 
 
 def _widget(title: str, sub_question: str, role: str = "analysis") -> SimpleNamespace:
-    return SimpleNamespace(title=title, sub_question=sub_question, role=role)
+    return SimpleNamespace(title=title, sub_question=sub_question, role=role, view=None)
 
 
 def _make_graph(widgets: list[SimpleNamespace] | None = None) -> TypedChatGraph:
