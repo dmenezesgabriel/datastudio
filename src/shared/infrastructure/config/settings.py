@@ -41,12 +41,20 @@ class AppSettings(BaseSettings):
     output_token_price_per_million: float = 0.0
     # Eval SLOs — the budget gate fails when a run regresses past these.
     eval_min_pass_rate: float = 0.8
+    # How many times each case runs. >1 turns a noisy single pass/fail into a per-case
+    # consistency (pass@k) rate, so a flaky 55% case is distinguishable from a reliable 95%
+    # one. Kept at 1 by default (fast); raise it for an assertive run (e.g. 5).
+    eval_repeats: int = 1
+    # A case must pass at least this fraction of its repeated attempts to clear the gate.
+    eval_min_consistency: float = 0.8
     eval_max_p95_latency_s: float = 180.0
     eval_max_avg_output_tokens: float = 3000.0
     # Guards against conversation-memory bloat: injected history lands in input tokens,
-    # so a runaway window (or double-injected turns) trips this before it hits cost. Full
-    # runs sit ~2.1k/case today; the ceiling leaves ~2x headroom.
-    eval_max_avg_input_tokens: float = 4000.0
+    # so a runaway window (or double-injected turns) trips this before it hits cost. The
+    # scenario track (multi-widget executive dashboards, drilldown follow-up chains, and
+    # per-widget SQL context in the narrative prompt) lifted full runs to ~4.4k/case; the
+    # ceiling keeps ~35% headroom over that.
+    eval_max_avg_input_tokens: float = 6000.0
     # Cases run through a bounded thread pool; the ceiling is LLM rate limits.
     eval_max_workers: int = 4
     # Per-question wall-clock ceiling in the CLI; None disables it in the eval runner.

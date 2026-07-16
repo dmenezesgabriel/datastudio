@@ -11,11 +11,11 @@ import datetime
 import json
 from dataclasses import asdict
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 from chat.infrastructure.eval.checks import deserialize_check
-from chat.infrastructure.eval.graph_builder import build_eval_graph
-from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner
+from chat.infrastructure.eval.graph_builder import build_edit_eval_graph, build_eval_graph
+from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner, EvalTurn
 from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
 from shared.application.ports.sql_engine_port import SqlEnginePort
 from shared.infrastructure.config.settings import AppSettings
@@ -58,24 +58,40 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         metavar="NAME",
         help="LiteLLM model name for rubric evaluation (default: same as chat model)",
     )
+    parser.add_argument(
+        "--repeats",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Run each case N times and report per-case consistency (default: eval_repeats)",
+    )
     return parser
 
 
 def _load_cases(cases_path: Path, judge_model: object, sql_engine: SqlEnginePort) -> list[EvalCase]:
-    """Load EvalCases from a JSON fixture file, deserialising each check spec."""
+    """Load EvalCases (including edit/follow-up turns) from a JSON fixture file."""
     from langchain_core.language_models import BaseChatModel
 
     assert isinstance(judge_model, BaseChatModel)
+
+    def checks_for(specs: list[dict[str, str]]) -> list[object]:
+        return [deserialize_check(spec, judge_model, sql_engine) for spec in specs]
+
     raw = json.loads(cases_path.read_text())
     return [
         EvalCase(
             id=case_spec["id"],
             question=case_spec["question"],
-            checks=[
-                deserialize_check(spec, judge_model, sql_engine)
-                for spec in case_spec.get("checks", [])
-            ],
+            checks=cast(Any, checks_for(case_spec.get("checks", []))),
             tags=case_spec.get("tags", []),
+            follow_ups=[
+                EvalTurn(
+                    question=turn.get("question", ""),
+                    checks=cast(Any, checks_for(turn.get("checks", []))),
+                    instruction=turn.get("instruction"),
+                )
+                for turn in case_spec.get("follow_ups", [])
+            ],
         )
         for case_spec in raw["cases"]
     ]
@@ -93,9 +109,23 @@ def _print_summary(report: EvalReport) -> None:
         f"({s['avg_output_tokens']}/case)"
     )
     print(f"Cost     : ${s['cost_usd']}")
+    _print_consistency(s)
     _print_by_tag(s)
     print()
     _print_cases(report)
+
+
+def _print_consistency(summary: dict[str, object]) -> None:
+    """Print the pass@k reliability block when cases were repeated."""
+    consistency = summary.get("consistency")
+    if not isinstance(consistency, dict):
+        return
+    c = cast(dict[str, object], consistency)
+    print(
+        f"Consist. : mean {c['mean_consistency']} "
+        f"({c['reliable']} reliable / {c['flaky']} flaky / {c['failing']} failing "
+        f"of {c['cases']} cases)"
+    )
 
 
 def _print_by_tag(summary: dict[str, object]) -> None:
@@ -151,14 +181,19 @@ def main() -> None:
 
     sql_engine = DuckDbSqlEngine(settings.duckdb_path)
     cases = _load_cases(Path(args.cases), judge_model, sql_engine)
+    repeats = args.repeats if args.repeats is not None else settings.eval_repeats
     runner = EvalRunner(
         graph_factory=lambda recorder: build_eval_graph(
+            chat_model, sql_engine, recorder, format_chat_model, settings.openai_base_url
+        ),
+        edit_graph_factory=lambda recorder: build_edit_eval_graph(
             chat_model, sql_engine, recorder, format_chat_model, settings.openai_base_url
         ),
         model_name=settings.language_model_name,
         input_price_per_m=settings.input_token_price_per_million,
         output_price_per_m=settings.output_token_price_per_million,
         max_workers=settings.eval_max_workers,
+        repeats=repeats,
     )
     report = runner.run(cases)
 

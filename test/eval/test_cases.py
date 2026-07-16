@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -22,14 +23,28 @@ def _format_failure(result: CaseResult) -> str:
     return "\n".join(lines)
 
 
+def _consistency_failure(case_id: str, report: EvalReport, floor: float) -> str:
+    """Report the case's pass@k rate plus one failed attempt's checks for diagnosis."""
+    record = next(c for c in report.consistency if c.case_id == case_id)
+    header = (
+        f"Case '{case_id}' consistency {record.consistency} "
+        f"({record.passed_count}/{record.attempts}) < floor {floor}"
+    )
+    failed = next((c for c in report.cases if c.case_id == case_id and not c.passed), None)
+    return header if failed is None else f"{header}\n{_format_failure(failed)}"
+
+
 class TestEvalCases:
     @pytest.mark.eval
     @pytest.mark.parametrize("case_id", _CASE_IDS)
-    def test_case_passes(self, case_id: str, eval_report: EvalReport) -> None:
-        # Arrange
-        result = next(c for c in eval_report.cases if c.case_id == case_id)
+    def test_case_meets_consistency(
+        self, case_id: str, eval_report: EvalReport, app_settings: AppSettings
+    ) -> None:
+        # Arrange — a case runs eval_repeats times; grade its pass@k, not a single attempt.
+        floor = app_settings.eval_min_consistency
+        record = next(c for c in eval_report.consistency if c.case_id == case_id)
         # Assert
-        assert result.passed, _format_failure(result)
+        assert record.consistency >= floor, _consistency_failure(case_id, eval_report, floor)
 
 
 class TestEvalBudgets:
@@ -43,6 +58,17 @@ class TestEvalBudgets:
         pass_rate = float(eval_report.summary["pass_rate"])  # type: ignore[arg-type]
         assert pass_rate >= app_settings.eval_min_pass_rate, (
             f"pass_rate {pass_rate} < target {app_settings.eval_min_pass_rate}"
+        )
+
+    @pytest.mark.eval
+    def test_mean_consistency_meets_target(
+        self, eval_report: EvalReport, app_settings: AppSettings
+    ) -> None:
+        # Assert — the suite as a whole must clear the consistency floor, not just each case.
+        consistency = cast(dict[str, object], eval_report.summary["consistency"])
+        mean = float(cast(float, consistency["mean_consistency"]))
+        assert mean >= app_settings.eval_min_consistency, (
+            f"mean consistency {mean} < target {app_settings.eval_min_consistency}"
         )
 
     @pytest.mark.eval

@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from chat.infrastructure.eval.checks import Check, deserialize_check
-from chat.infrastructure.eval.graph_builder import build_eval_graph
+from chat.infrastructure.eval.graph_builder import build_edit_eval_graph, build_eval_graph
 from chat.infrastructure.eval.runner import EvalCase, EvalReport, EvalRunner, EvalTurn
 from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
 from shared.infrastructure.config.settings import AppSettings
@@ -56,7 +56,11 @@ def eval_cases(request: pytest.FixtureRequest, app_settings: AppSettings) -> lis
             checks=checks_for(spec.get("checks", [])),
             tags=spec.get("tags", []),
             follow_ups=[
-                EvalTurn(question=turn["question"], checks=checks_for(turn.get("checks", [])))
+                EvalTurn(
+                    question=turn.get("question", ""),
+                    checks=checks_for(turn.get("checks", [])),
+                    instruction=turn.get("instruction"),
+                )
                 for turn in spec.get("follow_ups", [])
             ],
         )
@@ -86,10 +90,14 @@ def eval_report(app_settings: AppSettings, eval_cases: list[EvalCase]) -> EvalRe
         graph_factory=lambda recorder: build_eval_graph(
             chat_model, sql_engine, recorder, format_chat_model, app_settings.openai_base_url
         ),
+        edit_graph_factory=lambda recorder: build_edit_eval_graph(
+            chat_model, sql_engine, recorder, format_chat_model, app_settings.openai_base_url
+        ),
         model_name=app_settings.language_model_name,
         input_price_per_m=app_settings.input_token_price_per_million,
         output_price_per_m=app_settings.output_token_price_per_million,
         max_workers=app_settings.eval_max_workers,
+        repeats=app_settings.eval_repeats,
     )
     report = runner.run(eval_cases)
 
