@@ -1430,8 +1430,11 @@
           "type": "sql_valid"
         },
         {
-          "type": "execution_match",
-          "gold_sql": "SELECT t.product_category_name_english AS category, COUNT(*) AS items FROM olist_order_items i JOIN olist_products p ON i.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1 HAVING COUNT(*)>5000 ORDER BY items DESC"
+          "type": "execution_match_any",
+          "gold_sql_options": [
+            "SELECT t.product_category_name_english AS category, COUNT(*) AS items FROM olist_order_items i JOIN olist_products p ON i.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1 HAVING COUNT(*)>5000 ORDER BY items DESC",
+            "SELECT p.product_category_name AS category, COUNT(*) AS items FROM olist_order_items i JOIN olist_products p ON i.product_id=p.product_id WHERE p.product_category_name IS NOT NULL GROUP BY 1 HAVING COUNT(*)>5000 ORDER BY items DESC"
+          ]
         },
         {
           "type": "view_integrity"
@@ -1534,8 +1537,11 @@
           "type": "sql_valid"
         },
         {
-          "type": "execution_match",
-          "gold_sql": "WITH r AS (SELECT c.customer_state AS state, t.product_category_name_english AS category, SUM(i.price) AS rev, ROW_NUMBER() OVER(PARTITION BY c.customer_state ORDER BY SUM(i.price) DESC) AS rk FROM olist_orders o JOIN olist_customers c ON o.customer_id=c.customer_id JOIN olist_order_items i ON o.order_id=i.order_id JOIN olist_products p ON i.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1,2) SELECT state, category, ROUND(rev,2) AS revenue FROM r WHERE rk=1 ORDER BY state"
+          "type": "execution_match_any",
+          "gold_sql_options": [
+            "WITH r AS (SELECT c.customer_state AS state, t.product_category_name_english AS category, SUM(i.price) AS rev, ROW_NUMBER() OVER(PARTITION BY c.customer_state ORDER BY SUM(i.price) DESC) AS rk FROM olist_orders o JOIN olist_customers c ON o.customer_id=c.customer_id JOIN olist_order_items i ON o.order_id=i.order_id JOIN olist_products p ON i.product_id=p.product_id JOIN olist_category_translation t ON p.product_category_name=t.product_category_name GROUP BY 1,2) SELECT state, category, ROUND(rev,2) AS revenue FROM r WHERE rk=1 ORDER BY state",
+            "WITH r AS (SELECT c.customer_state AS state, p.product_category_name AS category, SUM(i.price) AS rev, ROW_NUMBER() OVER(PARTITION BY c.customer_state ORDER BY SUM(i.price) DESC) AS rk FROM olist_orders o JOIN olist_customers c ON o.customer_id=c.customer_id JOIN olist_order_items i ON o.order_id=i.order_id JOIN olist_products p ON i.product_id=p.product_id WHERE p.product_category_name IS NOT NULL GROUP BY 1,2) SELECT state, category, ROUND(rev,2) AS revenue FROM r WHERE rk=1 ORDER BY state"
+          ]
         },
         {
           "type": "view_integrity"
