@@ -17,6 +17,10 @@ _SYSTEM_PROMPT = (
     "- Return exactly one SELECT statement; compute everything inside SQL. For "
     "comparisons across periods or groups, use CASE WHEN, conditional aggregation, "
     "or subqueries within the single statement.\n"
+    "- First pin down the exact metric and grain the question asks for: WHAT is measured "
+    "(the aggregate), PER what group/unit, over WHAT scope. Make the SELECT return precisely "
+    "that — the right measure at the right grain. A query that returns the right number of "
+    "rows but the wrong measure, aggregate, or grouping is wrong.\n"
     "- Apply EVERY qualifier the question states as a filter: a named status, subset, "
     "category, or time range restricts the rows (e.g. a question about one status or one "
     "period must add the matching WHERE clause). Never silently broaden the scope the "
@@ -33,7 +37,10 @@ _SYSTEM_PROMPT = (
     "- When aggregating or computing a rate over a column that may be NULL, treat NULL as "
     "unknown, not as a value: exclude NULL rows from both the numerator and the denominator "
     "(e.g. WHERE <col> IS NOT NULL). Never count NULL as zero or as failing a condition.\n"
-    "- Reference columns exactly as named in the schema."
+    "- Reference columns exactly as named in the schema.\n"
+    "- Use ONLY columns the schema defines. Never invent a column, and never compute a metric "
+    "the schema cannot support (e.g. a profit or margin with no cost column) by substituting an "
+    "unrelated column as a proxy — a query that runs but answers a different question is wrong."
 )
 
 
