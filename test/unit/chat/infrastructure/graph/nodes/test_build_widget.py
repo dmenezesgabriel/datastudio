@@ -40,8 +40,9 @@ def _state(widget: WidgetSpec) -> ChatState:
 
 class TestBuildWidget:
     def test_happy_path_returns_namespaced_view_and_result(self) -> None:
-        # Arrange
-        result = QueryResult(columns=["n"], rows=[(42,)], row_count=1)
+        # Arrange — a multi-row result so the authored ChartJs survives the view shape guard;
+        # this test asserts namespacing/binding, not view selection (covered by shape_guard tests).
+        result = QueryResult(columns=["n"], rows=[(42,), (43,)], row_count=2)
         engine = FakeSqlEngine(query_result=result)
         widget = WidgetSpec(id="widget-1", title="Count", sub_question="how many", role="analysis")
         # Act

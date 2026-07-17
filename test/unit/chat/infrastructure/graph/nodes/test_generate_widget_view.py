@@ -32,6 +32,11 @@ def _result() -> QueryResult:
     return QueryResult(columns=["month", "revenue"], rows=[("Jan", 100)], row_count=1)
 
 
+def _multi_row_result() -> QueryResult:
+    """A two-row result: a chart authored over it survives the shape guard unchanged."""
+    return QueryResult(columns=["month", "revenue"], rows=[("Jan", 100), ("Feb", 200)], row_count=2)
+
+
 class TestValidViewPatchLines:
     def test_keeps_add_patches_drops_prose_and_reserved(self) -> None:
         text = (
@@ -129,7 +134,9 @@ class TestGenerateWidgetView:
             '{"op":"add","path":"/elements/root/children/-","value":"chart"}'
         )
         node = GenerateWidgetView(FakeViewModel(content), "prompt", PlainTextExtractor())  # type: ignore[arg-type]
-        lines = node.author("widget-0", "Revenue", "analysis", _result())
+        # A multi-row result so the ChartJs survives the shape guard — this test asserts
+        # namespacing, not view selection (which the shape-guard tests cover).
+        lines = node.author("widget-0", "Revenue", "analysis", _multi_row_result())
         assert json.loads(lines[0])["path"] == "/elements/widget-0-chart"
         assert json.loads(lines[0])["value"]["props"]["data"] == {"$state": "/widget-0/rows"}
         # the leaf is wrapped in a frame (lines[1]) that is placed in its region (lines[2])

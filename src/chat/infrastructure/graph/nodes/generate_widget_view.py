@@ -24,6 +24,7 @@ from chat.infrastructure.graph.response_content_extractor import (
 )
 from chat.infrastructure.graph.spec_patch import parse_patch
 from chat.infrastructure.graph.step_tags import step_tag
+from chat.infrastructure.graph.view.shape_guard import coerce_view_to_shape
 from shared.domain.value_objects.query_result import QueryResult
 
 # Generated from the frontend json-render catalog by `npm run gen:prompt`, so the
@@ -285,4 +286,8 @@ class GenerateWidgetView:
         ]
         text = self._extractor.extract(self._model.invoke(messages))
         lines = keep_valid_patch_lines(text) or _fallback_table_lines()
+        # Host-authority shape guard: the model may chart a single row or an oversized pie; the
+        # backend (which alone knows the row count) enforces the data-shape invariant the eval's
+        # ChartFitCheck / viz_rubric assert, before ids and $state paths are namespaced.
+        lines = coerce_view_to_shape(lines, role, query_result, view_hint)
         return namespace_widget_patches(lines, widget_id, role)
