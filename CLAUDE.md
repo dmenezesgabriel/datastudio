@@ -40,7 +40,16 @@
   - **Domain service** (`domain/services/`): **pure** logic over domain types — zero
     ports, zero I/O. If it needs a port, it is a use case, not a domain service.
   - **Adapter** (`infrastructure/<kind>/`): implements a port; frameworks live here.
+    Name it `<Mechanism><PortConcept>` — the mechanism names the tech it wraps
+    (`InMemoryArtifactRepository`, `StreamWriterProgressReporter`,
+    `SpecStreamDashboardViewBuilder`) — and subclass the port explicitly, so grepping
+    the port name lands on its implementation.
   - Writes go through a use case; reads may hit the repository directly from a router.
+- Prefer a uniform port / use-case surface over case-by-case minimalism. Keep a
+  single-implementation port when it keeps every boundary and operation discoverable in
+  one place (`application/ports/`, `application/use_cases/`) — that consistency is the map
+  a newcomer navigates by, not ceremony. Don't strip an abstraction just because it has
+  one implementation today.
 - Data-agnostic core: no dataset identity in `src/`. Table/column names and domain
   values (and prompt examples that name them) are discovered at runtime via
   `SqlEnginePort` — never hardcoded. Sample-dataset identity lives only in
