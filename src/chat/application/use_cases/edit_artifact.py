@@ -3,8 +3,8 @@
 import time
 
 from chat.application.ports.artifact_repository import ArtifactRepository
+from chat.application.ports.dashboard_view_builder import DashboardViewBuilder
 from chat.application.ports.edit_dashboard_port import EditDashboardPort
-from chat.application.ports.edit_view_builder import EditViewBuilder
 from chat.domain.errors import ArtifactNotFoundError
 from chat.domain.value_objects.stream_event import ChatStreamEvent, ProgressStep, TypedChatStream
 
@@ -28,9 +28,9 @@ class EditArtifact:
         self,
         repository: ArtifactRepository,
         engine: EditDashboardPort,
-        view_builder: EditViewBuilder,
+        view_builder: DashboardViewBuilder,
     ) -> None:
-        """Wire the artifact repository, the edit engine, and the edit view builder."""
+        """Wire the artifact repository, the edit engine, and the dashboard view builder."""
         self._repository = repository
         self._engine = engine
         self._view_builder = view_builder
@@ -51,7 +51,7 @@ class EditArtifact:
             if not isinstance(event, ProgressStep):
                 events.append(event)  # keep the payload; progress is transient chrome
             yield event
-        edited = self._view_builder.build(prior_spec, events)
+        edited = self._view_builder.apply_edit(prior_spec, events)
         if edited is not prior_spec:  # only version a real change
             artifact.append_version(edited, instruction, time.time())
             self._repository.save(artifact)

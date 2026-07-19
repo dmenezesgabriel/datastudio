@@ -5,8 +5,8 @@ from uuid import uuid4
 
 from chat.application.ports.artifact_repository import ArtifactRepository
 from chat.application.ports.conversation_repository import ConversationRepository
+from chat.application.ports.dashboard_view_builder import DashboardViewBuilder
 from chat.application.ports.text2sql_port import Text2SqlPort
-from chat.application.ports.turn_view_builder import TurnViewBuilder
 from chat.domain.entities.artifact import Artifact
 from chat.domain.entities.conversation import Conversation
 from chat.domain.services.dashboard_widgets import artifact_drafts
@@ -44,7 +44,7 @@ class StreamMessage:
         self,
         repository: ConversationRepository,
         engine: Text2SqlPort,
-        view_builder: TurnViewBuilder,
+        view_builder: DashboardViewBuilder,
         artifact_repository: ArtifactRepository,
     ) -> None:
         """Wire the conversation repository, the engine, the view builder, and artifact store.

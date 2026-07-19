@@ -14,10 +14,10 @@ from chat.domain.value_objects.stream_event import (
     WidgetDataReady,
 )
 from chat.domain.value_objects.text2sql_result import Text2SqlResult
-from chat.infrastructure.api.dashboard_view_builder import DashboardViewBuilder
 from chat.infrastructure.persistence.in_memory_artifact_repository import (
     InMemoryArtifactRepository,
 )
+from chat.infrastructure.view.dashboard_view_builder import SpecStreamDashboardViewBuilder
 from shared.domain.value_objects.query_result import QueryResult
 from test.unit.chat.application.use_cases.fakes import (
     FakeConversationRepository,
@@ -35,7 +35,7 @@ def _use_case(
     return StreamMessage(
         cast(ConversationRepository, repository),
         cast(Text2SqlPort, engine),
-        DashboardViewBuilder(),
+        SpecStreamDashboardViewBuilder(),
         artifact_repository or InMemoryArtifactRepository(),
     )
 

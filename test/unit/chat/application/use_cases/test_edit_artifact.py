@@ -10,10 +10,10 @@ from chat.domain.entities.artifact import Artifact
 from chat.domain.errors import ArtifactNotFoundError
 from chat.domain.value_objects.render_tree import RenderElement, RenderTree
 from chat.domain.value_objects.stream_event import ChatStreamEvent, ProgressStep, ViewPatchLine
-from chat.infrastructure.api.edited_dashboard_view_builder import EditedDashboardViewBuilder
 from chat.infrastructure.persistence.in_memory_artifact_repository import (
     InMemoryArtifactRepository,
 )
+from chat.infrastructure.view.dashboard_view_builder import SpecStreamDashboardViewBuilder
 
 _KIND_TO_LINE = '{"op":"replace","path":"/elements/widget-0-chart/props/kind","value":"line"}'
 
@@ -50,7 +50,7 @@ def _repo_with_artifact() -> InMemoryArtifactRepository:
 
 
 def _use_case(repo: InMemoryArtifactRepository, engine: FakeEditDashboardEngine) -> EditArtifact:
-    return EditArtifact(repo, cast(EditDashboardPort, engine), EditedDashboardViewBuilder())
+    return EditArtifact(repo, cast(EditDashboardPort, engine), SpecStreamDashboardViewBuilder())
 
 
 def _drain(

@@ -100,7 +100,7 @@ def _widget_events(
 def make_dashboard_events(response: str = "Overview.") -> list[ChatStreamEvent]:
     """Build a realistic two-widget dashboard stream (a KPI + a chart, each framed).
 
-    Mirrors what two ``build_widget`` workers emit, so ``DashboardViewBuilder`` compiles a
+    Mirrors what two ``build_widget`` workers emit, so ``SpecStreamDashboardViewBuilder`` compiles a
     tree with ``widget-0-frame``/``widget-1-frame`` — the shape the artifact split reads.
     """
     kpi = QueryResult(columns=["c"], rows=[(42,)], row_count=1)

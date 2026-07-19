@@ -20,8 +20,6 @@ from chat.infrastructure.api.artifact_edit_router import ArtifactEditRouter
 from chat.infrastructure.api.artifacts_router import ArtifactsRouter
 from chat.infrastructure.api.chat_router import ChatRouter
 from chat.infrastructure.api.conversations_router import ConversationsRouter
-from chat.infrastructure.api.dashboard_view_builder import DashboardViewBuilder
-from chat.infrastructure.api.edited_dashboard_view_builder import EditedDashboardViewBuilder
 from chat.infrastructure.graph.edit_dashboard_adapter import EditDashboardAdapter
 from chat.infrastructure.graph.edit_graph import build_edit_graph
 from chat.infrastructure.graph.litellm_language_model import LiteLLMLanguageModel
@@ -33,6 +31,7 @@ from chat.infrastructure.persistence.in_memory_artifact_repository import (
 from chat.infrastructure.persistence.in_memory_conversation_repository import (
     InMemoryConversationRepository,
 )
+from chat.infrastructure.view.dashboard_view_builder import SpecStreamDashboardViewBuilder
 from shared.infrastructure.api.current_user import ResolveOwnerId
 from shared.infrastructure.config.settings import AppSettings
 from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
@@ -120,7 +119,7 @@ def build_stream_message(
         api_base=settings.openai_base_url,
     )
     engine = Text2SqlEngineAdapter(graph, timeout_s=settings.query_timeout_s)
-    return StreamMessage(repository, engine, DashboardViewBuilder(), artifact_repository)
+    return StreamMessage(repository, engine, SpecStreamDashboardViewBuilder(), artifact_repository)
 
 
 def build_edit_artifact(settings: AppSettings, repository: ArtifactRepository) -> EditArtifact:
@@ -141,7 +140,7 @@ def build_edit_artifact(settings: AppSettings, repository: ArtifactRepository) -
         api_base=settings.openai_base_url,
     )
     engine = EditDashboardAdapter(graph, timeout_s=settings.query_timeout_s)
-    return EditArtifact(repository, engine, EditedDashboardViewBuilder())
+    return EditArtifact(repository, engine, SpecStreamDashboardViewBuilder())
 
 
 def _build_chat_model(settings: AppSettings, model_name: str) -> BaseChatModel:
