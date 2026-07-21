@@ -18,7 +18,14 @@ body {
   background: var(--color-bg);
 }
 
+/* position:relative is what makes overflow:hidden mean "nothing escapes the shell": an
+   overflow clip only applies to descendants this box is the containing block for. Without
+   it, an absolutely positioned descendant with no positioned ancestor — a chart's
+   off-screen .sr-only data table — resolves against the initial containing block, skips
+   the clip, and extends the *document's* scrollable area, so a tall dashboard scrolled the
+   whole shell (sidebar and composer with it) and left blank space below. */
 .app-shell {
+  position: relative;
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr;
   height: 100vh;
