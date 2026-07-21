@@ -11,35 +11,36 @@ export const Composer = memo(function Composer({
   disabled,
   placeholder = "Ask a question about your data…",
   label = "Ask",
-  clearSignal,
+  restoreSignal,
   autoFocus = false,
 }: {
   onSubmit: (prompt: string) => void;
   disabled: boolean;
   placeholder?: string;
   label?: string;
-  // Bumped by the parent when a submission has succeeded. Until then the draft is preserved,
-  // so a failed send leaves the text in place to retry rather than discarding it (audit MOD-3).
-  clearSignal?: number;
+  // Bumped by the parent when the last send failed. The draft is cleared optimistically on
+  // submit; a bump restores the just-sent text so a single retry re-sends it (audit MOD-3).
+  restoreSignal?: number;
   // Land the cursor in the field on mount so the user can type immediately (audit follow-up).
   autoFocus?: boolean;
 }) {
   const [value, setValue] = useState("");
-  const lastCleared = useRef(clearSignal);
+  const lastSubmitted = useRef("");
+  const lastRestore = useRef(restoreSignal);
 
   useEffect(() => {
-    if (clearSignal !== lastCleared.current) {
-      lastCleared.current = clearSignal;
-      setValue("");
+    if (restoreSignal !== lastRestore.current) {
+      lastRestore.current = restoreSignal;
+      setValue(lastSubmitted.current); // the send failed → put the question back for retry
     }
-  }, [clearSignal]);
+  }, [restoreSignal]);
 
   function submit() {
     const trimmed = value.trim();
     if (!trimmed || disabled) return;
-    // The draft is NOT cleared here — only a success signal from the parent clears it, so a
-    // failed send keeps the question for one retry (audit MOD-3).
+    lastSubmitted.current = trimmed;
     onSubmit(trimmed);
+    setValue(""); // clear optimistically; restored via restoreSignal only if the send fails
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {

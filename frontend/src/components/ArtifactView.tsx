@@ -16,9 +16,6 @@ export function ArtifactView({ artifactId, onBack }: { artifactId: string; onBac
   const { detail, reload, revert, loadVersion } = useArtifact(artifactId);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [previewSpec, setPreviewSpec] = useState<SpecWithState | null>(null);
-  // Bumped on a completed edit so the composer clears its instruction only on success; a
-  // failed edit keeps the text to retry (audit MOD-3).
-  const [completedEdits, setCompletedEdits] = useState(0);
 
   const { spec: editSpec, isStreaming, send, clear } = useUIStream({
     api: `/api/artifacts/${artifactId}/edit`,
@@ -28,7 +25,6 @@ export function ArtifactView({ artifactId, onBack }: { artifactId: string; onBac
       setPreviewSpec(null);
       clear();
       void reload();
-      setCompletedEdits((n) => n + 1);
     },
   });
 
@@ -104,7 +100,6 @@ export function ArtifactView({ artifactId, onBack }: { artifactId: string; onBac
         disabled={isStreaming}
         placeholder="Describe a change — e.g. make the revenue chart a line chart…"
         label="Edit"
-        clearSignal={completedEdits}
       />
     </main>
   );

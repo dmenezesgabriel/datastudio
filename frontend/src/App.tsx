@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useUIStream } from "@json-render/react";
 
 import { Sidebar } from "./components/Sidebar";
@@ -31,9 +31,6 @@ export function App() {
   // this only matters at narrow widths where the sidebar collapses to an off-canvas drawer.
   const [navOpen, setNavOpen] = useState(false);
   const closeNav = useCallback(() => setNavOpen(false), []);
-  // Bumped when a turn completes; the composer watches it to clear the draft only on success
-  // (a failed send keeps the question to retry — audit MOD-3).
-  const [completedTurns, setCompletedTurns] = useState(0);
   const { threads, refresh, loadTurns } = useConversations();
   const { artifacts, refresh: refreshArtifacts, deleteArtifact } = useArtifacts();
 
@@ -55,9 +52,15 @@ export function App() {
       }));
       void refresh(); // the completed turn is now persisted server-side → update the sidebar
       void refreshArtifacts(); // the turn auto-saved its dashboard + widgets → refresh the gallery
-      setCompletedTurns((n) => n + 1); // success → let the composer clear its draft
     },
   });
+
+  // A failed send bumps this so the composer restores the question it optimistically cleared
+  // on submit — a single retry then re-sends it (audit MOD-3).
+  const [failedSends, setFailedSends] = useState(0);
+  useEffect(() => {
+    if (error) setFailedSends((n) => n + 1);
+  }, [error]);
 
   // Stable identities so the memoized Composer/Sidebar don't re-render on every streaming
   // patch (App re-renders per patch as `spec` grows; these callbacks must not churn with it).
@@ -159,7 +162,7 @@ export function App() {
               {friendlyError(error.message)}
             </p>
           )}
-          <Composer onSubmit={ask} disabled={isStreaming} clearSignal={completedTurns} autoFocus />
+          <Composer onSubmit={ask} disabled={isStreaming} restoreSignal={failedSends} autoFocus />
         </main>
       )}
       {view.kind === "gallery" && (

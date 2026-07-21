@@ -5,21 +5,21 @@ import { Composer } from "./Composer";
 
 afterEach(cleanup);
 
-test("keeps the draft after submit and clears it only on a success signal", () => {
-  // A failed send used to wipe the typed question. The draft is now preserved until the
-  // parent confirms success (a bumped clearSignal), so one retry re-sends it (audit MOD-3).
+test("clears the draft on submit and restores it when the send fails", () => {
+  // The field clears optimistically on submit (as chat inputs do); a failed send bumps
+  // restoreSignal to put the question back so one retry re-sends it (audit MOD-3).
   const onSubmit = vi.fn();
-  const { rerender } = render(<Composer onSubmit={onSubmit} disabled={false} clearSignal={0} />);
+  const { rerender } = render(<Composer onSubmit={onSubmit} disabled={false} restoreSignal={0} />);
   const field = screen.getByRole("textbox") as HTMLTextAreaElement;
 
   fireEvent.change(field, { target: { value: "revenue by month" } });
   fireEvent.click(screen.getByRole("button", { name: /ask/i }));
 
   expect(onSubmit).toHaveBeenCalledWith("revenue by month");
-  expect(field.value).toBe("revenue by month"); // preserved — not lost if the send failed
+  expect(field.value).toBe(""); // cleared optimistically on submit
 
-  rerender(<Composer onSubmit={onSubmit} disabled={false} clearSignal={1} />);
-  expect(field.value).toBe(""); // success signal clears it
+  rerender(<Composer onSubmit={onSubmit} disabled={false} restoreSignal={1} />);
+  expect(field.value).toBe("revenue by month"); // a failed send restores it for retry
 });
 
 test("keeps an accessible name on the send button while it is busy", () => {
