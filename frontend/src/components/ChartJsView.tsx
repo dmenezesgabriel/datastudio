@@ -76,13 +76,71 @@ export function ChartJsView({ kind, title, labels, datasets }: ChartJsProps) {
 
   // Title rides above the canvas as real HTML (token typography, selectable, muted)
   // rather than baked into the pixel canvas — the takeaway, not chartjunk.
+  //
+  // A bare <canvas> is invisible to screen readers, so the chart also carries a text
+  // alternative (a11y audit SC 1.1.1): the canvas is a labelled role="img" (a concise
+  // summary), and an off-screen data table holds every value as the real equivalent.
   return (
     <figure className="chart-figure">
       {title ? <figcaption className="chart-title">{title}</figcaption> : null}
       <div className="chart-box">
-        <canvas ref={canvasRef} />
+        <canvas ref={canvasRef} role="img" aria-label={describeChart(kind, title, labels, datasets)} />
       </div>
+      <ChartDataTable title={title} kind={kind} labels={labels} datasets={datasets} />
     </figure>
+  );
+}
+
+// A one-line description for the canvas' aria-label: the takeaway a sighted user reads from
+// the title/shape, condensed to words. The numbers live in the table below, not here.
+function describeChart(kind: string, title: string, labels: string[], datasets: ChartDataset[]): string {
+  const count = labels.length;
+  const parts = [
+    title.trim(),
+    `${kind} chart`,
+    `${count} ${count === 1 ? "category" : "categories"}`,
+    datasets.length > 1 ? `${datasets.length} series` : "",
+  ];
+  return parts.filter(Boolean).join(", ");
+}
+
+// The screen-reader equivalent of the plotted marks: an off-screen (.sr-only) table of the
+// same labels and values the canvas draws. One column per series; a null point reads "—".
+function ChartDataTable({
+  title,
+  kind,
+  labels,
+  datasets,
+}: {
+  title: string;
+  kind: string;
+  labels: string[];
+  datasets: ChartDataset[];
+}) {
+  return (
+    <table className="sr-only">
+      <caption>{title || `${kind} chart`} — data table</caption>
+      <thead>
+        <tr>
+          <th scope="col">Label</th>
+          {datasets.map((dataset) => (
+            <th scope="col" key={dataset.label}>
+              {dataset.label}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {labels.map((label, row) => (
+          <tr key={`${label}-${row}`}>
+            <th scope="row">{label}</th>
+            {datasets.map((dataset) => (
+              <td key={dataset.label}>{dataset.data[row] ?? "—"}</td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 

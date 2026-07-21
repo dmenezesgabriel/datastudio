@@ -61,6 +61,15 @@ export function applyFontDefaults(): void {
 // bar/line carry an x/y frame we want to strip; pie has no cartesian scales.
 const CARTESIAN = new Set(["bar", "line"]);
 
+// Whether the OS/browser is set to reduce motion. Guarded for jsdom (no matchMedia).
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
 /**
  * The decluttered option set for a chart: recessive grid/axes, one legend only when
  * it earns its place (≥2 series, or a pie's slice identity), a tooltip styled to the
@@ -70,6 +79,9 @@ export function baseOptions(kind: string, hasLegend: boolean, tokens: ChartToken
   return {
     responsive: true,
     maintainAspectRatio: false,
+    // Honour a reduced-motion preference: a still chart for users who asked for less motion
+    // (a11y audit SC 2.3.3). Recomputed on every paint(), so it also covers live updates.
+    animation: prefersReducedMotion() ? false : undefined,
     scales: CARTESIAN.has(kind) ? cartesianScales(kind, tokens) : undefined,
     plugins: {
       title: { display: false },

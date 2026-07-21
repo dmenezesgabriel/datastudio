@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 
 // Spies are hoisted so the vi.mock factory (itself hoisted above imports) can close over them.
 const { constructed, updateSpy, destroySpy, instances } = vi.hoisted(() => ({
@@ -76,6 +76,51 @@ test("colours a single series with one accent hue, not a per-series rainbow", ()
   const [dataset] = instances[0].data.datasets;
   expect(dataset.backgroundColor).toBe(dataset.borderColor);
   expect(dataset.backgroundColor).toBeTruthy();
+});
+
+test("exposes the chart to assistive tech: a labelled image plus a data-table equivalent", () => {
+  // A canvas is invisible to screen readers (SC 1.1.1). The chart must therefore expose a
+  // concise labelled image AND a text-equivalent table carrying the actual values.
+  render(
+    <ChartJsView
+      kind="bar"
+      title="Revenue by month"
+      labels={["Jan", "Feb"]}
+      datasets={[{ label: "revenue", data: [100, 250] }]}
+    />,
+  );
+
+  // The canvas is a labelled img, not a blank to assistive tech.
+  expect(screen.getByRole("img", { name: /Revenue by month/i })).toBeTruthy();
+
+  // The equivalent data table carries every label and value.
+  const table = within(screen.getByRole("table", { name: /Revenue by month/i }));
+  expect(table.getByText("Jan")).toBeTruthy();
+  expect(table.getByText("100")).toBeTruthy();
+  expect(table.getByText("Feb")).toBeTruthy();
+  expect(table.getByText("250")).toBeTruthy();
+});
+
+test("disables chart animation when the user prefers reduced motion", () => {
+  // Chart.js animates by default; a user who asked for less motion must get a still chart.
+  const original = window.matchMedia;
+  window.matchMedia = ((query: string) =>
+    ({
+      matches: /reduce/.test(query),
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      onchange: null,
+      dispatchEvent: () => false,
+    }) as unknown as MediaQueryList) as typeof window.matchMedia;
+
+  render(<ChartJsView {...ONE_BAR} />);
+  const config = constructed.mock.calls[0][0] as { options: { animation: unknown } };
+  expect(config.options.animation).toBe(false);
+
+  window.matchMedia = original;
 });
 
 test("gives two series two distinct categorical colours", () => {
