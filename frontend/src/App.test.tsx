@@ -305,6 +305,76 @@ test("a failed thread load is not cached as empty — re-clicking retries", asyn
   expect(detailCalls).toBe(2);
 });
 
+test("does not reuse the 'New chat' name for the unsaved active thread", () => {
+  // Two controls sharing one accessible name is ambiguous; only the toolbar action is
+  // "New chat", while the unsaved thread carries a distinct name.
+  vi.stubGlobal("fetch", routeFetch(() => streamResponse([])));
+  render(<App />);
+  expect(screen.getAllByRole("button", { name: "New chat" })).toHaveLength(1);
+  expect(screen.getByRole("button", { name: /untitled chat/i })).toBeTruthy();
+});
+
+test("exposes a mobile navigation toggle wired to the sidebar", () => {
+  // Arrange
+  vi.stubGlobal("fetch", routeFetch(() => streamResponse([])));
+  render(<App />);
+
+  // The menu button controls the sidebar (aria-controls → the nav's id) and reports state.
+  const menu = screen.getByRole("button", { name: /navigation/i });
+  const controls = menu.getAttribute("aria-controls");
+  expect(controls).toBeTruthy();
+  expect(document.getElementById(controls as string)).toBe(
+    screen.getByRole("navigation", { name: /conversations/i }),
+  );
+  expect(menu.getAttribute("aria-expanded")).toBe("false");
+
+  // Act — open the drawer
+  fireEvent.click(menu);
+
+  // Assert
+  expect(menu.getAttribute("aria-expanded")).toBe("true");
+});
+
+test("closes the mobile drawer after choosing a destination", () => {
+  // Arrange
+  vi.stubGlobal("fetch", routeFetch(() => streamResponse([])));
+  render(<App />);
+  const menu = screen.getByRole("button", { name: /navigation/i });
+  fireEvent.click(menu);
+  expect(menu.getAttribute("aria-expanded")).toBe("true");
+
+  // Act — pick a destination (Artifacts) from the drawer
+  fireEvent.click(screen.getByRole("button", { name: "Artifacts" }));
+
+  // Assert — the drawer collapses so the choice isn't left hidden behind an open overlay
+  expect(menu.getAttribute("aria-expanded")).toBe("false");
+});
+
+test("exposes a stream error as a role=alert live region so it is announced", async () => {
+  // Arrange — a failing chat stream.
+  const fetchMock = vi.fn((url: string) => {
+    if (url === "/api/conversations") return Promise.resolve(jsonResponse({ conversations: [] }));
+    if (typeof url === "string" && url.startsWith("/api/artifacts")) {
+      return Promise.resolve(jsonResponse({ artifacts: [] }));
+    }
+    return Promise.resolve({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ message: "boom" }),
+    } as unknown as Response);
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  render(<App />);
+
+  // Act — a failing prompt.
+  fireEvent.change(screen.getByPlaceholderText(/Ask a question/i), { target: { value: "will fail" } });
+  fireEvent.click(screen.getByRole("button", { name: /ask/i }));
+
+  // Assert — the banner is a role=alert region (screen readers announce it), not a mute <p>.
+  const alert = await screen.findByRole("alert");
+  expect(alert.textContent).toContain("boom");
+});
+
 test("switching threads clears a stream error from the previous thread", async () => {
   // Arrange — the chat stream fails; the past thread loads fine.
   const fetchMock = vi.fn((url: string) => {

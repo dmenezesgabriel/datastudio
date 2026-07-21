@@ -9,6 +9,7 @@ import { ArtifactView } from "./components/ArtifactView";
 import { useConversations } from "./hooks/useConversations";
 import { useArtifacts } from "./hooks/useArtifacts";
 import { newConversationId } from "./session";
+import { friendlyError } from "./errors";
 import type { SpecWithState, ThreadSummary, Turn } from "./types";
 
 // Which surface the main pane shows. Chat is the default; the gallery lists saved
@@ -26,6 +27,13 @@ export function App() {
     [firstId]: [],
   });
   const [view, setView] = useState<View>({ kind: "chat" });
+  // The mobile nav drawer's open state. Desktop keeps the sidebar always visible (CSS), so
+  // this only matters at narrow widths where the sidebar collapses to an off-canvas drawer.
+  const [navOpen, setNavOpen] = useState(false);
+  const closeNav = useCallback(() => setNavOpen(false), []);
+  // Bumped when a turn completes; the composer watches it to clear the draft only on success
+  // (a failed send keeps the question to retry — audit MOD-3).
+  const [completedTurns, setCompletedTurns] = useState(0);
   const { threads, refresh, loadTurns } = useConversations();
   const { artifacts, refresh: refreshArtifacts, deleteArtifact } = useArtifacts();
 
@@ -47,6 +55,7 @@ export function App() {
       }));
       void refresh(); // the completed turn is now persisted server-side → update the sidebar
       void refreshArtifacts(); // the turn auto-saved its dashboard + widgets → refresh the gallery
+      setCompletedTurns((n) => n + 1); // success → let the composer clear its draft
     },
   });
 
@@ -100,15 +109,41 @@ export function App() {
   );
 
   return (
-    <div className="app-shell">
+    <div className={"app-shell" + (navOpen ? " app-shell--nav-open" : "")}>
+      {/* Mobile-only top bar (hidden on desktop via CSS): the only route to the nav once the
+          sidebar collapses to a drawer. Without it, narrow viewports lost New chat, Artifacts,
+          and thread switching entirely. See a11y audit LG-1. */}
+      <header className="mobile-bar">
+        <button
+          type="button"
+          className="mobile-bar__menu"
+          aria-controls="app-sidebar"
+          aria-expanded={navOpen}
+          aria-label={navOpen ? "Close navigation" : "Open navigation"}
+          onClick={() => setNavOpen((open) => !open)}
+        >
+          <span aria-hidden="true">☰</span>
+        </button>
+        <span className="mobile-bar__wordmark">datastudio</span>
+      </header>
       <Sidebar
+        id="app-sidebar"
         threads={threadList}
         activeId={activeId}
         view={view.kind === "chat" ? "chat" : "artifacts"}
         onNewChat={newChat}
         onSelect={selectThread}
         onOpenArtifacts={openArtifacts}
+        onNavigate={closeNav}
       />
+      {navOpen && (
+        <button
+          type="button"
+          className="nav-backdrop"
+          aria-label="Close navigation"
+          onClick={closeNav}
+        />
+      )}
       {view.kind === "chat" && (
         <main className="main">
           <MessageList
@@ -117,11 +152,14 @@ export function App() {
             streaming={isStreaming ? { prompt: livePrompt.current, spec } : null}
           />
           {error && (
-            <p className="error-banner max-w-content mx-auto mb-4 text-base">
-              {error.message}
+            // role="alert" (an assertive live region) so screen readers announce the
+            // failure the moment it appears — a mute <p> left AT users with no feedback
+            // that their question failed. See a11y audit SC 4.1.3.
+            <p role="alert" className="error-banner max-w-content mx-auto mb-4 text-base">
+              {friendlyError(error.message)}
             </p>
           )}
-          <Composer onSubmit={ask} disabled={isStreaming} />
+          <Composer onSubmit={ask} disabled={isStreaming} clearSignal={completedTurns} autoFocus />
         </main>
       )}
       {view.kind === "gallery" && (
@@ -152,6 +190,8 @@ function mergeActiveThread(
   activeTurns: Turn[],
 ): ThreadSummary[] {
   if (threads.some((thread) => thread.id === activeId)) return threads;
-  const title = activeTurns[0]?.prompt ?? "New chat";
+  // "Untitled chat", not "New chat" — the latter is the toolbar action's name, and two
+  // controls sharing one accessible name is ambiguous to assistive tech (a11y audit QW-9).
+  const title = activeTurns[0]?.prompt ?? "Untitled chat";
   return [{ id: activeId, title }, ...threads];
 }

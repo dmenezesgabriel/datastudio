@@ -8,13 +8,17 @@ import type { ThreadSummary } from "../types";
 // memo so the thread list doesn't re-render on every streaming patch — with stable
 // threads/activeId/callbacks it only re-renders when the conversation list actually changes.
 export const Sidebar = memo(function Sidebar({
+  id,
   threads,
   activeId,
   view,
   onNewChat,
   onSelect,
   onOpenArtifacts,
+  onNavigate,
 }: {
+  // The nav's DOM id, so the mobile menu button can point at it via aria-controls.
+  id?: string;
   threads: ThreadSummary[];
   activeId: string;
   // Which surface is open, so the sidebar can highlight it and dim the thread selection.
@@ -22,9 +26,14 @@ export const Sidebar = memo(function Sidebar({
   onNewChat: () => void;
   onSelect: (id: string) => void;
   onOpenArtifacts: () => void;
+  // Called after any navigation choice so the parent can close the mobile drawer. A no-op
+  // on desktop (the drawer isn't open there). Kept separate from the action callbacks so
+  // App's memoized handlers stay stable and don't churn the streaming re-render path.
+  onNavigate?: () => void;
 }) {
   return (
     <nav
+      id={id}
       className="sidebar flex flex-col gap-3 p-4 bg-subtle overflow-y-auto"
       aria-label="Conversations"
     >
@@ -34,7 +43,10 @@ export const Sidebar = memo(function Sidebar({
       <button
         type="button"
         className="sidebar__new-chat flex items-center gap-2 w-full p-3 text-base font-medium bg-raised border-strong rounded-md cursor-pointer"
-        onClick={onNewChat}
+        onClick={() => {
+          onNewChat();
+          onNavigate?.();
+        }}
       >
         <span aria-hidden="true">+</span> New chat
       </button>
@@ -44,7 +56,10 @@ export const Sidebar = memo(function Sidebar({
           "sidebar__artifacts flex items-center gap-2 w-full p-3 text-base font-medium bg-raised border-strong rounded-md cursor-pointer" +
           (view === "artifacts" ? " thread-list__item--active" : "")
         }
-        onClick={onOpenArtifacts}
+        onClick={() => {
+          onOpenArtifacts();
+          onNavigate?.();
+        }}
       >
         <span aria-hidden="true">▤</span> Artifacts
       </button>
@@ -65,7 +80,10 @@ export const Sidebar = memo(function Sidebar({
                     ? " thread-list__item--active"
                     : "")
                 }
-                onClick={() => onSelect(thread.id)}
+                onClick={() => {
+                  onSelect(thread.id);
+                  onNavigate?.();
+                }}
                 title={thread.title}
               >
                 {thread.title}

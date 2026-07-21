@@ -102,7 +102,11 @@ body {
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
-.message-list table {
+/* Wide result/markdown tables scroll inside their own box. Excludes .sr-only tables (the
+   charts' off-screen data equivalents): forcing overflow-x:auto on a 1px-wide off-screen
+   table makes it a scrollable region with no keyboard access, which axe flags under WCAG
+   2.1.1 (exhaustive-check finding). sr-only tables must keep overflow:hidden. */
+.message-list table:not(.sr-only) {
   display: block;
   max-width: 100%;
   overflow-x: auto;
@@ -179,8 +183,12 @@ body {
   line-height: 1.4;
 }
 
+/* A real focus ring (2px, offset) instead of the old outline:none + 1px border tint — that
+   was far subtler than the browser ring every button gets, and easy to miss (a11y audit
+   QW-10). Keeps the accent border so the change reads even against a busy background. */
 .composer__input:focus {
-  outline: none;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
   border-color: var(--color-accent);
 }
 
@@ -287,8 +295,19 @@ body {
   min-width: 0;
 }
 
-/* Segmented toggle: an overlay pinned to the widget's top-right corner, hidden
-   (opacity:0) until the widget is hovered/focused — see the reveal rule below. */
+/* The Preview/SQL toggle floats at the widget's top-right corner. Full-width content — a
+   table's header row, the SQL text — would sit under it, so reserve a top strip to clear it.
+   Charts and KPIs place their heading on the left, clear of the toggle, so they need none
+   (audit follow-up: always-on toggle overlapped the last table column header). */
+.widget-frame__body .table-scroll,
+.widget-frame__body .widget-frame__sql {
+  padding-top: 34px;
+}
+
+/* Segmented toggle: an overlay pinned to the widget's top-right corner. It stays visible at
+   rest (it was opacity:0 until hover, so the SQL view was undiscoverable — and unreachable on
+   touch, where there is no hover; audit MOD-4). A raised surface keeps it quiet without dimming
+   the labels (opacity would drop their contrast below the AA threshold we just restored). */
 .widget-frame__toggle {
   position: absolute;
   top: var(--space-2);
@@ -298,16 +317,17 @@ body {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   overflow: hidden;
-  opacity: 0;
-}
-
-.widget-frame:hover .widget-frame__toggle,
-.widget-frame:focus-within .widget-frame__toggle {
-  opacity: 1;
+  background: var(--color-bg-raised);
+  box-shadow: var(--shadow-raised);
 }
 
 .widget-frame__tab {
-  padding: 2px var(--space-2);
+  /* min-height 24px meets the WCAG 2.5.8 target-size minimum (the tabs were 19px tall);
+     inline-flex centres the label within it. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 10px;
   font-size: var(--text-sm);
   color: var(--color-text-muted);
   background: var(--color-bg);
@@ -319,9 +339,12 @@ body {
   border-left: 1px solid var(--color-border);
 }
 
-/* aria-pressed carries selection so the active mode reads without relying on color. */
+/* aria-pressed carries selection so the active mode reads without relying on color.
+   The colour is --color-accent-hover (not --color-accent) so the label clears WCAG AA
+   (4.5:1) on the tinted background in both themes — the same fix already used by
+   .thread-list__item--active; plain --color-accent lands at ~4.0 (a11y audit SC 1.4.3). */
 .widget-frame__tab[aria-pressed="true"] {
-  color: var(--color-accent);
+  color: var(--color-accent-hover);
   background: var(--color-accent-subtle);
   font-weight: 500;
 }
@@ -446,13 +469,90 @@ body {
   color: var(--color-accent-hover);
 }
 
-/* --- Responsive: collapse the sidebar on narrow screens ------------------- */
+/* --- Mobile top bar + nav drawer ------------------------------------------ */
+
+/* Both are desktop-hidden; the media query below turns them on when the sidebar
+   collapses to an off-canvas drawer. */
+.mobile-bar {
+  display: none;
+}
+.nav-backdrop {
+  display: none;
+}
+
+/* --- Responsive: collapse the sidebar into a drawer on narrow screens ------ */
 
 @media (max-width: 720px) {
+  /* One column, with the mobile bar as an auto row above a scrollable main. main was
+     height:100vh for the two-column desktop layout; here it must fill only the row that
+     remains under the bar, or the docked composer is pushed off-screen. */
   .app-shell {
     grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
   }
+  .main {
+    height: auto;
+    min-height: 0;
+  }
+
+  .mobile-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg);
+  }
+  /* A 44px comfortable touch target (well over the 24px minimum). */
+  .mobile-bar__menu {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    font-size: var(--text-lg);
+    color: var(--color-text);
+    background: var(--color-bg-raised);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+  }
+  .mobile-bar__wordmark {
+    font-size: var(--text-lg);
+    font-weight: 600;
+  }
+
+  /* The sidebar becomes an off-canvas drawer. visibility:hidden while closed takes it out
+     of the tab order and the accessibility tree, so the menu button is the sole entry
+     point (no tabbing into an invisible panel); the transform animates it in. */
   .sidebar {
-    display: none;
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(84vw, var(--sidebar-width));
+    z-index: 30;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.2s ease;
+  }
+  .app-shell--nav-open .sidebar {
+    transform: translateX(0);
+    visibility: visible;
+  }
+  /* A dimming scrim behind the open drawer; clicking it closes the drawer. */
+  .nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    border: none;
+    background: rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+  }
+}
+
+/* Users who ask for less motion get the drawer without the slide. */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none;
   }
 }
