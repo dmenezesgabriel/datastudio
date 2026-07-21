@@ -182,23 +182,25 @@ class TestAutoSaveArtifacts:
         engine = FakeStreamingText2SqlEngine(make_dashboard_events())
         _drain(_use_case(FakeConversationRepository(), engine, artifacts), cid, question)
 
-    def test_persists_the_dashboard_and_each_widget(self) -> None:
+    def test_persists_one_dashboard_artifact_per_answer(self) -> None:
+        # One answer saves one artifact — the whole dashboard — not a card per widget
+        # (which flooded the gallery and leaked widget ids as titles; audit MOD-2).
         artifacts = InMemoryArtifactRepository()
         self._drain_dashboard(artifacts)
-        assert len(artifacts.list_summaries(_OWNER)) == 3  # dashboard + 2 widgets
+        assert len(artifacts.list_summaries(_OWNER)) == 1
 
-    def test_titles_dashboard_by_question_and_widgets_by_their_own_titles(self) -> None:
+    def test_titles_the_dashboard_artifact_by_the_question(self) -> None:
         artifacts = InMemoryArtifactRepository()
         self._drain_dashboard(artifacts, question="Movies overview")
         titles = {s.title for s in artifacts.list_summaries(_OWNER)}
-        assert titles == {"Movies overview", "Total", "By genre"}
+        assert titles == {"Movies overview"}
 
-    def test_widget_artifact_is_a_single_widget_spec(self) -> None:
+    def test_dashboard_artifact_carries_every_widget(self) -> None:
         artifacts = InMemoryArtifactRepository()
-        self._drain_dashboard(artifacts)
-        widget = next(a for a in self._saved(artifacts) if a.title == "By genre")
-        assert "widget-1-frame" in widget.current_spec.elements
-        assert "widget-0-frame" not in widget.current_spec.elements  # carries only its own widget
+        self._drain_dashboard(artifacts, question="Movies overview")
+        dashboard = next(a for a in self._saved(artifacts) if a.title == "Movies overview")
+        # Both widgets live on the one saved dashboard; nothing is split out or dropped.
+        assert {"widget-0-frame", "widget-1-frame"} <= set(dashboard.current_spec.elements)
 
     def test_artifacts_reference_the_source_conversation(self) -> None:
         artifacts = InMemoryArtifactRepository()
