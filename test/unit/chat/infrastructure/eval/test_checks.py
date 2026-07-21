@@ -12,6 +12,7 @@ from chat.infrastructure.eval.checks import (
     ResultSetCheck,
     RubricCheck,
     SqlValidCheck,
+    ValueRangeCheck,
     ViewContainsCheck,
     ViewIntegrityCheck,
     ViewPresentCheck,
@@ -285,6 +286,95 @@ class TestResultSetAnyCheck:
         check = ResultSetAnyCheck(expected_value_options=["42"], column="b")
         # act / assert
         assert check.evaluate(_state_with_result(result))["passed"] is False
+
+
+class TestValueRangeCheck:
+    """Deterministic numeric-bounds guard: impossible values fail without an LLM judge."""
+
+    def test_passes_when_all_numeric_cells_within_bounds(self) -> None:
+        # arrange — a plausible percentage
+        result = QueryResult(columns=["pct"], rows=[(63.2,)], row_count=1)
+        check = ValueRangeCheck(min_value=0.0, max_value=100.0)
+        # act / assert
+        assert check.evaluate(_state_with_result(result))["passed"] is True
+
+    def test_fails_when_a_cell_is_below_min(self) -> None:
+        # arrange — a negative count is impossible
+        result = QueryResult(columns=["cnt"], rows=[(-3,)], row_count=1)
+        check = ValueRangeCheck(min_value=0.0)
+        # act
+        outcome = check.evaluate(_state_with_result(result))
+        # assert — fails and names the offending value
+        assert outcome["passed"] is False
+        assert "-3" in outcome["reasoning"]
+
+    def test_fails_when_a_cell_is_above_max(self) -> None:
+        # arrange — a >100% rate from a wrong denominator
+        result = QueryResult(columns=["pct"], rows=[(163.8,)], row_count=1)
+        check = ValueRangeCheck(min_value=0.0, max_value=100.0)
+        # act
+        outcome = check.evaluate(_state_with_result(result))
+        # assert
+        assert outcome["passed"] is False
+        assert "163.8" in outcome["reasoning"]
+
+    def test_ignores_non_numeric_cells(self) -> None:
+        # arrange — a label column must not be range-checked
+        result = QueryResult(columns=["state", "pct"], rows=[("SP", 40.0)], row_count=1)
+        check = ValueRangeCheck(min_value=0.0, max_value=100.0)
+        # act / assert
+        assert check.evaluate(_state_with_result(result))["passed"] is True
+
+    def test_ignores_boolean_cells(self) -> None:
+        # arrange — bool is an int subclass; a flag must not be read as a 0/1 measurement
+        result = QueryResult(columns=["flag"], rows=[(True,)], row_count=1)
+        check = ValueRangeCheck(min_value=2.0, max_value=100.0)
+        # act / assert — True would fail a [2,100] range if treated as 1
+        assert check.evaluate(_state_with_result(result))["passed"] is True
+
+    def test_passes_vacuously_without_a_result(self) -> None:
+        # arrange — no widget produced a result (e.g. a declined question)
+        check = ValueRangeCheck(min_value=0.0, max_value=100.0)
+        # act / assert — composes with cases where a widget is optional
+        assert check.evaluate(cast(ChatState, {"question": "q"}))["passed"] is True
+
+    def test_restricts_to_named_column(self) -> None:
+        # arrange — an out-of-range value outside the checked column is ignored
+        result = QueryResult(columns=["raw", "pct"], rows=[(500, 40.0)], row_count=1)
+        check = ValueRangeCheck(min_value=0.0, max_value=100.0, column="pct")
+        # act / assert
+        assert check.evaluate(_state_with_result(result))["passed"] is True
+
+
+class TestDeserializeValueRange:
+    def test_builds_check_with_min_max_and_column(self) -> None:
+        # arrange
+        spec = {"type": "value_range", "min": 0, "max": 100, "column": "pct"}
+        # act
+        check = deserialize_check(
+            cast(dict[str, str], spec),
+            FakeStructuredChatModel(passed=True, reasoning=""),
+            FakeSqlEngine(),
+        )
+        # assert
+        assert isinstance(check, ValueRangeCheck)
+        assert check.min_value == 0.0
+        assert check.max_value == 100.0
+        assert check.column == "pct"
+
+    def test_omitted_bound_stays_none(self) -> None:
+        # arrange — a count case bounds only the low end
+        spec = {"type": "value_range", "min": 0}
+        # act
+        check = deserialize_check(
+            cast(dict[str, str], spec),
+            FakeStructuredChatModel(passed=True, reasoning=""),
+            FakeSqlEngine(),
+        )
+        # assert
+        assert isinstance(check, ValueRangeCheck)
+        assert check.min_value == 0.0
+        assert check.max_value is None
 
 
 class TestDeserializeResultSetAny:

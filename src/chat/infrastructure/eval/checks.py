@@ -6,6 +6,7 @@ Data/SQL/text checks live here; the generative-UI view checks live in ``view_che
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from decimal import Decimal
 from typing import cast
 
 from langchain_core.language_models import BaseChatModel
@@ -193,6 +194,61 @@ class ResultSetAnyCheck:
         return CheckResult(type="result_set_any", value=label, passed=passed, reasoning=reasoning)
 
 
+def _optional_float(bound: object) -> float | None:
+    """Coerce a JSON spec bound (number or numeric string) to float, or None when absent."""
+    return None if bound is None else float(cast(float, bound))
+
+
+def _as_number(cell: object) -> float | None:
+    """Coerce a cell to float for range-checking, or None when it is not a measurement.
+
+    ``bool`` is excluded even though it subclasses ``int`` — a flag column is not a numeric
+    measurement and must not be read as 0/1 against a range.
+    """
+    if isinstance(cell, bool):
+        return None
+    if isinstance(cell, int | float | Decimal):
+        return float(cell)
+    return None
+
+
+@dataclass
+class ValueRangeCheck:
+    """Passes when every numeric cell of the result lies within ``[min_value, max_value]``.
+
+    A deterministic sanity guard for outputs whose plausible range is known a priori — a
+    percentage must be within ``[0, 100]``, a count cannot be negative. It fails impossible
+    numbers (a >100% rate from a wrong denominator, a negative count) on arithmetic rather
+    than leaving them to the flaky LLM judge. Non-numeric cells are ignored, and it passes
+    vacuously with no result so it composes with cases where a widget is optional. Either
+    bound may be omitted to leave that side unbounded.
+
+    Example:
+        check = ValueRangeCheck(min_value=0, max_value=100)  # a percentage
+        result = check.evaluate(state)  # {"type": "value_range", "passed": True, ...}
+    """
+
+    min_value: float | None = field(default=None)
+    max_value: float | None = field(default=None)
+    column: str | None = field(default=None)
+
+    def evaluate(self, state: ChatState) -> CheckResult:
+        """Return passed when no numeric cell falls outside the configured bounds."""
+        label = f"[{self.min_value}, {self.max_value}]"
+        cells = collect_cells(all_results(state), self.column)
+        numbers = [n for cell in cells if (n := _as_number(cell)) is not None]
+        offender = next((n for n in numbers if self._out_of_range(n)), None)
+        passed = offender is None
+        reasoning = "" if passed else f"value {offender} outside {label}"
+        return CheckResult(type="value_range", value=label, passed=passed, reasoning=reasoning)
+
+    def _out_of_range(self, number: float) -> bool:
+        """True when number is below min_value or above max_value (unbounded side ignored)."""
+        below = self.min_value is not None and number < self.min_value
+        above = self.max_value is not None and number > self.max_value
+        return below or above
+
+
 @dataclass
 class ExecutionMatchAnyCheck:
     """Execution accuracy with answer-set tolerance: any of N gold queries may match.
@@ -325,6 +381,11 @@ def deserialize_check(
         ),
         "result_set_any": lambda: ResultSetAnyCheck(
             expected_value_options=list(cast(list[str], spec["expected_value_options"])),
+            column=spec.get("column"),
+        ),
+        "value_range": lambda: ValueRangeCheck(
+            min_value=_optional_float(spec.get("min")),
+            max_value=_optional_float(spec.get("max")),
             column=spec.get("column"),
         ),
         "rubric": lambda: RubricCheck(model=judge_model, rubric=spec["rubric"]),
