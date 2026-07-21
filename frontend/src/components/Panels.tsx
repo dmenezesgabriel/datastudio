@@ -88,8 +88,11 @@ export function DataTable({
   numericColumns: boolean[];
 }) {
   // A wide table scrolls inside this box rather than widening the page (CLAUDE.md).
+  // The box is a focusable, labelled region so a keyboard user can reach it and scroll it
+  // with the arrow keys — a scrollable region with no keyboard access fails WCAG 2.1.1
+  // (a11y audit, exhaustive-check finding).
   return (
-    <div className="table-scroll">
+    <div className="table-scroll" tabIndex={0} role="group" aria-label="Data table">
       <table className="data-table text-base">
         <thead>
           <tr>

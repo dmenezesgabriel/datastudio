@@ -1,9 +1,19 @@
 import { afterEach, describe, expect, test } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 
-import { Grid, KpiRow, KpiStat } from "./Panels";
+import { DataTable, Grid, KpiRow, KpiStat } from "./Panels";
 
 afterEach(cleanup);
+
+describe("DataTable", () => {
+  test("wraps the table in a keyboard-focusable scroll region", () => {
+    // A horizontally-scrolling table region must be reachable by keyboard to scroll it
+    // (WCAG 2.1.1). axe flags a scrollable region with no focusable access.
+    render(<DataTable columns={["city", "orders"]} rows={[["Sampa", "42"]]} numericColumns={[false, true]} />);
+    const region = screen.getByRole("group", { name: /data table/i });
+    expect(region.getAttribute("tabindex")).toBe("0");
+  });
+});
 
 describe("KpiStat", () => {
   test("renders the value and label", () => {
