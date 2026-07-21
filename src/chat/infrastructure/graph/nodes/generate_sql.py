@@ -9,6 +9,7 @@ from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
 from chat.infrastructure.graph.chat_state import ChatState
+from chat.infrastructure.graph.nodes._structured_output import invoke_structured
 from chat.infrastructure.graph.step_tags import step_tag
 
 _SYSTEM_PROMPT = (
@@ -67,11 +68,16 @@ class GenerateSql:
         )
 
     def __call__(self, state: ChatState) -> dict[str, str]:
-        """Generate a SQL query from the schema and question in state."""
+        """Generate a SQL query from the schema and question in state.
+
+        Malformed structured output is deterministic, so on it we return no ``sql`` rather
+        than raising: ``execute_sql`` then records the missing-query error and this one
+        widget degrades via the repair loop, instead of the exception aborting the turn.
+        """
         human_content = f"Schema:\n{state['schema']}\n\nQuestion: {state['question']}"
         messages = [
             SystemMessage(content=_SYSTEM_PROMPT),
             HumanMessage(content=human_content),
         ]
-        result: _SqlOutput = self._model.invoke(messages)
-        return {"sql": result.sql}
+        result = invoke_structured(self._model, messages, "generate_sql")
+        return {"sql": result.sql} if result is not None else {}

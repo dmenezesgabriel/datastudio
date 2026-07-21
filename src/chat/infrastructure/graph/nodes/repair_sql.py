@@ -10,6 +10,7 @@ from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
 from chat.infrastructure.graph.chat_state import ChatState
+from chat.infrastructure.graph.nodes._structured_output import invoke_structured
 from chat.infrastructure.graph.step_tags import step_tag
 from shared.application.ports.sql_engine_port import SqlEnginePort
 
@@ -89,7 +90,10 @@ class RepairSql:
         return first or ""
 
     def _repair_once(self, state: ChatState, hint: str) -> str:
-        return self._model.invoke(self._build_messages(state, hint)).sql
+        # Malformed structured output → empty SQL (no retry fixes it), so the next execute
+        # fails cleanly and the widget degrades rather than the exception aborting the turn.
+        result = invoke_structured(self._model, self._build_messages(state, hint), "repair_sql")
+        return result.sql if result is not None else ""
 
     def _hints(self) -> tuple[str, ...]:
         return _CANDIDATE_HINTS[: self._candidate_count]

@@ -7,6 +7,9 @@ from chat.infrastructure.graph.nodes.repair_sql import (
     RepairSql,
 )
 from shared.domain.value_objects.query_result import QueryResult
+from test.unit.chat.infrastructure.graph.nodes.fake_malformed_chat_model import (
+    FakeMalformedChatModel,
+)
 from test.unit.chat.infrastructure.graph.nodes.fake_sql_candidate_model import (
     FakeSqlCandidateModel,
 )
@@ -137,6 +140,20 @@ class TestRepairSqlBuildMessagesDefaults:
         combined = self._combined(state)
         assert "Error: None" not in combined
         assert "Error: XXXX" not in combined
+
+
+class TestRepairSqlMalformedOutput:
+    def test_returns_empty_sql_instead_of_raising_on_malformed_output(self) -> None:
+        # Regression: repair_sql called with_structured_output(...).invoke() raw, so
+        # malformed structured output propagated and aborted the turn instead of letting the
+        # repair loop give up gracefully. A malformed repair must yield empty SQL so the next
+        # execute fails cleanly and the widget degrades to a "couldn't build" note.
+        # arrange
+        model = FakeMalformedChatModel()
+        # act — non-final attempt
+        result = RepairSql(model, FakeSqlEngine())(_state(attempts=0))
+        # assert — empty sql, no exception propagated
+        assert result == {"sql": "", "repair_attempts": 1}
 
 
 class TestRepairSqlCurrentAttempts:
