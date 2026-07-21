@@ -32,7 +32,7 @@ export const catalog = defineCatalog(schema, {
       props: z.object({ sql: z.string() }),
       description:
         "Backend-owned wrapper that pairs a widget's visualization (its single child) with " +
-        "the SQL that produced it, exposing a Preview/SQL toggle. Never authored by the model — " +
+        "the SQL that produced it, exposing a small SQL toggle above it. Never authored by the model — " +
         "the backend wraps each widget in one; excluded from the authorable vocabulary.",
       example: { sql: "" },
     },

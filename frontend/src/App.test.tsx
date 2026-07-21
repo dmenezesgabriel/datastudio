@@ -109,7 +109,7 @@ const WIDGET_FRAME_LINES = [
   '{"op":"replace","path":"/elements/widget-0-frame/props/sql","value":"SELECT month, revenue FROM t"}',
 ];
 
-test("renders a widget's Preview/SQL toggle and swaps its body to the SQL", async () => {
+test("renders a widget's SQL toggle and swaps its body to the SQL", async () => {
   // Arrange
   vi.stubGlobal("fetch", routeFetch(() => streamResponse(WIDGET_FRAME_LINES)));
   render(<App />);
@@ -120,11 +120,11 @@ test("renders a widget's Preview/SQL toggle and swaps its body to the SQL", asyn
   });
   fireEvent.click(screen.getByRole("button", { name: /ask/i }));
 
-  // Assert — Preview is the default: the widget's data shows; toggling reveals its SQL and
+  // Assert — the widget is the default: its data shows; toggling reveals the SQL and
   // hides the data. This drives the real json-render Renderer + registry (WidgetFrame gets
   // both its `sql` prop and its rendered child), not the component in isolation.
   await waitFor(() => expect(screen.getByText("Jan")).toBeTruthy());
-  fireEvent.click(screen.getByRole("button", { name: "SQL" }));
+  fireEvent.click(screen.getByRole("button", { name: "Show SQL" }));
   expect(screen.getByText("SELECT month, revenue FROM t")).toBeTruthy();
   expect(screen.queryByText("Jan")).toBeNull();
 });

@@ -281,13 +281,16 @@ body {
   width: 100%;
 }
 
-/* Per-widget frame: the widget body fills the box and the Preview/SQL toggle is an
-   absolute overlay in the top-right corner, revealed only on hover/focus (below);
-   position: relative anchors that overlay. Layout-neutral (a plain grid child of
+/* Per-widget frame: a column of [tool row, widget body]. The SQL toggle used to be an
+   absolute overlay in a corner, which is what put it on top of widget content; in flow it
+   cannot overlap what it sits above, so the body needs no reserved strip and the frame
+   needs no positioning context. Layout-neutral otherwise (a plain grid child of
    .kpi-row / .dash-grid); grid widgets are borderless and KPI tiles carry their own
-   border, so the frame adds none of its own. */
+   border, so the frame adds none of its own — which puts the toggle outside a KPI's border. */
 .widget-frame {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -295,58 +298,66 @@ body {
   min-width: 0;
 }
 
-/* The Preview/SQL toggle floats at the widget's top-right corner. Full-width content — a
-   table's header row, the SQL text — would sit under it, so reserve a top strip to clear it.
-   Charts and KPIs place their heading on the left, clear of the toggle, so they need none
-   (audit follow-up: always-on toggle overlapped the last table column header). */
-.widget-frame__body .table-scroll,
-.widget-frame__body .widget-frame__sql {
-  padding-top: 34px;
-}
-
-/* Segmented toggle: an overlay pinned to the widget's top-right corner. It stays visible at
-   rest (it was opacity:0 until hover, so the SQL view was undiscoverable — and unreachable on
-   touch, where there is no hover; audit MOD-4). A raised surface keeps it quiet without dimming
-   the labels (opacity would drop their contrast below the AA threshold we just restored). */
-.widget-frame__toggle {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  z-index: 1;
-  display: inline-flex;
+/* The SQL view: a readable panel that scrolls inside its own box, the same idiom as the
+   chat's code blocks (.message-list pre). Without the max-width a long query overflows
+   its grid cell and paints over the neighbouring widget. */
+.widget-frame__sql {
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 0;
+  padding: var(--space-3);
+  background: var(--color-bg-subtle);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  overflow: hidden;
-  background: var(--color-bg-raised);
-  box-shadow: var(--shadow-raised);
+  font-size: var(--text-sm);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
-.widget-frame__tab {
-  /* min-height 24px meets the WCAG 2.5.8 target-size minimum (the tabs were 19px tall);
-     inline-flex centres the label within it. */
+/* The toggle's own row, left-aligned above the widget. Present only when there is SQL,
+   so a widget without it reserves no space. */
+.widget-frame__tools {
+  display: flex;
+}
+
+/* Quiet at rest — no border or surface of its own, just a muted glyph; the widget stays
+   the loud thing. Visible at rest all the same: it was opacity:0 until hover, so the SQL
+   view was undiscoverable and unreachable on touch, where there is no hover (audit MOD-4). */
+.widget-frame__sql-toggle {
+  /* 24x24 meets the WCAG 2.5.8 target-size minimum (inherited from the tabs this
+     replaced, which had been 19px tall); inline-flex centres the glyph within it. */
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-width: 24px;
   min-height: 24px;
-  padding: 2px 10px;
-  font-size: var(--text-sm);
+  padding: 0;
   color: var(--color-text-muted);
-  background: var(--color-bg);
+  background: none;
   border: 0;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
-.widget-frame__tab + .widget-frame__tab {
-  border-left: 1px solid var(--color-border);
+.widget-frame__sql-toggle:hover {
+  color: var(--color-text);
+  background: var(--color-bg-subtle);
 }
 
-/* aria-pressed carries selection so the active mode reads without relying on color.
-   The colour is --color-accent-hover (not --color-accent) so the label clears WCAG AA
-   (4.5:1) on the tinted background in both themes — the same fix already used by
-   .thread-list__item--active; plain --color-accent lands at ~4.0 (a11y audit SC 1.4.3). */
-.widget-frame__tab[aria-pressed="true"] {
+/* The same 2px offset ring the composer uses — the browser default is easy to miss on a
+   control this small (a11y audit QW-10). */
+.widget-frame__sql-toggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* aria-pressed carries the state so it reads without relying on color (the body swapping
+   to SQL is the other, non-color cue). The colour is --color-accent-hover (not
+   --color-accent) so the glyph clears WCAG AA on the tinted background in both themes —
+   the same fix already used by .thread-list__item--active; plain --color-accent lands at
+   ~4.0 (a11y audit SC 1.4.3). */
+.widget-frame__sql-toggle[aria-pressed="true"] {
   color: var(--color-accent-hover);
   background: var(--color-accent-subtle);
-  font-weight: 500;
 }
 
 .kpi-stat {
