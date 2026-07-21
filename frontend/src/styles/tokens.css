@@ -12,12 +12,18 @@
 
   /* Text */
   --color-text: #1f2023;
-  --color-text-muted: #6b6d75;
+  /* Darkened from #6b6d75 so muted text (section labels, captions, table headers, chart axis)
+     clears WCAG AA with real headroom on the subtle surface — the old value sat at ~4.8:1
+     (a fragile pass) (audit follow-up). */
+  --color-text-muted: #62646c;
   --color-text-inverted: #ffffff;
 
   /* Accent (interactive) */
-  --color-accent: #2f6feb;
-  --color-accent-hover: #2559c9;
+  /* Darkened from #2f6feb so white text on the primary (send) button clears WCAG AA with
+     headroom — the old value sat at ~4.57:1, a fragile pass. Darkening also strengthens
+     accent text/links/focus rings on light surfaces (audit follow-up). */
+  --color-accent: #2a63d6;
+  --color-accent-hover: #2151b0;
   --color-accent-subtle: #eaf1ff;
 
   /* Status (progress checklist) */
