@@ -10,8 +10,9 @@ export default defineConfig({
     // (a localhost/IPv6-only bind makes the forwarded port hang in the browser).
     host: true,
     // Pin the forwarded port; fail loudly on a conflict instead of drifting to
-    // 5174 (which isn't forwarded and silently "hangs" in the browser).
-    port: 5173,
+    // another port that isn't forwarded and silently "hangs" in the browser.
+    // 5173 is reserved outside the devcontainer for another project.
+    port: 5174,
     strictPort: true,
     proxy: {
       "/api": "http://127.0.0.1:8000",
