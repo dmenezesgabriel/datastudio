@@ -350,6 +350,25 @@ test("Ctrl+Z undoes the user's typing, Ctrl+Shift+Z brings it back", async () =>
   expect(field.textContent).toContain("revenue by month");
 });
 
+test("claims Ctrl+Shift+Z on an empty redo stack so the browser's native history can't fire", async () => {
+  // undo/redo report false when their stack is empty; left unclaimed, the keypress falls
+  // through to the browser's own contentEditable history and edits the document out from
+  // under ProseMirror (Ctrl+Shift+Z was toggling the last change). The editor must claim the
+  // key — preventDefault — whether or not there was anything to redo.
+  const { field } = renderComposer();
+  const redoKey = new KeyboardEvent("keydown", {
+    key: "z",
+    ctrlKey: true,
+    shiftKey: true,
+    bubbles: true,
+    cancelable: true,
+  });
+
+  field.dispatchEvent(redoKey);
+
+  expect(redoKey.defaultPrevented).toBe(true);
+});
+
 test("switching threads gives thread B a fresh undo history isolated from thread A", async () => {
   // Switching threads reloads a different draft — a context switch, not an edit. showDoc
   // rebuilds the editor state so thread B gets a clean history: B's own edits undo, and no
