@@ -35,11 +35,16 @@ class FakeStreamingChatGraph:
         self._chunks = chunks
         self._delay_s = delay_s
         self.last_input: dict[str, Any] | None = None
+        # Recorded so tests can pin stream_mode: the adapters depend on *both* modes
+        # being requested, and asking for only "updates" would silently drop every
+        # live ProgressStep rather than fail loudly.
+        self.last_kwargs: dict[str, Any] = {}
 
     async def astream(
         self, state: dict[str, Any], *args: Any, **kwargs: Any
     ) -> AsyncIterator[tuple[str, Any]]:
         self.last_input = state
+        self.last_kwargs = kwargs
         for chunk in self._chunks:
             if self._delay_s:
                 await asyncio.sleep(self._delay_s)

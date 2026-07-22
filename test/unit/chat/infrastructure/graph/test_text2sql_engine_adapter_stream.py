@@ -103,6 +103,38 @@ class TestStreamHappyPath:
         steps = [(e.step_id, e.status) for e in events if isinstance(e, ProgressStep)]
         assert steps == [("plan_widgets", "running")]
 
+    def test_requests_both_update_and_custom_stream_modes(self) -> None:
+        # Asking for "updates" alone would silently drop every live ProgressStep
+        # rather than fail, so the stream_mode pair is pinned explicitly.
+        graph = FakeStreamingChatGraph(_chunks())
+        _collect(_adapter(graph), "q")
+        assert graph.last_kwargs["stream_mode"] == ["updates", "custom"]
+
+
+class TestStreamMultiNodeChunk:
+    def test_every_node_in_one_chunk_is_surfaced(self) -> None:
+        # Widgets fan out in parallel, so one superstep's chunk carries several node
+        # keys. Accumulating (not overwriting) is what keeps the earlier widget's
+        # patches from being dropped.
+        chunks = [
+            {
+                "build_widget": {
+                    "widget_patch_lines": [
+                        '{"op":"add","path":"/elements/widget-0-chart","value":{"type":"ChartJs"}}'
+                    ],
+                    "widget_results": [_widget_result("widget-0", 42)],
+                },
+                "compose_narrative": {"narrative": "Summarized."},
+            }
+        ]
+        events = _collect(_adapter(FakeStreamingChatGraph(chunks)), "q")
+        assert [type(e).__name__ for e in events] == [
+            "WidgetDataReady",  # build_widget — must survive the later node
+            "ViewPatchLine",
+            "SqlReady",
+            "NarrativeReady",
+        ]
+
 
 class TestStreamSeedsHistory:
     def test_history_is_converted_to_messages_in_initial_state(self) -> None:
