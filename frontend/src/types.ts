@@ -11,6 +11,20 @@ export type SpecWithState = Spec & {
 // One completed exchange in the transcript: the question asked and the dashboard produced.
 export type Turn = { prompt: string; spec: SpecWithState };
 
+// The outcome of fetching one deep-linkable resource. "missing" (the server said 404) and
+// "error" (the request failed) must stay apart: a missing thread is a dead end the page
+// has to explain, while a failed one is worth retrying. Collapsing them into `null` used
+// to render a deleted artifact as a blank canvas forever.
+export type LoadState<T> =
+  | { status: "loading" }
+  | { status: "ready"; value: T }
+  | { status: "missing" }
+  | { status: "error" };
+
+// What a fetch settles on — a `LoadState` that has stopped loading. Fetchers return this so
+// callers can't be handed a "loading" they would have to treat as unreachable.
+export type Settled<T> = Exclude<LoadState<T>, { status: "loading" }>;
+
 // A thread as shown in the sidebar. `title` is the recognisable label (first question).
 export type ThreadSummary = { id: string; title: string };
 

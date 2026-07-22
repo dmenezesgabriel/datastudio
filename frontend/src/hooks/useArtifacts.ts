@@ -4,6 +4,7 @@ import type {
   ArtifactDetail,
   ArtifactSummary,
   ArtifactVersionMeta,
+  LoadState,
   SpecWithState,
 } from "../types";
 
@@ -86,16 +87,21 @@ export function useArtifacts() {
 // One artifact's detail (current spec + history), with reload, revert, and version preview.
 // The server owns the spec: after an edit or revert we re-fetch rather than patch locally,
 // so what we render is always the deduped, persisted result.
+//
+// The result is a LoadState, not `ArtifactDetail | null`: /artifacts/:id is deep-linkable,
+// so a 404 (deleted, or someone else's) must be reported as missing instead of painting a
+// blank canvas forever.
 export function useArtifact(id: string) {
-  const [detail, setDetail] = useState<ArtifactDetail | null>(null);
+  const [load, setLoad] = useState<LoadState<ArtifactDetail>>({ status: "loading" });
 
   const reload = useCallback(async () => {
     try {
-      const response = await fetch(`/api/artifacts/${id}`);
-      if (!response.ok) return;
-      setDetail(toDetail((await response.json()) as DetailPayload));
+      const response = await fetch(`/api/artifacts/${encodeURIComponent(id)}`);
+      if (response.status === 404) return setLoad({ status: "missing" });
+      if (!response.ok) return setLoad(keepIfLoaded({ status: "error" }));
+      setLoad({ status: "ready", value: toDetail((await response.json()) as DetailPayload) });
     } catch {
-      // Leave the last-known detail in place on a transient failure.
+      setLoad(keepIfLoaded({ status: "error" }));
     }
   }, [id]);
 
@@ -112,7 +118,7 @@ export function useArtifact(id: string) {
           body: JSON.stringify({ index }),
         });
         if (!response.ok) return;
-        setDetail(toDetail((await response.json()) as DetailPayload));
+        setLoad({ status: "ready", value: toDetail((await response.json()) as DetailPayload) });
       } catch {
         // Ignore; the caller can retry.
       }
@@ -134,5 +140,13 @@ export function useArtifact(id: string) {
     [id],
   );
 
-  return { detail, reload, revert, loadVersion };
+  return { load, reload, revert, loadVersion };
+}
+
+// A refresh that fails must not throw away a dashboard we are already showing — the user
+// keeps reading the last-known version while the next attempt runs.
+function keepIfLoaded(
+  failure: LoadState<ArtifactDetail>,
+): (previous: LoadState<ArtifactDetail>) => LoadState<ArtifactDetail> {
+  return (previous) => (previous.status === "ready" ? previous : failure);
 }

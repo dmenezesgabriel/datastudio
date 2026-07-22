@@ -3,6 +3,7 @@ import { JSONUIProvider, Renderer } from "@json-render/react";
 import type { Spec } from "@json-render/react";
 
 import { registry } from "../registry";
+import { PageNotice } from "./PageNotice";
 import { ProgressChecklist } from "./ProgressChecklist";
 import type { ProgressSteps, SpecWithState, Turn } from "../types";
 
@@ -20,12 +21,9 @@ export function MessageList({
 }) {
   if (turns.length === 0 && !streaming) {
     return (
-      <div className="message-list flex-1 overflow-y-auto py-6 px-4">
-        <div className="message-list__empty text-center text-muted">
-          <h2>What would you like to know?</h2>
-          <p>Ask a question about your data to build a dashboard.</p>
-        </div>
-      </div>
+      <PageNotice heading="What would you like to know?">
+        <p>Ask a question about your data to build a dashboard.</p>
+      </PageNotice>
     );
   }
 

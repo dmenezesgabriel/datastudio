@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import type { SpecWithState, ThreadSummary, Turn } from "../types";
+import type { Settled, SpecWithState, ThreadSummary, Turn } from "../types";
 
 type ListPayload = { conversations: { conversation_id: string; title: string }[] };
 type DetailPayload = { turns: { prompt: string; spec: SpecWithState }[] };
@@ -27,16 +27,19 @@ export function useConversations() {
     void refresh();
   }, [refresh]);
 
-  // null signals a failed load (vs. an empty-but-valid transcript `[]`), so the caller can
-  // avoid caching a transient failure as "this conversation is empty" and retry next time.
-  const loadTurns = useCallback(async (conversationId: string): Promise<Turn[] | null> => {
+  // The outcome is a three-way answer, not `Turn[] | null`: a deep link to a conversation
+  // the server 404s ("missing") is a dead end to explain, while a failed request ("error")
+  // is worth retrying. Neither may be cached as an empty-but-valid transcript.
+  const loadTurns = useCallback(async (conversationId: string): Promise<Settled<Turn[]>> => {
     try {
-      const response = await fetch(`/api/conversations/${conversationId}`);
-      if (!response.ok) return null;
+      const response = await fetch(`/api/conversations/${encodeURIComponent(conversationId)}`);
+      if (response.status === 404) return { status: "missing" };
+      if (!response.ok) return { status: "error" };
       const payload = (await response.json()) as DetailPayload;
-      return payload.turns.map((turn) => ({ prompt: turn.prompt, spec: turn.spec }));
+      const turns = payload.turns.map((turn) => ({ prompt: turn.prompt, spec: turn.spec }));
+      return { status: "ready", value: turns };
     } catch {
-      return null;
+      return { status: "error" };
     }
   }, []);
 

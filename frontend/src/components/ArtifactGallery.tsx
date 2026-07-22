@@ -1,26 +1,24 @@
 import { memo, useState } from "react";
+import { Link } from "react-router-dom";
 
+import { PageNotice } from "./PageNotice";
+import { artifactPath } from "../routes";
 import type { ArtifactSummary } from "../types";
 
-// The gallery of saved dashboards. Each card opens its artifact for viewing/editing; the
-// header returns to chat. Empty until the user saves a dashboard from a chat turn.
+// The gallery of saved dashboards. Each card links to its artifact for viewing/editing.
+// Empty until the user saves a dashboard from a chat answer.
 export const ArtifactGallery = memo(function ArtifactGallery({
   artifacts,
-  onOpen,
   onDelete,
 }: {
   artifacts: ArtifactSummary[];
-  onOpen: (id: string) => void;
   onDelete: (id: string) => void;
 }) {
   if (artifacts.length === 0) {
     return (
-      <div className="artifact-gallery flex-1 overflow-y-auto py-6 px-4">
-        <div className="artifact-gallery__empty text-center text-muted">
-          <h2>No saved dashboards yet</h2>
-          <p>Save a dashboard from a chat answer to keep and edit it here.</p>
-        </div>
-      </div>
+      <PageNotice heading="No saved dashboards yet">
+        <p>Save a dashboard from a chat answer to keep and edit it here.</p>
+      </PageNotice>
     );
   }
 
@@ -33,7 +31,7 @@ export const ArtifactGallery = memo(function ArtifactGallery({
       </h2>
       <div className="artifact-gallery__grid">
         {artifacts.map((artifact) => (
-          <ArtifactCard key={artifact.id} artifact={artifact} onOpen={onOpen} onDelete={onDelete} />
+          <ArtifactCard key={artifact.id} artifact={artifact} onDelete={onDelete} />
         ))}
       </div>
     </div>
@@ -44,11 +42,9 @@ export const ArtifactGallery = memo(function ArtifactGallery({
 // the first click arms a confirm prompt rather than deleting outright (a11y audit QW-6).
 function ArtifactCard({
   artifact,
-  onOpen,
   onDelete,
 }: {
   artifact: ArtifactSummary;
-  onOpen: (id: string) => void;
   onDelete: (id: string) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
@@ -81,13 +77,16 @@ function ArtifactCard({
         </div>
       ) : (
         <div className="artifact-card__actions flex gap-2">
-          <button
-            type="button"
+          {/* A link, not a button: a saved dashboard is an address, so it can be opened in
+              a new tab or copied. The title is in the accessible name because a grid of
+              cards otherwise offers a row of identical "Open" controls (a11y audit QW-9). */}
+          <Link
             className="artifact-card__open px-3 py-2 text-sm font-medium border rounded-md cursor-pointer"
-            onClick={() => onOpen(artifact.id)}
+            to={artifactPath(artifact.id)}
+            aria-label={`Open ${artifact.title}`}
           >
             Open
-          </button>
+          </Link>
           <button
             type="button"
             className="artifact-card__delete px-3 py-2 text-sm rounded-md cursor-pointer"

@@ -39,6 +39,26 @@ body {
   height: 100vh;
 }
 
+/* Navigation and card actions are links rather than buttons, so every destination is a
+   real address (open in a new tab, copy the link). Two UA defaults have to go for a link
+   to sit where a button did: the prose underline (the classes below supply color and
+   surface), and content-box sizing — the UA stylesheet gives form controls border-box, so
+   an <a> with .w-full and padding overflows its container by exactly its padding+border. */
+.sidebar__new-chat,
+.sidebar__artifacts,
+.thread-list__item,
+.artifact-card__open,
+.artifact-view__back {
+  box-sizing: border-box;
+  text-decoration: none;
+}
+
+/* The one place a link should still look like one: the way out of a dead end. The UA's
+   default link blue is not token-driven and fails contrast on the dark surface. */
+.page-notice__body a {
+  color: var(--color-accent-hover);
+}
+
 /* --- Sidebar -------------------------------------------------------------- */
 
 /* Layout/spacing/surface come from utilities; the border and the responsive collapse
@@ -47,8 +67,9 @@ body {
   border-right: 1px solid var(--color-border);
 }
 
-/* A <button> doesn't inherit page color, so set it explicitly (as .thread-list__item does)
-   — otherwise it falls back to the UA default black and fails contrast on the dark surface. */
+/* Set the color explicitly (as .thread-list__item does) — otherwise this <a> falls back to
+   the UA's default link blue, which is not token-driven and fails contrast on the dark
+   surface. */
 .sidebar__new-chat {
   color: var(--color-text);
 }
@@ -58,8 +79,8 @@ body {
   color: var(--color-accent);
 }
 
-/* Same reason as .sidebar__new-chat: a <button> needs an explicit text color or it
-   falls back to UA black and fails contrast on the dark surface. Declared before
+/* Same reason as .sidebar__new-chat: without an explicit text color this <a> falls back to
+   the UA link blue and fails contrast on the dark surface. Declared before
    .thread-list__item--active so the active accent color still wins by source order. */
 .sidebar__artifacts {
   color: var(--color-text);
@@ -70,7 +91,7 @@ body {
   color: var(--color-accent);
 }
 
-/* Reset the UA button chrome; layout/spacing come from utilities. */
+/* Override the UA link color; layout/spacing come from utilities. */
 .thread-list__item {
   color: var(--color-text);
   background: transparent;
@@ -120,13 +141,14 @@ body {
 }
 
 /* The empty-state hero sits ~15vh down and centers itself — a specific offset, not a
-   spacing-scale step, so it stays a named class. */
-.message-list__empty {
+   spacing-scale step, so it stays a named class. Shared by every dead end (empty chat,
+   empty gallery, missing conversation, unknown URL) via <PageNotice>. */
+.page-notice__body {
   max-width: var(--content-max);
   margin: 15vh auto 0;
 }
 
-.message-list__empty h2 {
+.page-notice__body h2 {
   color: var(--color-text);
   font-size: var(--text-xl);
   margin: 0 0 var(--space-2);
@@ -421,8 +443,8 @@ body {
   margin: 0 auto;
 }
 
-/* Card action buttons need explicit color (a <button> won't inherit): a quiet
-   "Open" and a muted "Delete" that only reddens on hover. */
+/* Card actions need explicit color (neither the "Open" link nor the <button> inherits it):
+   a quiet "Open" and a muted "Delete" that only reddens on hover. */
 .artifact-card__open {
   color: var(--color-text);
   background: var(--color-bg-subtle);

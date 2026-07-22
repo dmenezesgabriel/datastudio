@@ -1,19 +1,25 @@
 import { useCallback, useMemo, useState } from "react";
 import { JSONUIProvider, Renderer, useUIStream } from "@json-render/react";
+import { Link } from "react-router-dom";
 
 import { registry } from "../registry";
 import { Composer } from "./Composer";
+import { PageNotice } from "./PageNotice";
 import { ProgressChecklist } from "./ProgressChecklist";
 import { VersionHistory } from "./VersionHistory";
 import { useArtifact } from "../hooks/useArtifacts";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { ARTIFACTS_PATH } from "../routes";
 import type { SpecWithState } from "../types";
 
 // One saved dashboard, opened for viewing and conversational editing. The rendered spec is
 // the server's — after an edit or revert we re-fetch rather than apply patches locally, so
 // what shows is always the deduped, persisted result (the edit stream is used only for its
 // lifecycle and live progress). Keyed by artifact id upstream so it remounts per artifact.
-export function ArtifactView({ artifactId, onBack }: { artifactId: string; onBack: () => void }) {
-  const { detail, reload, revert, loadVersion } = useArtifact(artifactId);
+export function ArtifactView({ artifactId }: { artifactId: string }) {
+  const { load, reload, revert, loadVersion } = useArtifact(artifactId);
+  const detail = load.status === "ready" ? load.value : null;
+  useDocumentTitle(detail?.title ?? null);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [previewSpec, setPreviewSpec] = useState<SpecWithState | null>(null);
 
@@ -61,16 +67,30 @@ export function ArtifactView({ artifactId, onBack }: { artifactId: string; onBac
   const shownSpec = previewIndex !== null ? previewSpec : (detail?.spec ?? null);
   const progress = (editSpec as SpecWithState | null)?.state?.progress;
 
+  // A shared link outlives the dashboard it points at (deleted, or another user's), so the
+  // 404 has to say so rather than render an empty canvas under a generic title.
+  if (load.status === "missing") {
+    return (
+      <main className="main">
+        <PageNotice heading="This dashboard isn’t available">
+          <p>It may have been deleted, or it belongs to someone else.</p>
+          <Link className="text-base" to={ARTIFACTS_PATH}>
+            Back to saved dashboards
+          </Link>
+        </PageNotice>
+      </main>
+    );
+  }
+
   return (
     <main className="main">
       <header className="artifact-view__header flex items-center gap-3 px-4 py-3 border-b">
-        <button
-          type="button"
+        <Link
           className="artifact-view__back shrink-0 px-3 py-2 text-sm border rounded-md cursor-pointer"
-          onClick={onBack}
+          to={ARTIFACTS_PATH}
         >
           ← Artifacts
-        </button>
+        </Link>
         <h2 className="m-0 text-lg font-semibold truncate">{detail?.title ?? "Artifact"}</h2>
       </header>
       <div className="artifact-view__body flex flex-1 min-h-0">

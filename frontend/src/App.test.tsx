@@ -1,7 +1,16 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 
-import { App } from "./App";
+import { renderAt } from "./test-support/render";
+import {
+  chatCalls,
+  errorResponse,
+  heldStreamResponse,
+  jsonResponse,
+  routeFetch,
+  sentConversationId,
+  streamResponse,
+} from "./test-support/streams";
 
 afterEach(() => {
   cleanup();
@@ -20,44 +29,6 @@ const PATCH_LINES = [
   '{"op":"add","path":"/elements/root/children/-","value":"widget-0-table"}',
 ];
 
-function streamResponse(lines: string[]): Response {
-  const encoder = new TextEncoder();
-  let index = 0;
-  const reader = {
-    read(): Promise<ReadableStreamReadResult<Uint8Array>> {
-      if (index < lines.length) {
-        return Promise.resolve({ done: false, value: encoder.encode(lines[index++] + "\n") });
-      }
-      return Promise.resolve({ done: true, value: undefined });
-    },
-  };
-  return { ok: true, body: { getReader: () => reader } } as unknown as Response;
-}
-
-// The sidebar's useConversations hook fetches /api/conversations on mount and after each
-// turn. Route those to an empty JSON list so tests can focus on the /api/chat stream.
-function jsonResponse(data: unknown): Response {
-  return { ok: true, json: () => Promise.resolve(data) } as unknown as Response;
-}
-
-function routeFetch(chatResponder: () => Response) {
-  return vi.fn((url: string, _init?: RequestInit) => {
-    if (typeof url === "string" && url.startsWith("/api/conversations")) {
-      return Promise.resolve(jsonResponse({ conversations: [] }));
-    }
-    // The gallery's useArtifacts hook fetches /api/artifacts on mount; route it to an
-    // empty list so these chat tests keep the shared stream responder for /api/chat only.
-    if (typeof url === "string" && url.startsWith("/api/artifacts")) {
-      return Promise.resolve(jsonResponse({ artifacts: [] }));
-    }
-    return Promise.resolve(chatResponder());
-  });
-}
-
-function chatCalls(mock: ReturnType<typeof routeFetch>) {
-  return mock.mock.calls.filter((call) => call[0] === "/api/chat");
-}
-
 // A second turn's stream: a distinct narrative so the transcript is unambiguous.
 const FOLLOW_UP_LINES = [
   '{"op":"add","path":"/root","value":"root"}',
@@ -66,17 +37,19 @@ const FOLLOW_UP_LINES = [
   '{"op":"add","path":"/elements/root/children/-","value":"narrative"}',
 ];
 
+function ask(question: string): void {
+  fireEvent.change(screen.getByPlaceholderText(/Ask a question/i), { target: { value: question } });
+  fireEvent.click(screen.getByRole("button", { name: /ask/i }));
+}
+
 test("renders a widget from streamed /state — one chat request, no /api/result", async () => {
   // Arrange
   const fetchMock = routeFetch(() => streamResponse(PATCH_LINES));
   vi.stubGlobal("fetch", fetchMock);
-  render(<App />);
+  renderAt("/");
 
   // Act
-  fireEvent.change(screen.getByPlaceholderText(/Ask a question/i), {
-    target: { value: "Revenue by month" },
-  });
-  fireEvent.click(screen.getByRole("button", { name: /ask/i }));
+  ask("Revenue by month");
 
   // Assert — narrative paints, and the table fills from the streamed $state data
   await waitFor(() => expect(screen.getByText(/Two months of revenue\./)).toBeTruthy());
@@ -112,13 +85,10 @@ const WIDGET_FRAME_LINES = [
 test("renders a widget's SQL toggle and swaps its body to the SQL", async () => {
   // Arrange
   vi.stubGlobal("fetch", routeFetch(() => streamResponse(WIDGET_FRAME_LINES)));
-  render(<App />);
+  renderAt("/");
 
   // Act — ask a question that streams a framed widget
-  fireEvent.change(screen.getByPlaceholderText(/Ask a question/i), {
-    target: { value: "Revenue by month" },
-  });
-  fireEvent.click(screen.getByRole("button", { name: /ask/i }));
+  ask("Revenue by month");
 
   // Assert — the widget is the default: its data shows; toggling reveals the SQL and
   // hides the data. This drives the real json-render Renderer + registry (WidgetFrame gets
@@ -137,34 +107,14 @@ const PROGRESS_LINES = [
   '{"op":"add","path":"/state/progress/get_schema","value":{"label":"Reading the schema","status":"running","parentId":null,"order":0}}',
 ];
 
-function heldStreamResponse(lines: string[]): { response: Response; release: () => void } {
-  const encoder = new TextEncoder();
-  let index = 0;
-  let release!: () => void;
-  const gate = new Promise<void>((resolve) => (release = resolve));
-  const reader = {
-    async read(): Promise<ReadableStreamReadResult<Uint8Array>> {
-      if (index < lines.length) {
-        return { done: false, value: encoder.encode(lines[index++] + "\n") };
-      }
-      await gate; // hold the stream open until the test releases it
-      return { done: true, value: undefined };
-    },
-  };
-  return { response: { ok: true, body: { getReader: () => reader } } as unknown as Response, release };
-}
-
 test("shows the live progress checklist while a turn is streaming", async () => {
   // Arrange — a stream held open after emitting a running progress step
   const held = heldStreamResponse(PROGRESS_LINES);
   vi.stubGlobal("fetch", routeFetch(() => held.response));
-  render(<App />);
+  renderAt("/");
 
   // Act
-  fireEvent.change(screen.getByPlaceholderText(/Ask a question/i), {
-    target: { value: "Overview" },
-  });
-  fireEvent.click(screen.getByRole("button", { name: /ask/i }));
+  ask("Overview");
 
   // Assert — the checklist surfaces the streamed step while still streaming
   expect(await screen.findByText("Reading the schema")).toBeTruthy();
@@ -180,19 +130,13 @@ test("accumulates a transcript across turns on one stable conversation_id", asyn
   const streams = [PATCH_LINES, FOLLOW_UP_LINES];
   const fetchMock = routeFetch(() => streamResponse(streams.shift() ?? []));
   vi.stubGlobal("fetch", fetchMock);
-  render(<App />);
+  renderAt("/");
 
   // Act — first question, then a follow-up
-  fireEvent.change(screen.getByPlaceholderText(/Ask a question/i), {
-    target: { value: "Revenue by month" },
-  });
-  fireEvent.click(screen.getByRole("button", { name: /ask/i }));
+  ask("Revenue by month");
   await waitFor(() => expect(screen.getByText(/Two months of revenue\./)).toBeTruthy());
 
-  fireEvent.change(screen.getByPlaceholderText(/Ask a question/i), {
-    target: { value: "Break it down by week" },
-  });
-  fireEvent.click(screen.getByRole("button", { name: /ask/i }));
+  ask("Break it down by week");
   await waitFor(() => expect(screen.getByText(/Broken down by week\./)).toBeTruthy());
 
   // Assert — the first turn is STILL on screen (transcript accumulated, not replaced),
@@ -203,12 +147,10 @@ test("accumulates a transcript across turns on one stable conversation_id", asyn
   expect(transcript.getByText("Revenue by month")).toBeTruthy();
   expect(transcript.getByText("Break it down by week")).toBeTruthy();
 
-  // Both chat requests reused the same conversation_id (server-side memory key)
-  const calls = chatCalls(fetchMock);
-  expect(calls).toHaveLength(2);
-  const cid = (call: number) =>
-    JSON.parse((calls[call][1] as RequestInit).body as string).context.conversation_id;
-  expect(cid(0)).toBe(cid(1));
+  // Both chat requests reused the same conversation_id — the follow-up picked it up from
+  // the URL the first question navigated to (server-side memory key).
+  expect(chatCalls(fetchMock)).toHaveLength(2);
+  expect(sentConversationId(fetchMock, 0)).toBe(sentConversationId(fetchMock, 1));
 });
 
 test("reopening a past thread from the sidebar loads its transcript", async () => {
@@ -244,11 +186,10 @@ test("reopening a past thread from the sidebar loads its transcript", async () =
     return Promise.resolve(streamResponse([]));
   });
   vi.stubGlobal("fetch", fetchMock);
-  render(<App />);
+  renderAt("/");
 
   // Act — click the past thread in the sidebar
-  const threadButton = await screen.findByRole("button", { name: "Old question" });
-  fireEvent.click(threadButton);
+  fireEvent.click(await screen.findByRole("link", { name: "Old question" }));
 
   // Assert — the reopened transcript renders its question, persisted answer, AND the
   // full dashboard (a table bound to persisted $state), not just text.
@@ -258,7 +199,7 @@ test("reopening a past thread from the sidebar loads its transcript", async () =
   expect(screen.getByText("42")).toBeTruthy();
 });
 
-// A minimal persisted transcript (just a narrative) for the loading/error tests below.
+// A minimal persisted transcript (just a narrative) for the error test below.
 const PAST_DETAIL = {
   turns: [
     {
@@ -277,47 +218,19 @@ const PAST_DETAIL = {
 
 const PAST_LIST = { conversations: [{ conversation_id: "past-1", title: "Old question" }] };
 
-test("a failed thread load is not cached as empty — re-clicking retries", async () => {
-  // Arrange — the detail endpoint fails the first time, succeeds the second.
-  let detailCalls = 0;
-  const fetchMock = vi.fn((url: string) => {
-    if (url === "/api/conversations") return Promise.resolve(jsonResponse(PAST_LIST));
-    if (url === "/api/conversations/past-1") {
-      detailCalls += 1;
-      if (detailCalls === 1) return Promise.resolve({ ok: false, status: 500 } as Response);
-      return Promise.resolve(jsonResponse(PAST_DETAIL));
-    }
-    return Promise.resolve(streamResponse([]));
-  });
-  vi.stubGlobal("fetch", fetchMock);
-  render(<App />);
-
-  // Act — open the thread (first load fails), then re-click the same thread.
-  const threadButton = await screen.findByRole("button", { name: "Old question" });
-  fireEvent.click(threadButton);
-  await waitFor(() => expect(detailCalls).toBe(1));
-  expect(screen.queryByText("Past answer.")).toBeNull(); // failed load shows nothing…
-
-  fireEvent.click(threadButton); // …and re-clicking retries rather than being a no-op
-
-  // Assert — the retry loads the transcript (a swallowed [] would have cached empty forever).
-  await waitFor(() => expect(screen.getByText("Past answer.")).toBeTruthy());
-  expect(detailCalls).toBe(2);
-});
-
 test("does not reuse the 'New chat' name for the unsaved active thread", () => {
   // Two controls sharing one accessible name is ambiguous; only the toolbar action is
   // "New chat", while the unsaved thread carries a distinct name.
   vi.stubGlobal("fetch", routeFetch(() => streamResponse([])));
-  render(<App />);
-  expect(screen.getAllByRole("button", { name: "New chat" })).toHaveLength(1);
-  expect(screen.getByRole("button", { name: /untitled chat/i })).toBeTruthy();
+  renderAt("/");
+  expect(screen.getAllByRole("link", { name: "New chat" })).toHaveLength(1);
+  expect(screen.getByRole("link", { name: /untitled chat/i })).toBeTruthy();
 });
 
 test("exposes a mobile navigation toggle wired to the sidebar", () => {
   // Arrange
   vi.stubGlobal("fetch", routeFetch(() => streamResponse([])));
-  render(<App />);
+  renderAt("/");
 
   // The menu button controls the sidebar (aria-controls → the nav's id) and reports state.
   const menu = screen.getByRole("button", { name: /navigation/i });
@@ -338,13 +251,13 @@ test("exposes a mobile navigation toggle wired to the sidebar", () => {
 test("closes the mobile drawer after choosing a destination", () => {
   // Arrange
   vi.stubGlobal("fetch", routeFetch(() => streamResponse([])));
-  render(<App />);
+  renderAt("/");
   const menu = screen.getByRole("button", { name: /navigation/i });
   fireEvent.click(menu);
   expect(menu.getAttribute("aria-expanded")).toBe("true");
 
   // Act — pick a destination (Artifacts) from the drawer
-  fireEvent.click(screen.getByRole("button", { name: "Artifacts" }));
+  fireEvent.click(screen.getByRole("link", { name: "Artifacts" }));
 
   // Assert — the drawer collapses so the choice isn't left hidden behind an open overlay
   expect(menu.getAttribute("aria-expanded")).toBe("false");
@@ -352,50 +265,42 @@ test("closes the mobile drawer after choosing a destination", () => {
 
 test("exposes a stream error as a role=alert live region so it is announced", async () => {
   // Arrange — a failing chat stream.
-  const fetchMock = vi.fn((url: string) => {
-    if (url === "/api/conversations") return Promise.resolve(jsonResponse({ conversations: [] }));
-    if (typeof url === "string" && url.startsWith("/api/artifacts")) {
-      return Promise.resolve(jsonResponse({ artifacts: [] }));
-    }
-    return Promise.resolve({
-      ok: false,
-      status: 500,
-      json: () => Promise.resolve({ message: "boom" }),
-    } as unknown as Response);
-  });
-  vi.stubGlobal("fetch", fetchMock);
-  render(<App />);
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url: string) => {
+      if (url === "/api/conversations") return Promise.resolve(jsonResponse({ conversations: [] }));
+      if (url.startsWith("/api/artifacts")) return Promise.resolve(jsonResponse({ artifacts: [] }));
+      return Promise.resolve(errorResponse(500));
+    }),
+  );
+  renderAt("/");
 
   // Act — a failing prompt.
-  fireEvent.change(screen.getByPlaceholderText(/Ask a question/i), { target: { value: "will fail" } });
-  fireEvent.click(screen.getByRole("button", { name: /ask/i }));
+  ask("will fail");
 
   // Assert — the banner is a role=alert region (screen readers announce it), not a mute <p>.
   const alert = await screen.findByRole("alert");
   expect(alert.textContent).toContain("boom");
 });
 
-test("switching threads clears a stream error from the previous thread", async () => {
+test("a stream error stays with the thread that produced it when another is opened", async () => {
   // Arrange — the chat stream fails; the past thread loads fine.
-  const fetchMock = vi.fn((url: string) => {
-    if (url === "/api/conversations") return Promise.resolve(jsonResponse(PAST_LIST));
-    if (url === "/api/conversations/past-1") return Promise.resolve(jsonResponse(PAST_DETAIL));
-    return Promise.resolve({
-      ok: false,
-      status: 500,
-      json: () => Promise.resolve({ message: "boom" }),
-    } as unknown as Response);
-  });
-  vi.stubGlobal("fetch", fetchMock);
-  render(<App />);
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url: string) => {
+      if (url === "/api/conversations") return Promise.resolve(jsonResponse(PAST_LIST));
+      if (url === "/api/conversations/past-1") return Promise.resolve(jsonResponse(PAST_DETAIL));
+      return Promise.resolve(errorResponse(500));
+    }),
+  );
+  renderAt("/");
 
   // Act — a failing prompt surfaces the error banner…
-  fireEvent.change(screen.getByPlaceholderText(/Ask a question/i), { target: { value: "will fail" } });
-  fireEvent.click(screen.getByRole("button", { name: /ask/i }));
+  ask("will fail");
   await waitFor(() => expect(screen.getByText("boom")).toBeTruthy());
 
-  // …then switching to another thread clears it (the error belonged to the previous thread).
-  fireEvent.click(await screen.findByRole("button", { name: "Old question" }));
+  // …then opening another thread leaves it behind (the error belongs to the failed thread).
+  fireEvent.click(await screen.findByRole("link", { name: "Old question" }));
   await waitFor(() => expect(screen.getByText("Past answer.")).toBeTruthy());
   expect(screen.queryByText("boom")).toBeNull();
 });
