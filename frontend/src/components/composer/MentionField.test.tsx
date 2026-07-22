@@ -61,6 +61,23 @@ async function typeInto(field: HTMLElement, text: string) {
   });
 }
 
+// Undo/redo reach ProseMirror through the editable's own keydown, so they are pressed on
+// the field the way a keyboard presses them. On this platform "Mod" is Ctrl; "Shift-Mod-z"
+// is the redo binding alongside "Mod-y" (editorState.ts).
+async function pressUndo(field: HTMLElement) {
+  await act(async () => {
+    fireEvent.keyDown(field, { key: "z", ctrlKey: true });
+    await Promise.resolve();
+  });
+}
+
+async function pressRedo(field: HTMLElement) {
+  await act(async () => {
+    fireEvent.keyDown(field, { key: "z", ctrlKey: true, shiftKey: true });
+    await Promise.resolve();
+  });
+}
+
 function placeCaretAtEnd(node: Node) {
   const range = document.createRange();
   range.selectNodeContents(node);
@@ -320,6 +337,54 @@ test("offers no menu for a dot after something that is not a table", async () =>
   await typeInto(field, "@not_a_table.");
 
   expect(screen.queryByRole("listbox")).toBeNull();
+});
+
+test("Ctrl+Z undoes the user's typing, Ctrl+Shift+Z brings it back", async () => {
+  const { field } = renderComposer();
+  await typeInto(field, "revenue by month");
+
+  await pressUndo(field);
+  expect(field.textContent).not.toContain("revenue by month");
+
+  await pressRedo(field);
+  expect(field.textContent).toContain("revenue by month");
+});
+
+test("switching threads gives thread B a fresh undo history isolated from thread A", async () => {
+  // Switching threads reloads a different draft — a context switch, not an edit. showDoc
+  // rebuilds the editor state so thread B gets a clean history: B's own edits undo, and no
+  // amount of Ctrl+Z reaches back into thread A's draft. Recording the swap instead would
+  // let Ctrl+Z resurrect A; merely suppressing it (addToHistory: false) would leave A's edit
+  // lingering on the stack for a later Ctrl+Z to pull in, and break B's own undo once its
+  // steps were mapped through the swap. The 600ms wait keeps the typing and the swap in
+  // separate history groups — real usage, where the swap comes long after the typing — so a
+  // recorded swap is independently undoable and the isolation is genuinely exercised.
+  const onSubmit = vi.fn();
+  const { rerender } = render(
+    <Composer onSubmit={onSubmit} disabled={false} draftKey="undo-thread-a" mentionsEnabled />,
+  );
+  const field = screen.getByRole("textbox");
+  await typeInto(field, "draft that lives in thread A");
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 600));
+  });
+
+  // Re-point the same composer at another thread in place (not a remount), so the swap runs.
+  rerender(<Composer onSubmit={onSubmit} disabled={false} draftKey="undo-thread-b" mentionsEnabled />);
+  await waitFor(() => expect(field.textContent).not.toContain("draft that lives in thread A"));
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 600)); // keep B's edit its own history group
+  });
+
+  // B's own edit is undoable on its fresh history…
+  await typeInto(field, "an edit made in thread B");
+  await pressUndo(field);
+  expect(field.textContent).not.toContain("an edit made in thread B");
+
+  // …and undoing past it never pulls thread A's draft into thread B (a recorded swap would
+  // surface A here; a fresh history has nothing of A's to reach).
+  await pressUndo(field);
+  expect(field.textContent).not.toContain("draft that lives in thread A");
 });
 
 test("a dot typed in the column menu stays an ordinary character", async () => {

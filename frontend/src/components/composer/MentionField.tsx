@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { type Node as ProseMirrorNode } from "prosemirror-model";
+import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 
 import { useDraft } from "../../hooks/useDraft";
@@ -271,5 +272,11 @@ function step(current: number, by: number, length: number): number {
 /** Swap the whole document — a new draft, a sent question, or a failed send put back. */
 function showDoc(view: EditorView | null, doc: ProseMirrorNode): void {
   if (view === null) return;
-  view.dispatch(view.state.tr.replaceWith(0, view.state.doc.content.size, doc.content));
+  // Loading another draft is a context switch, not an edit, so it gets a fresh editor state:
+  // the same plugins over the new document, with an empty undo history. Replacing the doc
+  // with a transaction instead couples every draft to one shared history — recorded, Ctrl+Z
+  // resurrects the previous draft; suppressed (addToHistory: false), that draft's edits still
+  // linger on the stack and stay harmless only because ProseMirror maps them to no-ops, a
+  // fragile guarantee to lean on. A fresh state scopes undo to the draft on screen outright.
+  view.updateState(EditorState.create({ doc, plugins: view.state.plugins }));
 }
