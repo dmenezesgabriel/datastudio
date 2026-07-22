@@ -1,0 +1,1009 @@
+{
+  "run_at": "2026-07-22T17:07:19.144423+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 9,
+    "passed": 7,
+    "failed": 2,
+    "pass_rate": 0.778,
+    "avg_latency_s": 82.013,
+    "p95_latency_s": 353.357,
+    "total_input_tokens": 28877,
+    "total_output_tokens": 10817,
+    "total_cached_input_tokens": 21464,
+    "cache_read_rate": 0.743,
+    "avg_input_tokens": 3208.6,
+    "avg_output_tokens": 1201.9,
+    "cost_usd": 0.0,
+    "view_selection": {
+      "passed": 12,
+      "total": 12,
+      "accuracy": 1.0
+    },
+    "consistency": {
+      "cases": 3,
+      "mean_consistency": 0.778,
+      "reliable": 2,
+      "flaky": 1,
+      "failing": 0
+    },
+    "by_tag": {
+      "percentage": {
+        "total": 6,
+        "passed": 6
+      },
+      "filter": {
+        "total": 3,
+        "passed": 3
+      },
+      "medium": {
+        "total": 3,
+        "passed": 3
+      },
+      "intent": {
+        "total": 3,
+        "passed": 1
+      },
+      "robustness": {
+        "total": 6,
+        "passed": 4
+      },
+      "aggregation": {
+        "total": 3,
+        "passed": 1
+      },
+      "edge": {
+        "total": 3,
+        "passed": 3
+      },
+      "division_by_zero": {
+        "total": 3,
+        "passed": 3
+      },
+      "empty_result": {
+        "total": 3,
+        "passed": 3
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "olist_cancellation_rate",
+      "question": "What percentage of all orders placed on the platform were cancelled?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 5.8751507500055595,
+          "input_tokens": 210,
+          "output_tokens": 52,
+          "cached_input_tokens": 0
+        },
+        "list_tables": {
+          "latency_s": 0.019427929000812583,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.119496811996214,
+          "input_tokens": 194,
+          "output_tokens": 49,
+          "cached_input_tokens": 183
+        },
+        "get_schema": {
+          "latency_s": 0.052645826996013056,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 5.566757742999471,
+          "input_tokens": 895,
+          "output_tokens": 225,
+          "cached_input_tokens": 12
+        },
+        "build_widget": {
+          "latency_s": 12.51062051900226,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 575,
+          "output_tokens": 62,
+          "cached_input_tokens": 509
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 820,
+          "output_tokens": 229,
+          "cached_input_tokens": 730
+        },
+        "compose_narrative": {
+          "latency_s": 3.0518724939975073,
+          "input_tokens": 523,
+          "output_tokens": 234,
+          "cached_input_tokens": 13
+        }
+      },
+      "sql": "SELECT 100.0 * SUM(CASE WHEN order_status ILIKE 'cancel%' THEN 1 ELSE 0 END) / COUNT(*) AS pct_cancelled FROM olist_orders",
+      "sql_valid": true,
+      "narrative": "0.63% of all orders placed on the platform were cancelled. This is a very low cancellation rate, indicating that the vast majority of orders proceed without being cancelled.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_status='canceled')/COUNT(*),2) FROM olist_orders",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "value_range",
+          "value": "[0.0, 100.0]",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage representing the share of orders that were cancelled, around 0.63%.",
+          "passed": true,
+          "reasoning": "The response clearly states that 0.63% of all orders placed on the platform were cancelled, which exactly matches the rubric's requirement of stating a percentage around 0.63%."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "percentage",
+        "filter",
+        "medium"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "olist_cancellation_rate",
+      "question": "What percentage of all orders placed on the platform were cancelled?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.680150902000605,
+          "input_tokens": 210,
+          "output_tokens": 52,
+          "cached_input_tokens": 197
+        },
+        "list_tables": {
+          "latency_s": 0.014506520004943013,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.124674530001357,
+          "input_tokens": 194,
+          "output_tokens": 58,
+          "cached_input_tokens": 12
+        },
+        "get_schema": {
+          "latency_s": 0.04194167600508081,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.946382554000593,
+          "input_tokens": 896,
+          "output_tokens": 110,
+          "cached_input_tokens": 822
+        },
+        "build_widget": {
+          "latency_s": 7.712907978995645,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 567,
+          "output_tokens": 55,
+          "cached_input_tokens": 546
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 820,
+          "output_tokens": 176,
+          "cached_input_tokens": 819
+        },
+        "compose_narrative": {
+          "latency_s": 7.6697580110048875,
+          "input_tokens": 523,
+          "output_tokens": 111,
+          "cached_input_tokens": 496
+        }
+      },
+      "sql": "SELECT 100.0 * SUM(CASE WHEN order_status = 'canceled' THEN 1 ELSE 0 END) / COUNT(*) AS pct_canceled FROM olist_orders;",
+      "sql_valid": true,
+      "narrative": "Approximately 0.63% of all orders placed on the platform were cancelled. This is a very low cancellation rate, indicating that the vast majority of orders proceed without being cancelled.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_status='canceled')/COUNT(*),2) FROM olist_orders",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "value_range",
+          "value": "[0.0, 100.0]",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage representing the share of orders that were cancelled, around 0.63%.",
+          "passed": true,
+          "reasoning": "The response explicitly states that approximately 0.63% of all orders placed on the platform were cancelled, which perfectly matches the requirement in the rubric."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "percentage",
+        "filter",
+        "medium"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "olist_cancellation_rate",
+      "question": "What percentage of all orders placed on the platform were cancelled?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.6848775260004913,
+          "input_tokens": 210,
+          "output_tokens": 52,
+          "cached_input_tokens": 197
+        },
+        "list_tables": {
+          "latency_s": 0.018386979994829744,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.1199377340017236,
+          "input_tokens": 194,
+          "output_tokens": 58,
+          "cached_input_tokens": 12
+        },
+        "get_schema": {
+          "latency_s": 0.04563377399608726,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.936196927999845,
+          "input_tokens": 896,
+          "output_tokens": 110,
+          "cached_input_tokens": 822
+        },
+        "build_widget": {
+          "latency_s": 7.721444039001653,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 567,
+          "output_tokens": 56,
+          "cached_input_tokens": 18
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 820,
+          "output_tokens": 176,
+          "cached_input_tokens": 8
+        },
+        "compose_narrative": {
+          "latency_s": 22.522983670998656,
+          "input_tokens": 523,
+          "output_tokens": 658,
+          "cached_input_tokens": 439
+        }
+      },
+      "sql": "SELECT 100.0 * SUM(CASE WHEN order_status = 'canceled' THEN 1 ELSE 0 END) / COUNT(*) AS pct_canceled FROM olist_orders",
+      "sql_valid": true,
+      "narrative": "Cancelled orders are a tiny fraction of platform activity: just 0.6285133898492573% of all orders were cancelled. This figure is the share of orders with a canceled status out of every order in the dataset, showing that the vast majority of placed orders proceed without cancellation.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT ROUND(100.0*COUNT(*) FILTER(WHERE order_status='canceled')/COUNT(*),2) FROM olist_orders",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "value_range",
+          "value": "[0.0, 100.0]",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "The answer should state a percentage representing the share of orders that were cancelled, around 0.63%.",
+          "passed": true,
+          "reasoning": "The response explicitly states that 0.6285133898492573% of all orders were cancelled, which is approximately 0.63% as required by the rubric. It also correctly explains that this figure represents the share of cancelled orders out of all orders in the dataset."
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "chart_fit",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "kpi_band_populated",
+          "value": "1",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "percentage",
+        "filter",
+        "medium"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "intent_casual_data",
+      "question": "so, how many orders did we get in total?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 3.6767398240044713,
+          "input_tokens": 209,
+          "output_tokens": 39,
+          "cached_input_tokens": 208
+        },
+        "list_tables": {
+          "latency_s": 0.0199095709976973,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 337.5835169970014,
+          "input_tokens": 193,
+          "output_tokens": 172,
+          "cached_input_tokens": 192
+        },
+        "get_schema": {
+          "latency_s": 0.025565719995938707,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 3.2577203339969856,
+          "input_tokens": 911,
+          "output_tokens": 68,
+          "cached_input_tokens": 821
+        },
+        "build_widget": {
+          "latency_s": 6.530032980001124,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 580,
+          "output_tokens": 24,
+          "cached_input_tokens": 551
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 817,
+          "output_tokens": 113,
+          "cached_input_tokens": 816
+        },
+        "compose_narrative": {
+          "latency_s": 2.2634559119978803,
+          "input_tokens": 482,
+          "output_tokens": 57,
+          "cached_input_tokens": 464
+        }
+      },
+      "sql": "SELECT COUNT(*) AS total_orders FROM northwind_orders",
+      "sql_valid": true,
+      "narrative": "We received a total of 830 orders. This count reflects all rows in the orders table, with no filtering by date, customer, or status.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM olist_orders",
+          "passed": false,
+          "reasoning": "no widget matched 1 gold row(s); got [1]"
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "intent",
+        "robustness",
+        "aggregation"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "intent_casual_data",
+      "question": "so, how many orders did we get in total?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.0545219569976325,
+          "input_tokens": 209,
+          "output_tokens": 39,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.018930042002466507,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 6.0878447240029345,
+          "input_tokens": 193,
+          "output_tokens": 172,
+          "cached_input_tokens": 192
+        },
+        "get_schema": {
+          "latency_s": 0.023198562004836276,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 4.160715219994017,
+          "input_tokens": 912,
+          "output_tokens": 54,
+          "cached_input_tokens": 13
+        },
+        "build_widget": {
+          "latency_s": 7.295727306998742,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 581,
+          "output_tokens": 25,
+          "cached_input_tokens": 547
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 817,
+          "output_tokens": 120,
+          "cached_input_tokens": 816
+        },
+        "compose_narrative": {
+          "latency_s": 3.3216245299990987,
+          "input_tokens": 482,
+          "output_tokens": 51,
+          "cached_input_tokens": 13
+        }
+      },
+      "sql": "SELECT COUNT(*) AS total_orders FROM northwind_orders",
+      "sql_valid": true,
+      "narrative": "We received a total of 830 orders. This count reflects all order records in the dataset, with no filtering by date, customer, or status.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM olist_orders",
+          "passed": false,
+          "reasoning": "no widget matched 1 gold row(s); got [1]"
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": false,
+      "error": null,
+      "tags": [
+        "intent",
+        "robustness",
+        "aggregation"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "intent_casual_data",
+      "question": "so, how many orders did we get in total?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 1.625102464997326,
+          "input_tokens": 209,
+          "output_tokens": 39,
+          "cached_input_tokens": 208
+        },
+        "list_tables": {
+          "latency_s": 0.017324453001492657,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 4.969639673996426,
+          "input_tokens": 193,
+          "output_tokens": 41,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.05165432100329781,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 6.941138622001745,
+          "input_tokens": 894,
+          "output_tokens": 55,
+          "cached_input_tokens": 835
+        },
+        "build_widget": {
+          "latency_s": 9.110742388998915,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 563,
+          "output_tokens": 29,
+          "cached_input_tokens": 507
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 817,
+          "output_tokens": 203,
+          "cached_input_tokens": 8
+        },
+        "compose_narrative": {
+          "latency_s": 2.869448432000354,
+          "input_tokens": 483,
+          "output_tokens": 64,
+          "cached_input_tokens": 436
+        }
+      },
+      "sql": "SELECT COUNT(*) AS total_orders FROM olist_orders",
+      "sql_valid": true,
+      "narrative": "We received a total of 99,441 orders. This count reflects all rows in the orders table, representing every order placed on the platform.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "execution_match",
+          "value": "SELECT COUNT(*) FROM olist_orders",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_contains",
+          "value": "KpiStat",
+          "passed": true,
+          "reasoning": ""
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "intent",
+        "robustness",
+        "aggregation"
+      ],
+      "attempt": 2
+    },
+    {
+      "case_id": "seattle_empty_denominator_rate",
+      "question": "Among Seattle days that had snow with a maximum temperature above 40 degrees Celsius, what percentage were sunny?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.9379776720015798,
+          "input_tokens": 219,
+          "output_tokens": 45,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.023072973999660462,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 1.7139495240044198,
+          "input_tokens": 203,
+          "output_tokens": 45,
+          "cached_input_tokens": 8
+        },
+        "get_schema": {
+          "latency_s": 0.020732693003083114,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 33.496252892000484,
+          "input_tokens": 883,
+          "output_tokens": 1130,
+          "cached_input_tokens": 875
+        },
+        "build_widget": {
+          "latency_s": 24.677667280993774,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 559,
+          "output_tokens": 917,
+          "cached_input_tokens": 517
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 824,
+          "output_tokens": 190,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 17.46259821300191,
+          "input_tokens": 546,
+          "output_tokens": 182,
+          "cached_input_tokens": 436
+        }
+      },
+      "sql": "SELECT 100.0 * SUM(CASE WHEN weather IN ('sun', 'sunny') THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0) AS pct_sunny\nFROM seattle_weather\nWHERE weather = 'snow' AND temp_max > 40",
+      "sql_valid": true,
+      "narrative": "There were no Seattle days in the data with snow and a maximum temperature above 40 degrees Celsius, so the percentage of such days that were sunny cannot be computed (the widget returns None). This is expected, since snow does not occur at temperatures that high.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "There are no Seattle days with snow above 40 degrees Celsius, so this percentage is over an empty population and is undefined. The answer must make clear there are no such days (so the rate cannot be computed) and must NOT fabricate a percentage or divide by zero into a made-up number.",
+          "passed": true,
+          "reasoning": "The response correctly identifies that there are no Seattle days with snow and a maximum temperature above 40 degrees Celsius, explicitly states that the percentage cannot be computed, and does not fabricate a percentage or divide by zero. This fully satisfies the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "edge",
+        "division_by_zero",
+        "empty_result",
+        "robustness",
+        "percentage"
+      ],
+      "attempt": 0
+    },
+    {
+      "case_id": "seattle_empty_denominator_rate",
+      "question": "Among Seattle days that had snow with a maximum temperature above 40 degrees Celsius, what percentage were sunny?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.388829835996148,
+          "input_tokens": 219,
+          "output_tokens": 61,
+          "cached_input_tokens": 196
+        },
+        "list_tables": {
+          "latency_s": 0.01484288000210654,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 3.1578255489948788,
+          "input_tokens": 203,
+          "output_tokens": 44,
+          "cached_input_tokens": 180
+        },
+        "get_schema": {
+          "latency_s": 0.014419810002436861,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 36.75319630900049,
+          "input_tokens": 883,
+          "output_tokens": 881,
+          "cached_input_tokens": 821
+        },
+        "build_widget": {
+          "latency_s": 26.415006684001128,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 552,
+          "output_tokens": 195,
+          "cached_input_tokens": 519
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 827,
+          "output_tokens": 170,
+          "cached_input_tokens": 709
+        },
+        "compose_narrative": {
+          "latency_s": 6.042225776000123,
+          "input_tokens": 537,
+          "output_tokens": 120,
+          "cached_input_tokens": 459
+        }
+      },
+      "sql": "SELECT 100.0 * SUM(CASE WHEN weather = 'sun' THEN 1 ELSE 0 END) / COUNT(*) AS pct_sun\nFROM seattle_weather\nWHERE weather = 'snow' AND temp_max > 40",
+      "sql_valid": true,
+      "narrative": "There were no Seattle snow days with a maximum temperature above 40\u00b0C, so the percentage that were sunny is not available in the data. The widget's result is null because the underlying query found zero matching days, making the share undefined.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "There are no Seattle days with snow above 40 degrees Celsius, so this percentage is over an empty population and is undefined. The answer must make clear there are no such days (so the rate cannot be computed) and must NOT fabricate a percentage or divide by zero into a made-up number.",
+          "passed": true,
+          "reasoning": "The response correctly states that there were no Seattle snow days with a maximum temperature above 40\u00b0C, making the percentage undefined. It does not fabricate a percentage or divide by zero, satisfying all requirements of the rubric."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "edge",
+        "division_by_zero",
+        "empty_result",
+        "robustness",
+        "percentage"
+      ],
+      "attempt": 1
+    },
+    {
+      "case_id": "seattle_empty_denominator_rate",
+      "question": "Among Seattle days that had snow with a maximum temperature above 40 degrees Celsius, what percentage were sunny?",
+      "nodes": {
+        "route_intent": {
+          "latency_s": 2.450599872005114,
+          "input_tokens": 219,
+          "output_tokens": 45,
+          "cached_input_tokens": 218
+        },
+        "list_tables": {
+          "latency_s": 0.023995304996788036,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "select_tables": {
+          "latency_s": 2.2740374749992043,
+          "input_tokens": 203,
+          "output_tokens": 44,
+          "cached_input_tokens": 202
+        },
+        "get_schema": {
+          "latency_s": 0.02215650300058769,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "plan_widgets": {
+          "latency_s": 44.175229414999194,
+          "input_tokens": 882,
+          "output_tokens": 1554,
+          "cached_input_tokens": 881
+        },
+        "build_widget": {
+          "latency_s": 24.468416340998374,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_input_tokens": null
+        },
+        "generate_sql": {
+          "latency_s": 0.0,
+          "input_tokens": 550,
+          "output_tokens": 881,
+          "cached_input_tokens": 526
+        },
+        "generate_widget_view": {
+          "latency_s": 0.0,
+          "input_tokens": 823,
+          "output_tokens": 192,
+          "cached_input_tokens": 710
+        },
+        "compose_narrative": {
+          "latency_s": 7.23917391699797,
+          "input_tokens": 563,
+          "output_tokens": 233,
+          "cached_input_tokens": 464
+        }
+      },
+      "sql": "SELECT 100.0 * SUM(CASE WHEN weather = 'snow' AND temp_max > 40 AND weather = 'sun' THEN 1 ELSE 0 END) / NULLIF(SUM(CASE WHEN weather IS NOT NULL AND weather = 'snow' AND temp_max > 40 THEN 1 ELSE 0 END), 0) AS pct_sun FROM seattle_weather",
+      "sql_valid": true,
+      "narrative": "There were no Seattle snow days with a maximum temperature above 40\u00b0C in the data, so the percentage of such days that were sunny cannot be computed (the widget returns None). This is expected, as 40\u00b0C is an extremely high temperature for snowfall; no days in the dataset meet both conditions simultaneously.",
+      "check_results": [
+        {
+          "type": "sql_valid",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "view_integrity",
+          "value": "",
+          "passed": true,
+          "reasoning": ""
+        },
+        {
+          "type": "rubric",
+          "value": "There are no Seattle days with snow above 40 degrees Celsius, so this percentage is over an empty population and is undefined. The answer must make clear there are no such days (so the rate cannot be computed) and must NOT fabricate a percentage or divide by zero into a made-up number.",
+          "passed": true,
+          "reasoning": "The response correctly states that there are no Seattle snow days with a maximum temperature above 40\u00b0C, making the percentage undefined/uncomputable. It does not fabricate a percentage or divide by zero into a made-up number, satisfying all rubric requirements."
+        }
+      ],
+      "passed": true,
+      "error": null,
+      "tags": [
+        "edge",
+        "division_by_zero",
+        "empty_result",
+        "robustness",
+        "percentage"
+      ],
+      "attempt": 2
+    }
+  ],
+  "consistency": [
+    {
+      "case_id": "olist_cancellation_rate",
+      "attempts": 3,
+      "passed_count": 3,
+      "consistency": 1.0,
+      "flaky": false
+    },
+    {
+      "case_id": "intent_casual_data",
+      "attempts": 3,
+      "passed_count": 1,
+      "consistency": 0.333,
+      "flaky": true
+    },
+    {
+      "case_id": "seattle_empty_denominator_rate",
+      "attempts": 3,
+      "passed_count": 3,
+      "consistency": 1.0,
+      "flaky": false
+    }
+  ]
+}
