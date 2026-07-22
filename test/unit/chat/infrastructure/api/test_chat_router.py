@@ -33,7 +33,28 @@ class FakeStreamMessage:
             yield event
 
 
-def _client(fake: FakeStreamMessage, user_id: str = "u-1") -> TestClient:
+class FailingStreamMessage:
+    """Streams one event, then raises — the graph blowing up mid-answer.
+
+    Yielding before raising is the point: the client has already received patches and
+    the response headers are long gone, so the router cannot switch to a 500. It has to
+    append a graceful message to the stream it is already in.
+    """
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, str, str]] = []
+
+    async def execute(
+        self, owner_id: str, conversation_id: str, question: str
+    ) -> AsyncIterator[ChatStreamEvent]:
+        self.calls.append((owner_id, conversation_id, question))
+        yield ViewPatchLine(
+            line='{"op":"add","path":"/elements/widget-0-chart","value":{"type":"ChartJs"}}'
+        )
+        raise RuntimeError("graph exploded")
+
+
+def _client(fake: FakeStreamMessage | FailingStreamMessage, user_id: str = "u-1") -> TestClient:
     app = FastAPI()
     app.include_router(ChatRouter(cast(StreamMessage, fake), fake_owner_id(user_id)).router)
     return TestClient(app)
@@ -96,3 +117,28 @@ class TestChatRouterStreaming:
         patches = _stream_lines(_client(fake), {"prompt": "q"})
         assert patches
         assert fake.calls[0][2] == "q"
+
+
+class TestChatRouterUseCaseFailure:
+    """The graceful-degradation path: a mid-stream exception must not hang the client."""
+
+    def test_failure_still_returns_200(self) -> None:
+        # the status line was sent before the first event, so it cannot become a 500
+        client = _client(FailingStreamMessage())
+        with client.stream("POST", "/api/chat", json={"prompt": "q"}) as response:
+            assert response.status_code == 200
+
+    def test_patches_streamed_before_the_failure_survive(self) -> None:
+        patches = _stream_lines(_client(FailingStreamMessage()), {"prompt": "q"})
+        # the chart that made it out is kept — the error message is appended, not substituted
+        assert any(p["path"] == "/elements/widget-0-chart" for p in patches)
+
+    def test_appends_the_answering_error_message_last(self) -> None:
+        patches = _stream_lines(_client(FailingStreamMessage()), {"prompt": "q"})
+        assert patches[-1]["path"] == "/elements/narrative/props/text"
+        assert patches[-1]["value"] == "Something went wrong while answering. Please try again."
+
+    def test_every_line_including_the_error_is_a_well_formed_patch(self) -> None:
+        # a half-serialized trailing line would break the client's patch application
+        patches = _stream_lines(_client(FailingStreamMessage()), {"prompt": "q"})
+        assert all("op" in p and "path" in p for p in patches)
