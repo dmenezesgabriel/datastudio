@@ -1,7 +1,12 @@
-- Prompt input to text area
 - Prose mirror text area chat input, undo, redo
+- cross filtering
+- automated glossary
+- chart annotations
+- color blindness (blue, orange pallet, tableau like)
 - artifact thumbnails in cards
 - icons on task planning/progress
 - syntax highlight sql + copy button
 - canvas mode + collaboration
 - first chat page custom
+- data sources references, date references
+- emphasize numbers on narrative
