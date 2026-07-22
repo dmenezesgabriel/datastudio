@@ -29,23 +29,38 @@ class DuckDbSqlEngine:
         """Store the DuckDB file path."""
         self._db_path = db_path
 
+    def _connect(self) -> DuckDBPyConnection:
+        """Open the only kind of connection this engine ever opens: a read-only one.
+
+        The SQL reaching :meth:`execute_query` is authored by the language model, so
+        this connection is the containment boundary — read_only=True is what turns a
+        hallucinated or injected DROP/UPDATE into an error instead of data loss. It
+        lives here, in one place, rather than at each call site so the invariant has a
+        single home to read and a single home to test.
+
+        Example:
+            with self._connect() as conn:
+                conn.execute("SHOW TABLES").fetchall()
+        """
+        return duckdb.connect(self._db_path, read_only=True)
+
     def list_tables(self) -> list[str]:
         """Query SHOW TABLES and return table names as a list."""
-        with duckdb.connect(self._db_path, read_only=True) as conn:
+        with self._connect() as conn:
             rows = conn.execute("SHOW TABLES").fetchall()
         return [row[0] for row in rows]
 
     def get_table_schema(self, table_name: str) -> str:
         """Return annotated DDL for the table with example values for text columns."""
         self._validate_table_name(table_name)
-        with duckdb.connect(self._db_path, read_only=True) as conn:
+        with self._connect() as conn:
             rows = conn.execute(f'DESCRIBE "{table_name}"').fetchall()
             lines = [self._describe_column(conn, table_name, row) for row in rows]
         return f"-- {table_name}\n" + "\n".join(lines)
 
     def execute_query(self, sql: str) -> QueryResult:
         """Execute a SQL query and return the result as a QueryResult."""
-        with duckdb.connect(self._db_path, read_only=True) as conn:
+        with self._connect() as conn:
             cursor = conn.execute(sql)
             columns = [desc[0] for desc in cursor.description]
             rows = cursor.fetchall()

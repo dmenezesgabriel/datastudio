@@ -159,3 +159,50 @@ class TestDuckDbSqlEngine:
         schema = DuckDbSqlEngine(path).get_table_schema("t")
         # exactly 20 distinct values → NOT high cardinality → example annotation must appear
         assert "-- e.g." in schema
+
+
+class TestReadOnlyConnection:
+    """The SQL reaching execute_query is model-authored, so writes must be refused.
+
+    _connect()'s read_only=True is the containment boundary: without it a hallucinated
+    or injected DROP/UPDATE would silently mutate the user's database. These tests pin
+    that invariant — deleting read_only=True previously survived mutation testing
+    because nothing in the suite asserted it.
+    """
+
+    def test_rejects_ddl_that_creates_a_table(self, db_path: str) -> None:
+        # kills _connect__mutmut_1 (read_only=True dropped from duckdb.connect)
+        with pytest.raises(duckdb.InvalidInputException, match="read-only mode"):
+            DuckDbSqlEngine(db_path).execute_query("CREATE TABLE injected (i INTEGER)")
+
+    def test_rejects_ddl_that_drops_a_table(self, db_path: str) -> None:
+        with pytest.raises(duckdb.InvalidInputException, match="read-only mode"):
+            DuckDbSqlEngine(db_path).execute_query("DROP TABLE items")
+
+    def test_rejects_dml_that_inserts_rows(self, db_path: str) -> None:
+        with pytest.raises(duckdb.InvalidInputException, match="read-only mode"):
+            DuckDbSqlEngine(db_path).execute_query("INSERT INTO items VALUES (3, 'gamma')")
+
+    def test_rejects_dml_that_updates_rows(self, db_path: str) -> None:
+        with pytest.raises(duckdb.InvalidInputException, match="read-only mode"):
+            DuckDbSqlEngine(db_path).execute_query("UPDATE items SET label = 'overwritten'")
+
+    def test_a_refused_write_leaves_the_data_untouched(self, db_path: str) -> None:
+        # arrange
+        engine = DuckDbSqlEngine(db_path)
+
+        # act — the write is refused …
+        with pytest.raises(duckdb.InvalidInputException):
+            engine.execute_query("DELETE FROM items")
+
+        # assert — … and the rows it targeted are still there
+        assert engine.execute_query("SELECT count(*) AS n FROM items").rows == [(2,)]
+
+    def test_reads_are_unaffected(self, db_path: str) -> None:
+        # the guard must refuse writes without costing us the read path
+        engine = DuckDbSqlEngine(db_path)
+        assert engine.list_tables() == ["items"]
+        assert engine.execute_query("SELECT label FROM items ORDER BY id").rows == [
+            ("alpha",),
+            ("beta",),
+        ]
