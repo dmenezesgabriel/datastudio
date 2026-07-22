@@ -20,6 +20,7 @@ from chat.infrastructure.persistence.in_memory_conversation_repository import (
     InMemoryConversationRepository,
 )
 from test.unit.chat.infrastructure.api.fakes import fake_owner_id
+from test.unit.shared.infrastructure.sql_engine.fake_sql_engine import FakeSqlEngine
 
 
 class FakeStreamMessage:
@@ -68,7 +69,12 @@ def _routers(repo: InMemoryConversationRepository) -> list[APIRouter]:
     stream_message = cast(StreamMessage, FakeStreamMessage())
     edit_artifact = cast(EditArtifact, FakeEditArtifact())
     return build_chat_routers(
-        stream_message, repo, edit_artifact, InMemoryArtifactRepository(), fake_owner_id("u-1")
+        stream_message,
+        repo,
+        edit_artifact,
+        InMemoryArtifactRepository(),
+        FakeSqlEngine(tables=["events", "customers"]),
+        fake_owner_id("u-1"),
     )
 
 
@@ -96,7 +102,16 @@ class TestBuildChatRouters:
             "/api/artifacts/{artifact_id}",
             "/api/artifacts/{artifact_id}/edit",
             "/api/artifacts/{artifact_id}/revert",
+            "/api/schema/tables",
         } <= paths
+
+    def test_schema_route_reads_the_injected_sql_engine(self) -> None:
+        # arrange — the mention menu must be served from the engine the app was wired with
+        client = _client(InMemoryConversationRepository())
+        # act
+        body = client.get("/api/schema/tables").json()
+        # assert
+        assert body == {"tables": ["events", "customers"]}
 
     def test_conversations_route_reads_the_injected_repository(self) -> None:
         # arrange — the read router must serve from the very repo it was handed
