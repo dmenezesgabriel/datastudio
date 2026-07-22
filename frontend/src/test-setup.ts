@@ -22,3 +22,14 @@ if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
       dispatchEvent: () => false,
     }) as unknown as MediaQueryList;
 }
+
+// The Composer re-measures its field when the field's width changes; jsdom has no
+// ResizeObserver, so provide an inert stand-in (it never fires). Composer.test.tsx swaps in
+// its own that does, to drive that path.
+if (typeof globalThis.ResizeObserver !== "function") {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}

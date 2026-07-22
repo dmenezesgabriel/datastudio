@@ -1,4 +1,13 @@
-import { type KeyboardEvent, memo, useEffect, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  type RefObject,
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 // The bottom-docked message composer. A textarea (grows with content, submits on Enter,
 // newline on Shift+Enter) plus a send button — the familiar Claude/ChatGPT affordance.
@@ -25,6 +34,7 @@ export const Composer = memo(function Composer({
   autoFocus?: boolean;
 }) {
   const [value, setValue] = useState("");
+  const field = useAutoGrow(value);
   const lastSubmitted = useRef("");
   const lastRestore = useRef(restoreSignal);
 
@@ -60,6 +70,7 @@ export const Composer = memo(function Composer({
         }}
       >
         <textarea
+          ref={field}
           // eslint-disable-next-line jsx-a11y/no-autofocus -- opt-in via prop; only the
           // top-level chat composer sets it, where focusing the input on load is expected.
           autoFocus={autoFocus}
@@ -89,3 +100,40 @@ export const Composer = memo(function Composer({
     </div>
   );
 });
+
+// Sizes the field to the draft it holds, so a long question is never scrolled out of its
+// own view and a Shift+Enter newline is visible. The height resets before each measurement
+// — scrollHeight only ever reports the content's full extent, so without the reset the
+// field would ratchet upward and never shrink. The ceiling is CSS (.composer__input's
+// max-height), which clamps whatever this asks for.
+function useAutoGrow(value: string): RefObject<HTMLTextAreaElement | null> {
+  const field = useRef<HTMLTextAreaElement>(null);
+
+  const fitToDraft = useCallback(() => {
+    const textarea = field.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    // scrollHeight covers content and padding but not borders, and the field is border-box —
+    // sized to scrollHeight alone it sits 2px short of its own text and scrolls at every height.
+    const borders = textarea.offsetHeight - textarea.clientHeight;
+    textarea.style.height = `${textarea.scrollHeight + borders}px`;
+  }, []);
+
+  // Layout effect, not effect: the resize lands in the same paint as the keystroke that
+  // caused it, so the field never flashes at the previous draft's height.
+  useLayoutEffect(fitToDraft, [value, fitToDraft]);
+
+  // A height is only valid at the width it was measured at — narrow the window, or open a
+  // phone keyboard, and a draft measured wide re-wraps taller than the height it is stuck
+  // at, hiding its own last lines. Re-measuring settles in one extra pass: the second
+  // callback asks for the height already set, and an unchanged box stops the observer.
+  useLayoutEffect(() => {
+    const textarea = field.current;
+    if (!textarea) return;
+    const observer = new ResizeObserver(fitToDraft);
+    observer.observe(textarea);
+    return () => observer.disconnect();
+  }, [fitToDraft]);
+
+  return field;
+}
