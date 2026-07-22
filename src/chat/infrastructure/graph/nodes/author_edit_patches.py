@@ -15,12 +15,20 @@ from langchain_core.language_models.base import LanguageModelInput
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.runnables import Runnable
 
+from chat.domain.value_objects.dashboard_layout import (
+    FRAME_SUFFIX,
+    GRID_REGION,
+    KPI_REGION,
+)
 from chat.domain.value_objects.render_tree import RenderTree
 from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.nodes.generate_widget_view import keep_valid_patch_lines
 from chat.infrastructure.graph.response_content_extractor import ResponseContentExtractor
 from chat.infrastructure.graph.step_tags import step_tag
 
+# The region/frame names are interpolated from the layout contract rather than spelled out:
+# this prompt is the only place the F-layout is described in prose, so a rename there must
+# not be able to leave the model reading a stale map of the dashboard.
 _RESTYLE_INSTRUCTIONS = (
     "You are editing an existing dashboard by emitting RFC-6902 JSON-Patch lines that modify "
     "its current elements (given below). Emit ONE patch per line and nothing else. Rules:\n"
@@ -29,8 +37,8 @@ _RESTYLE_INSTRUCTIONS = (
     "- Switch a chart type with replace /elements/<id>/props/kind to 'bar', 'line', or 'pie'.\n"
     "- Rename with replace /elements/<id>/props/title (or /props/label for a KpiStat).\n"
     "- Reorder or move widgets by replacing a region's children array, e.g. replace "
-    "/elements/grid/children with the reordered list of frame ids (a widget's frame is "
-    "'<widget-id>-frame'); the regions are 'kpi-row' and 'grid'.\n"
+    f"/elements/{GRID_REGION}/children with the reordered list of frame ids (a widget's frame "
+    f"is '<widget-id>{FRAME_SUFFIX}'); the regions are '{KPI_REGION}' and '{GRID_REGION}'.\n"
     "- Keep every $state binding and column name exactly as-is.\n"
     "Emit only the patch lines the instruction requires."
 )

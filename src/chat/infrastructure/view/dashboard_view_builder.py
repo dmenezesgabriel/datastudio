@@ -12,6 +12,7 @@ matches exactly what the client rendered live.
 from collections.abc import Sequence
 
 from chat.application.ports.dashboard_view_builder import DashboardViewBuilder
+from chat.domain.value_objects.dashboard_layout import frame_id
 from chat.domain.value_objects.render_tree import RenderTree
 from chat.domain.value_objects.stream_event import (
     ChatStreamEvent,
@@ -99,6 +100,6 @@ def _edit_patch_lines(events: Sequence[ChatStreamEvent]) -> list[str]:
             lines.append(patch_line("add", f"/state/{event.widget_id}", state_value(event.result)))
         elif isinstance(event, SqlReady) and event.sql:
             lines.append(
-                patch_line("replace", f"/elements/{event.widget_id}-frame/props/sql", event.sql)
+                patch_line("replace", f"/elements/{frame_id(event.widget_id)}/props/sql", event.sql)
             )
     return lines

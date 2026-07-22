@@ -14,6 +14,7 @@ import json
 from datetime import date, datetime, time
 from decimal import Decimal
 
+from chat.domain.value_objects.dashboard_layout import GRID_REGION, KPI_REGION, frame_id
 from chat.domain.value_objects.render_tree import RenderElement
 from chat.domain.value_objects.stream_event import (
     ChatStreamEvent,
@@ -28,12 +29,6 @@ from shared.domain.value_objects.query_result import QueryResult
 # The narrative answer lives under a fixed id so the final summary replaces any earlier
 # text in place (no add/remove flicker).
 _NARRATIVE_ID = "narrative"
-
-# F-layout regions seeded under the root, in reading order after the narrative: the KPI
-# headline band, then the charts/tables grid. Widgets are namespaced into these by the
-# view-authoring node per their planner-declared role (see generate_widget_view._region_for_role).
-_KPI_REGION = "kpi-row"
-_GRID_REGION = "grid"
 
 # Cap rows put on the wire so a large detail result can't bloat the stream.
 _MAX_STREAM_ROWS = 500
@@ -176,7 +171,7 @@ class SpecStreamSerializer:
         """
         if not sql:
             return []
-        return [patch_line("replace", f"/elements/{widget_id}-frame/props/sql", sql)]
+        return [patch_line("replace", f"/elements/{frame_id(widget_id)}/props/sql", sql)]
 
     def _root_init_lines(self) -> list[str]:
         """Emit the root Stack + a leading (empty) narrative element exactly once.
@@ -201,13 +196,14 @@ class SpecStreamSerializer:
 
         Lazy (only when a widget view arrives) so a text-only answer stays narrative-only
         with no empty dashboard scaffolding. Widgets append into these via ``$state``-bound
-        child refs the view-authoring node namespaces to ``kpi-row``/``grid``.
+        child refs the view-authoring node namespaces per their planner-declared role
+        (see generate_widget_view._region_for_role).
         """
         lines = self._root_init_lines()
         if self._regions_initialized:
             return lines
         self._regions_initialized = True
-        for region, kind in ((_KPI_REGION, "KpiRow"), (_GRID_REGION, "Grid")):
+        for region, kind in ((KPI_REGION, "KpiRow"), (GRID_REGION, "Grid")):
             element = RenderElement(type=kind, props={}, children=[])
             lines += self._add_element_lines(region, element)
         return lines

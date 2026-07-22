@@ -17,12 +17,12 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
+from chat.domain.services.dashboard_widgets import widget_ids
+from chat.domain.value_objects.dashboard_layout import frame_id
 from chat.domain.value_objects.render_tree import RenderElement, RenderTree
 from chat.domain.value_objects.widget import WidgetSpec
 from chat.infrastructure.graph.chat_state import ChatState
 from chat.infrastructure.graph.nodes._structured_output import invoke_structured
-
-_FRAME_SUFFIX = "-frame"
 
 _SYSTEM_PROMPT = (
     "You are the router for a dashboard editor. The user wants to change an existing "
@@ -78,7 +78,7 @@ class ClassifyEdit:
 
     def _reanalyze(self, plan: _EditPlan, instruction: str, spec: RenderTree) -> dict[str, object]:
         """Resolve the widget id to (re)build and seed the SQL worker's inputs."""
-        existing = _widget_ids(spec)
+        existing = widget_ids(spec)
         widget_id = plan.target_widget_id if plan.target_widget_id in existing else _next_id(spec)
         sub_question = plan.sub_question.strip() or instruction
         widget = WidgetSpec(
@@ -95,27 +95,22 @@ class ClassifyEdit:
         }
 
 
-def _widget_ids(spec: RenderTree) -> list[str]:
-    """The ids of the widgets currently on the dashboard, in layout order."""
-    return [k[: -len(_FRAME_SUFFIX)] for k in spec.elements if k.endswith(_FRAME_SUFFIX)]
-
-
 def _next_id(spec: RenderTree) -> str:
     """Mint a fresh, collision-free ``widget-N`` id for an added widget."""
-    matches = (re.fullmatch(r"widget-(\d+)", wid) for wid in _widget_ids(spec))
+    matches = (re.fullmatch(r"widget-(\d+)", wid) for wid in widget_ids(spec))
     numbers = [int(m.group(1)) for m in matches if m is not None]
     return f"widget-{max(numbers) + 1 if numbers else 0}"
 
 
 def _describe_widgets(spec: RenderTree) -> str:
     """List each widget as ``- <id> (<leaf type>): <title>`` for the router prompt."""
-    lines = [f"- {wid} ({_kind(spec, wid)}){_title(spec, wid)}" for wid in _widget_ids(spec)]
+    lines = [f"- {wid} ({_kind(spec, wid)}){_title(spec, wid)}" for wid in widget_ids(spec)]
     return "\n".join(lines) or "(no widgets yet)"
 
 
 def _leaf(spec: RenderTree, widget_id: str) -> RenderElement | None:
     """The widget's visualization element (the frame's single child), if present."""
-    frame = spec.elements.get(f"{widget_id}{_FRAME_SUFFIX}")
+    frame = spec.elements.get(frame_id(widget_id))
     if frame is None or not frame.children:
         return None
     return spec.elements.get(frame.children[0])

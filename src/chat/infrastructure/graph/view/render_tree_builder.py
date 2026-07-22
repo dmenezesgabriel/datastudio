@@ -9,6 +9,7 @@ the frontend Zod catalogue (``frontend/src/catalog.ts``).
 
 from typing import cast
 
+from chat.domain.value_objects.dashboard_layout import GRID_REGION, KPI_REGION, frame_id
 from chat.domain.value_objects.render_tree import RenderElement, RenderTree
 from chat.infrastructure.graph.spec_patch import parse_patch
 
@@ -42,10 +43,10 @@ def compile_render_tree(
         tree = compile_render_tree("42 events.", ['{"op":"add",...}'], {"widget-0": "SELECT 1"})
     """
     elements: dict[str, dict[str, object]] = {
-        "root": {"type": "Stack", "props": {}, "children": ["narrative", "kpi-row", "grid"]},
+        "root": {"type": "Stack", "props": {}, "children": ["narrative", KPI_REGION, GRID_REGION]},
         "narrative": {"type": "Markdown", "props": {"text": narrative}, "children": []},
-        "kpi-row": {"type": "KpiRow", "props": {}, "children": []},
-        "grid": {"type": "Grid", "props": {}, "children": []},
+        KPI_REGION: {"type": "KpiRow", "props": {}, "children": []},
+        GRID_REGION: {"type": "Grid", "props": {}, "children": []},
     }
     for line in patch_lines:
         _apply_view_patch(elements, line)
@@ -60,7 +61,7 @@ def _set_frame_sql(elements: dict[str, dict[str, object]], sql_by_widget: dict[s
     streaming views hold SQL identically. A widget whose view produced no frame is skipped.
     """
     for widget_id, sql in sql_by_widget.items():
-        frame = elements.get(f"{widget_id}-frame")
+        frame = elements.get(frame_id(widget_id))
         props = frame.get("props") if isinstance(frame, dict) else None
         if isinstance(props, dict):
             cast(dict[str, object], props)["sql"] = sql

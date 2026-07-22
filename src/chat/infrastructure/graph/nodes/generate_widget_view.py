@@ -18,6 +18,7 @@ from langchain_core.language_models.base import LanguageModelInput
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.runnables import Runnable
 
+from chat.domain.value_objects.dashboard_layout import GRID_REGION, KPI_REGION, frame_id
 from chat.domain.value_objects.widget import WidgetRole, WidgetViewHint
 from chat.infrastructure.graph.response_content_extractor import (
     ResponseContentExtractor,
@@ -39,11 +40,6 @@ _RESERVED_EXACT = frozenset({"/root", "/elements/root"})
 _RESERVED_PREFIXES = ("/elements/narrative", "/elements/sql")
 _ALLOWED_OPS = frozenset({"add", "replace", "remove"})
 
-# F-layout regions the backend seeds (see spec_stream / render_tree_builder): a widget's
-# region is decided by its planner-declared role, not by the element the model authors —
-# "metric" widgets go into the headline KPI band, everything else into the charts/tables grid.
-_KPI_REGION = "kpi-row"
-_GRID_REGION = "grid"
 _ROOT_CHILDREN = "/elements/root/children/-"
 
 
@@ -96,9 +92,10 @@ def _region_for_role(role: WidgetRole) -> str:
 
     Deterministic and independent of what the worker authored: a ``metric`` belongs in the
     headline KPI band, every ``analysis`` widget in the grid below it. This is the host's
-    layout authority — the model only fills a component into the region we assign.
+    layout authority — the model only fills a component into the region we assign. Both
+    regions are seeded by the serializer/compiler (see spec_stream._region_init_lines).
     """
-    return _KPI_REGION if role == "metric" else _GRID_REGION
+    return KPI_REGION if role == "metric" else GRID_REGION
 
 
 def namespace_widget_patches(lines: list[str], widget_id: str, role: WidgetRole) -> list[str]:
@@ -140,15 +137,15 @@ def _frame_patches(widget_id: str, child_id: str, region: str) -> list[str]:
     every widget uniformly lets the serializer fill the SQL with one `/props/sql` patch (no
     per-widget special-casing); the ``sql`` prop starts empty and is set when SQL is ready.
     """
-    frame_id = f"{widget_id}-frame"
+    widget_frame_id = frame_id(widget_id)
     frame: dict[str, object] = {
         "type": "WidgetFrame",
         "props": {"sql": ""},
         "children": [child_id],
     }
     return [
-        _patch("add", f"/elements/{frame_id}", frame),
-        _patch("add", f"/elements/{region}/children/-", frame_id),
+        _patch("add", f"/elements/{widget_frame_id}", frame),
+        _patch("add", f"/elements/{region}/children/-", widget_frame_id),
     ]
 
 

@@ -8,9 +8,8 @@ answer saves.
 
 from dataclasses import dataclass
 
+from chat.domain.value_objects.dashboard_layout import FRAME_SUFFIX
 from chat.domain.value_objects.render_tree import RenderTree
-
-_FRAME_SUFFIX = "-frame"
 
 
 @dataclass(frozen=True)
@@ -27,7 +26,7 @@ class ArtifactDraft:
 
 def widget_ids(dashboard: RenderTree) -> list[str]:
     """The ids of the widgets on the dashboard, in layout order (frame insertion order)."""
-    return [key[: -len(_FRAME_SUFFIX)] for key in dashboard.elements if key.endswith(_FRAME_SUFFIX)]
+    return [key[: -len(FRAME_SUFFIX)] for key in dashboard.elements if key.endswith(FRAME_SUFFIX)]
 
 
 def artifact_drafts(question: str, dashboard: RenderTree) -> list[ArtifactDraft]:
