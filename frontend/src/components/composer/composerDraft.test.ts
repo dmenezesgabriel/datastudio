@@ -1,6 +1,11 @@
 import { expect, test } from "vitest";
 
-import { composerSchema, docFromText, tableMentionNode } from "./composerSchema";
+import {
+  columnMentionNode,
+  composerSchema,
+  docFromText,
+  tableMentionNode,
+} from "./composerSchema";
 import { draftFromStorage, draftToStorage, draftToText } from "./composerDraft";
 
 const { paragraph, hard_break: hardBreak } = composerSchema.nodes;
@@ -75,4 +80,29 @@ test("a chip survives being stored and reopened", () => {
 
   expect(reopened.firstChild?.lastChild?.type.name).toBe("tableMention");
   expect(draftToText(reopened)).toBe("rows in olist_orders");
+});
+
+test("sends a column chip qualified by its table", () => {
+  // "order_id" alone appears in six tables; the qualified name is the whole reason the
+  // column chip is worth having, and it is how SQL names a column too.
+  const doc = composerSchema.node("doc", null, [
+    paragraph.create(null, [
+      text("average "),
+      columnMentionNode("olist_order_items", "price"),
+      text(" per order"),
+    ]),
+  ]);
+
+  expect(draftToText(doc)).toBe("average olist_order_items.price per order");
+});
+
+test("a column chip survives being stored and reopened", () => {
+  const doc = composerSchema.node("doc", null, [
+    paragraph.create(null, [columnMentionNode("events", "amount")]),
+  ]);
+
+  const reopened = draftFromStorage(draftToStorage(doc));
+
+  expect(reopened.firstChild?.firstChild?.type.name).toBe("columnMention");
+  expect(draftToText(reopened)).toBe("events.amount");
 });

@@ -9,11 +9,20 @@ afterEach(cleanup);
 // dataset has, and none of them depends on a real fetch.
 class FakeSchemaApi {
   calls = 0;
-  constructor(private readonly tables: string[]) {}
+  constructor(
+    private readonly tables: string[],
+    private readonly columnsByTable: Record<string, string[]> = {},
+  ) {}
 
   install() {
     vi.stubGlobal("fetch", (url: string) => {
       if (!url.startsWith("/api/schema/tables")) throw new Error(`unexpected fetch: ${url}`);
+      const columnsOf = /\/api\/schema\/tables\/(.+)\/columns$/.exec(url);
+      if (columnsOf !== null) {
+        const table = decodeURIComponent(columnsOf[1]);
+        const columns = (this.columnsByTable[table] ?? []).map((name) => ({ name }));
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ table, columns }) });
+      }
       this.calls += 1;
       return Promise.resolve({ ok: true, json: () => Promise.resolve({ tables: this.tables }) });
     });
@@ -23,7 +32,10 @@ class FakeSchemaApi {
 let api: FakeSchemaApi;
 
 beforeEach(() => {
-  api = new FakeSchemaApi(["olist_orders", "olist_products", "northwind_order_details"]);
+  api = new FakeSchemaApi(
+    ["olist_orders", "olist_products", "northwind_order_details"],
+    { olist_orders: ["order_id", "order_status", "customer_id"] },
+  );
   api.install();
 });
 
@@ -210,4 +222,77 @@ test("keeps a chip when the draft is stored and reopened", async () => {
   expect(screen.getByRole("textbox").querySelector("[data-table-mention]")?.textContent).toBe(
     "olist_orders",
   );
+});
+
+test("a dot on a highlighted table drills into its columns", async () => {
+  // Reaching a column must not mean typing the table's full name by hand — that is what
+  // the menu exists to avoid.
+  const { field } = renderComposer();
+  act(() => field.focus());
+  await waitFor(() => expect(api.calls).toBe(1));
+  await typeInto(field, "average @olist_ord");
+  await waitFor(() => expect(screen.getByRole("listbox")).toBeTruthy());
+
+  await act(async () => {
+    fireEvent.keyDown(field, { key: "." });
+    await Promise.resolve();
+  });
+
+  await waitFor(() =>
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual([
+      "order_id",
+      "order_status",
+      "customer_id",
+    ]),
+  );
+});
+
+test("narrows the columns as the name after the dot is typed", async () => {
+  const { field } = renderComposer();
+  act(() => field.focus());
+  await waitFor(() => expect(api.calls).toBe(1));
+
+  await typeInto(field, "average @olist_orders.order_s");
+
+  await waitFor(() =>
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["order_status"]),
+  );
+});
+
+test("sends a picked column qualified by its table", async () => {
+  // The point of the column chip: "order_id" alone is ambiguous across six tables.
+  const { field, onSubmit } = renderComposer();
+  act(() => field.focus());
+  await waitFor(() => expect(api.calls).toBe(1));
+  await typeInto(field, "average @olist_orders.order_s");
+  await waitFor(() => expect(screen.getByRole("listbox")).toBeTruthy());
+  fireEvent.keyDown(field, { key: "Enter" }); // picks order_status
+
+  fireEvent.keyDown(field, { key: "Enter" }); // menu closed -> sends
+
+  expect(onSubmit).toHaveBeenCalledWith("average olist_orders.order_status");
+});
+
+test("offers no menu for a dot after something that is not a table", async () => {
+  const { field } = renderComposer();
+  act(() => field.focus());
+  await waitFor(() => expect(api.calls).toBe(1));
+
+  await typeInto(field, "@not_a_table.");
+
+  expect(screen.queryByRole("listbox")).toBeNull();
+});
+
+test("a dot typed in the column menu stays an ordinary character", async () => {
+  // Only the table menu claims "."; in the column menu it has to reach the document, since
+  // a column name may contain one.
+  const { field } = renderComposer();
+  act(() => field.focus());
+  await waitFor(() => expect(api.calls).toBe(1));
+  await typeInto(field, "@olist_orders.order");
+  await waitFor(() => expect(screen.getByRole("listbox")).toBeTruthy());
+
+  const claimed = !fireEvent.keyDown(field, { key: "." });
+
+  expect(claimed).toBe(false);
 });

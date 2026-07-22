@@ -17,11 +17,15 @@ import { draftFromStorage, draftToStorage, draftToText } from "./composerDraft";
 import { docFromText } from "./composerSchema";
 import type { ComposerFieldHandle } from "./composerField";
 import { buildEditorState } from "./editorState";
+import { useTableColumns } from "../../hooks/useTableColumns";
+import { matchingColumns, parseMentionQuery } from "./mentionQuery";
 import {
   type MentionTrigger,
   findMentionTrigger,
+  insertColumnMention,
   insertTableMention,
   matchingTables,
+  typeMentionQuery,
 } from "./tableMention";
 
 const MENU_ID = "composer-table-menu";
@@ -29,6 +33,9 @@ const MENU_ID = "composer-table-menu";
 // question, and the arrows move the highlight instead of the caret — the same precedence
 // claude.ai gives its slash menu.
 const MENU_KEYS = ["Enter", "Tab", "ArrowUp", "ArrowDown", "Escape"];
+// "." is claimed only while the menu is showing tables, where it drills into one. In the
+// column menu it is an ordinary character, since a column name may contain one.
+const DRILL_KEY = ".";
 
 // The composer's structured editing surface: text, plus chips standing for real tables.
 // A ProseMirror document rather than a string, because a chip has to stay one indivisible
@@ -58,7 +65,22 @@ export function MentionField({
   const [dismissedAt, setDismissedAt] = useState<number | null>(null);
 
   const view = useEditorView({ host, placeholder, autoFocus, stored, storeDraft, setTrigger });
-  const matches = useMemo(() => matchingTables(tables, trigger?.query), [tables, trigger]);
+
+  // What the "@" is turning into: a table until a dot follows one, its columns after.
+  const mention = useMemo(
+    () => (trigger === null ? null : parseMentionQuery(trigger.query, tables)),
+    [trigger, tables],
+  );
+  const columns = useTableColumns(mention?.kind === "column" ? mention.table : null);
+  const matches = useMemo(
+    () =>
+      mention === null
+        ? []
+        : mention.kind === "table"
+          ? matchingTables(tables, mention.query)
+          : matchingColumns(columns, mention.query),
+    [mention, tables, columns],
+  );
   const isOpen = trigger !== null && trigger.from !== dismissedAt && matches.length > 0;
 
   // A highlight belongs to the list it was moved through. Editing the query builds a new
@@ -82,17 +104,32 @@ export function MentionField({
     [view, clearText],
   );
 
-  function pick(table: string) {
-    if (view.current === null || trigger === null) return;
-    insertTableMention(trigger, table)(view.current.state, view.current.dispatch);
-    view.current.focus();
+  /** Put the highlighted name into the draft as a chip. */
+  function pick(name: string) {
+    const editor = view.current;
+    if (editor === null || trigger === null || mention === null) return;
+    const insert =
+      mention.kind === "table"
+        ? insertTableMention(trigger, name)
+        : insertColumnMention(trigger, mention.table, name);
+    insert(editor.state, editor.dispatch);
+    editor.focus();
+  }
+
+  /** Carry a highlighted table into its columns, so "." drills in instead of picking. */
+  function drillIntoTable() {
+    const editor = view.current;
+    if (editor === null || trigger === null) return;
+    typeMentionQuery(trigger, `${matches[highlighted]}.`)(editor.state, editor.dispatch);
+    editor.focus();
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     // Mid-composition, Enter accepts the IME's candidate rather than ending the message —
     // sending here fires mid-word for anyone typing Japanese, Chinese, or Korean.
     if (event.nativeEvent.isComposing) return;
-    if (isOpen && MENU_KEYS.includes(event.key)) return claimForMenu(event);
+    const claimed = MENU_KEYS.includes(event.key) || (event.key === DRILL_KEY && mention?.kind === "table");
+    if (isOpen && claimed) return claimForMenu(event);
     if (event.key === "Enter" && !event.shiftKey && !event.altKey) {
       // Shift+Enter and Alt+Enter fall through to the editor, which splits the paragraph.
       event.preventDefault();
@@ -108,6 +145,10 @@ export function MentionField({
     if (event.key === "Escape") return setDismissedAt(trigger?.from ?? null);
     if (event.key === "ArrowDown") return setHighlighted(step(highlighted, 1, matches.length));
     if (event.key === "ArrowUp") return setHighlighted(step(highlighted, -1, matches.length));
+    // "." on a highlighted table means "now show me its columns" — otherwise the only way
+    // to reach a column would be to type the table's full name by hand, which is exactly
+    // what the menu exists to avoid.
+    if (event.key === ".") return drillIntoTable();
     pick(matches[highlighted]);
   }
 

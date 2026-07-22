@@ -55,6 +55,36 @@ export const composerSchema = new Schema({
         String(node.attrs.name),
       ],
     },
+
+    // A column of a named table. Held qualified — the column name alone is ambiguous
+    // across tables, and "order_id" in six tables is exactly the ambiguity the chip
+    // exists to remove. leafText emits "table.column", which is how SQL names it too.
+    columnMention: {
+      inline: true,
+      group: "inline",
+      atom: true,
+      selectable: false,
+      attrs: { table: {}, name: {} },
+      leafText: (node) => `${String(node.attrs.table)}.${String(node.attrs.name)}`,
+      parseDOM: [
+        {
+          tag: "span[data-column-mention]",
+          getAttrs: (dom: HTMLElement) => ({
+            table: dom.getAttribute("data-column-table") ?? "",
+            name: dom.getAttribute("data-column-mention") ?? "",
+          }),
+        },
+      ],
+      toDOM: (node) => [
+        "span",
+        {
+          "data-column-mention": String(node.attrs.name),
+          "data-column-table": String(node.attrs.table),
+          class: "composer__mention",
+        },
+        `${String(node.attrs.table)}.${String(node.attrs.name)}`,
+      ],
+    },
   },
   // No marks at all: nothing in a question survives as formatting, so the schema should not
   // pretend otherwise (a mark the serializer drops is a lie to whoever applied it).
@@ -69,6 +99,16 @@ export const composerSchema = new Schema({
  */
 export function tableMentionNode(name: string): ProseMirrorNode {
   return composerSchema.nodes.tableMention.create({ name });
+}
+
+/**
+ * Build a column chip for `name` on `table`.
+ *
+ * Example:
+ *     columnMentionNode("events", "amount")
+ */
+export function columnMentionNode(table: string, name: string): ProseMirrorNode {
+  return composerSchema.nodes.columnMention.create({ table, name });
 }
 
 /**

@@ -1,6 +1,8 @@
+import { type Node as ProseMirrorNode } from "prosemirror-model";
 import { type Command, type EditorState, TextSelection } from "prosemirror-state";
 
-import { composerSchema, tableMentionNode } from "./composerSchema";
+import { composerSchema, columnMentionNode, tableMentionNode } from "./composerSchema";
+import { MENU_LENGTH, rankedMatches } from "./matching";
 
 // Typing "@" opens the table menu. Recognising that is pure work over the document, so it
 // lives here as a function rather than inside a plugin — it can be reasoned about, and
@@ -45,9 +47,6 @@ export function findMentionTrigger(state: EditorState): MentionTrigger | null {
   return { query, from: $from.pos - query.length - 1, to: $from.pos };
 }
 
-// A menu longer than this stops being scannable and starts hiding the transcript behind it.
-const MENU_LENGTH = 8;
-
 /**
  * The tables worth offering for `query`, best-first and capped to a scannable menu.
  *
@@ -56,17 +55,7 @@ const MENU_LENGTH = 8;
  */
 export function matchingTables(tables: string[], query: string | undefined): string[] {
   if (query === undefined) return [];
-  const needle = query.toLowerCase();
-  const matches = tables.filter((table) => table.toLowerCase().includes(needle));
-  // A name that starts with what was typed is the likelier target than one that merely
-  // contains it — "order" should reach "orders" before "northwind_order_details".
-  matches.sort((a, b) => rankFor(a, needle) - rankFor(b, needle));
-  return matches.slice(0, MENU_LENGTH);
-}
-
-/** 0 when the name starts with what was typed, 1 when it only contains it. */
-function rankFor(table: string, needle: string): number {
-  return table.toLowerCase().startsWith(needle) ? 0 : 1;
+  return rankedMatches(tables, query).slice(0, MENU_LENGTH);
 }
 
 /**
@@ -76,12 +65,48 @@ function rankFor(table: string, needle: string): number {
  *     insertTableMention(trigger, "events")(view.state, view.dispatch);
  */
 export function insertTableMention(trigger: MentionTrigger, tableName: string): Command {
+  return replaceTriggerWith(trigger, tableMentionNode(tableName));
+}
+
+/**
+ * Replace a typed "@table.query" with the chip for `column`, followed by a space.
+ *
+ * Example:
+ *     insertColumnMention(trigger, "events", "amount")(view.state, view.dispatch);
+ */
+export function insertColumnMention(
+  trigger: MentionTrigger,
+  table: string,
+  column: string,
+): Command {
+  return replaceTriggerWith(trigger, columnMentionNode(table, column));
+}
+
+/** Swap the typed "@query" for `chip`, leaving the caret past the space that follows it. */
+function replaceTriggerWith(trigger: MentionTrigger, chip: ProseMirrorNode): Command {
   return (state, dispatch) => {
     if (!dispatch) return true;
-    const chip = tableMentionNode(tableName);
     // The trailing space lets the user carry on typing rather than landing against the chip.
     const tr = state.tr.replaceWith(trigger.from, trigger.to, [chip, composerSchema.text(" ")]);
     tr.setSelection(TextSelection.create(tr.doc, trigger.from + chip.nodeSize + 1));
+    dispatch(tr.scrollIntoView());
+    return true;
+  };
+}
+
+/**
+ * Replace a typed "@query" with `query`, leaving the mention open for more typing.
+ *
+ * Used to carry a highlighted table into its columns: the reference is still being
+ * written, so it stays text rather than becoming a chip.
+ *
+ * Example:
+ *     typeMentionQuery(trigger, "events.")(view.state, view.dispatch);
+ */
+export function typeMentionQuery(trigger: MentionTrigger, query: string): Command {
+  return (state, dispatch) => {
+    if (!dispatch) return true;
+    const tr = state.tr.replaceWith(trigger.from, trigger.to, composerSchema.text(`@${query}`));
     dispatch(tr.scrollIntoView());
     return true;
   };
