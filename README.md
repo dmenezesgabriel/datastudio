@@ -17,6 +17,10 @@ cd frontend && npm run dev
 cd frontend && npm run build
 ```
 
+The frontend is a single-page app with real URLs (`/chat/<id>`, `/artifacts/<id>`), so
+whatever serves `dist/` must rewrite unknown paths to `index.html` — otherwise a shared
+link or a refresh 404s at the host. Vite's dev server and `vite preview` already do this.
+
 **CLI** (direct graph invocation, no HTTP)
 ```sh
 uv run python main.py -m "your question here"
@@ -42,6 +46,5 @@ uv run python scripts/run_eval.py
 - https://arxiv.org/html/2501.13594v1
 - https://arxiv.org/html/2505.05286v1
 - https://medium.com/@ranapratapdey/text2sql-architecture-empowered-by-knowledge-graphs-agentic-framework-and-semantic-memory-7d77fb7eef31
-- https://medium.com/@sathishkraju/the-ai-agentic-workflow-patterns-that-actually-matter-in-2026-08955ac6f398
 - https://docs.langchain.com/oss/python/langchain/frontend/generative-ui
 - https://docs.langchain.com/oss/python/langgraph/graph-api
