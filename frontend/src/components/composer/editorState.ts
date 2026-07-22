@@ -4,6 +4,7 @@ import { keymap } from "prosemirror-keymap";
 import { type Node as ProseMirrorNode } from "prosemirror-model";
 import { EditorState } from "prosemirror-state";
 
+import { pasteTableAsPlainText } from "./pasteTableAsPlainText";
 import { placeholderPlugin } from "./placeholderPlugin";
 
 /**
@@ -25,6 +26,10 @@ export function buildEditorState(doc: ProseMirrorNode, placeholder: string): Edi
       keymap(baseKeymap),
       history(),
       placeholderPlugin(placeholder),
+      // Ahead of nothing in particular, but it has to be a plugin rather than a prop so it
+      // sits with the rest of the editor's behaviour: a pasted spreadsheet range would
+      // otherwise lose every cell and row boundary on the way in.
+      pasteTableAsPlainText(),
     ],
   });
 }
