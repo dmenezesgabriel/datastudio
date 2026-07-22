@@ -230,3 +230,6 @@ frontend/dist/
 
 # Playwright CLI session artifacts (logs, page snapshots)
 .playwright-cli/
+
+# npm installs at any depth, not just frontend/
+node_modules
