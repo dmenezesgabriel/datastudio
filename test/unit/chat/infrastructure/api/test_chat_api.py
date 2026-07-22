@@ -103,6 +103,7 @@ class TestBuildChatRouters:
             "/api/artifacts/{artifact_id}/edit",
             "/api/artifacts/{artifact_id}/revert",
             "/api/schema/tables",
+            "/api/schema/tables/{table_name}/columns",
         } <= paths
 
     def test_schema_route_reads_the_injected_sql_engine(self) -> None:

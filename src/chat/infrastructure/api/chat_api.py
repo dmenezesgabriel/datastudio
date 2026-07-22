@@ -12,6 +12,7 @@ from langchain_core.language_models import BaseChatModel
 from chat.application.ports.artifact_repository import ArtifactRepository
 from chat.application.ports.conversation_repository import ConversationRepository
 from chat.application.use_cases.delete_artifact import DeleteArtifact
+from chat.application.use_cases.describe_dataset_table import DescribeDatasetTable
 from chat.application.use_cases.edit_artifact import EditArtifact
 from chat.application.use_cases.list_dataset_tables import ListDatasetTables
 from chat.application.use_cases.save_artifact import SaveArtifact
@@ -76,7 +77,11 @@ def build_chat_routers(
             resolve_current_user,
         ).router,
         ArtifactEditRouter(edit_artifact, artifact_repository, resolve_current_user).router,
-        SchemaRouter(ListDatasetTables(sql_engine), resolve_current_user).router,
+        SchemaRouter(
+            ListDatasetTables(sql_engine),
+            DescribeDatasetTable(sql_engine),
+            resolve_current_user,
+        ).router,
     ]
 
 

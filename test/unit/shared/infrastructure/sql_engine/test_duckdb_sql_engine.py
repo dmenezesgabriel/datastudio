@@ -63,3 +63,28 @@ class TestDuckDbSqlEngineScalability:
         schema = engine.get_table_schema("t")
         # assert — no example values are emitted for the high-cardinality column
         assert "e.g." not in schema
+
+
+class TestDuckDbSqlEngineDescribeTable:
+    def test_reports_every_column_with_its_type(self, engine: DuckDbSqlEngine) -> None:
+        # act
+        schema = engine.describe_table("cars")
+        # assert
+        assert schema.name == "cars"
+        assert [(c.name, c.data_type) for c in schema.columns] == [
+            ("name", "VARCHAR"),
+            ("origin", "VARCHAR"),
+            ("mpg", "DOUBLE"),
+        ]
+
+    def test_keeps_the_engines_column_order(self, engine: DuckDbSqlEngine) -> None:
+        # Column order is how the table reads; re-sorting it would make the menu disagree
+        # with every other view of the table.
+        names = [c.name for c in engine.describe_table("cars").columns]
+        assert names == ["name", "origin", "mpg"]
+
+    def test_rejects_a_table_name_that_is_not_an_identifier(self, engine: DuckDbSqlEngine) -> None:
+        # The name is interpolated into DESCRIBE (DuckDB has no bound identifiers), so the
+        # same guard get_table_schema uses has to apply here.
+        with pytest.raises(ValueError, match="cars; DROP"):
+            engine.describe_table("cars; DROP TABLE cars")

@@ -9,3 +9,7 @@ class ConversationNotFoundError(NotFoundError):
 
 class ArtifactNotFoundError(NotFoundError):
     """The requested artifact does not exist or is not owned by the caller."""
+
+
+class TableNotFoundError(NotFoundError):
+    """The requested table is not one the connected dataset lists."""

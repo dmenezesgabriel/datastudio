@@ -6,6 +6,7 @@ import duckdb
 from duckdb import DuckDBPyConnection
 
 from shared.domain.value_objects.query_result import QueryResult
+from shared.domain.value_objects.table_schema import ColumnDescriptor, TableSchema
 
 # A column qualifies as a low-cardinality category (worth showing example values
 # for) when it has at most this many distinct non-null values.
@@ -54,9 +55,17 @@ class DuckDbSqlEngine:
         """Return annotated DDL for the table with example values for text columns."""
         self._validate_table_name(table_name)
         with self._connect() as conn:
-            rows = conn.execute(f'DESCRIBE "{table_name}"').fetchall()
+            rows = self._describe(conn, table_name)
             lines = [self._describe_column(conn, table_name, row) for row in rows]
         return f"-- {table_name}\n" + "\n".join(lines)
+
+    def describe_table(self, table_name: str) -> TableSchema:
+        """Return the table's columns and types, in the order the table declares them."""
+        self._validate_table_name(table_name)
+        with self._connect() as conn:
+            rows = self._describe(conn, table_name)
+        columns = tuple(ColumnDescriptor(name=str(r[0]), data_type=str(r[1])) for r in rows)
+        return TableSchema(name=table_name, columns=columns)
 
     def execute_query(self, sql: str) -> QueryResult:
         """Execute a SQL query and return the result as a QueryResult."""
@@ -65,6 +74,13 @@ class DuckDbSqlEngine:
             columns = [desc[0] for desc in cursor.description]
             rows = cursor.fetchall()
         return QueryResult(columns=columns, rows=list(rows), row_count=len(rows))
+
+    @staticmethod
+    def _describe(conn: DuckDBPyConnection, table_name: str) -> list[tuple[object, ...]]:
+        """Run DESCRIBE for an already-validated table name (column, type, nullable, …)."""
+        # The name reaches here only through _validate_table_name, and DuckDB has no
+        # bound-parameter form for identifiers, so interpolation is required and safe.
+        return conn.execute(f'DESCRIBE "{table_name}"').fetchall()  # nosec B608
 
     def _describe_column(
         self, conn: DuckDBPyConnection, table: str, row: tuple[object, ...]

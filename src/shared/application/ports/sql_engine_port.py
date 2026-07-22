@@ -3,6 +3,7 @@
 from typing import Protocol, runtime_checkable
 
 from shared.domain.value_objects.query_result import QueryResult
+from shared.domain.value_objects.table_schema import TableSchema
 
 
 @runtime_checkable
@@ -29,6 +30,16 @@ class SqlEnginePort(Protocol):
 
     def get_table_schema(self, table_name: str) -> str:
         """Return a DDL-style schema string annotated with column info for the given table."""
+        ...
+
+    def describe_table(self, table_name: str) -> TableSchema:
+        """Return the table's columns and their types.
+
+        The structured counterpart to :meth:`get_table_schema`: that one is prose for a
+        prompt, this one is data for a caller that has to enumerate columns (naming one in
+        a question). One table per call, for the reason given in the class docstring — a
+        catalog-wide description does not survive a warehouse-sized dataset.
+        """
         ...
 
     def execute_query(self, sql: str) -> QueryResult:

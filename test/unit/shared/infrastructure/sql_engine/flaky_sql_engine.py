@@ -1,4 +1,5 @@
 from shared.domain.value_objects.query_result import QueryResult
+from shared.domain.value_objects.table_schema import TableSchema
 
 
 class FlakySqlEngine:
@@ -35,6 +36,10 @@ class FlakySqlEngine:
     def get_table_schema(self, table_name: str) -> str:
         """Return the single configured schema regardless of table name."""
         return self._schema
+
+    def describe_table(self, table_name: str) -> TableSchema:
+        """Return an empty description; this double exists to exercise list_tables retries."""
+        return TableSchema(name=table_name, columns=())
 
     def execute_query(self, sql: str) -> QueryResult:
         """Return the configured result set."""
