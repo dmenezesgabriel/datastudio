@@ -73,6 +73,12 @@ export function routeFetch(chatResponder: () => Response) {
     if (typeof url === "string" && url.startsWith("/api/artifacts")) {
       return Promise.resolve(jsonResponse({ artifacts: [] }));
     }
+    // The composer asks for the dataset's tables the moment it is focused, which is before
+    // any question is sent. Answered here so that read never consumes the chat stream a
+    // test queued up for its actual question.
+    if (typeof url === "string" && url.startsWith("/api/schema/tables")) {
+      return Promise.resolve(jsonResponse({ tables: [] }));
+    }
     return Promise.resolve(chatResponder());
   });
 }

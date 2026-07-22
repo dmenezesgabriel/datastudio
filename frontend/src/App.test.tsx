@@ -2,6 +2,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 
 import { renderAt } from "./test-support/render";
+import { askQuestion } from "./test-support/composer";
 import {
   chatCalls,
   errorResponse,
@@ -37,11 +38,6 @@ const FOLLOW_UP_LINES = [
   '{"op":"add","path":"/elements/root/children/-","value":"narrative"}',
 ];
 
-function ask(question: string): void {
-  fireEvent.change(screen.getByPlaceholderText(/Ask a question/i), { target: { value: question } });
-  fireEvent.click(screen.getByRole("button", { name: /ask/i }));
-}
-
 test("renders a widget from streamed /state — one chat request, no /api/result", async () => {
   // Arrange
   const fetchMock = routeFetch(() => streamResponse(PATCH_LINES));
@@ -49,7 +45,7 @@ test("renders a widget from streamed /state — one chat request, no /api/result
   renderAt("/");
 
   // Act
-  ask("Revenue by month");
+  await askQuestion("Revenue by month");
 
   // Assert — narrative paints, and the table fills from the streamed $state data
   await waitFor(() => expect(screen.getByText(/Two months of revenue\./)).toBeTruthy());
@@ -88,7 +84,7 @@ test("renders a widget's SQL toggle and swaps its body to the SQL", async () => 
   renderAt("/");
 
   // Act — ask a question that streams a framed widget
-  ask("Revenue by month");
+  await askQuestion("Revenue by month");
 
   // Assert — the widget is the default: its data shows; toggling reveals the SQL and
   // hides the data. This drives the real json-render Renderer + registry (WidgetFrame gets
@@ -114,7 +110,7 @@ test("shows the live progress checklist while a turn is streaming", async () => 
   renderAt("/");
 
   // Act
-  ask("Overview");
+  await askQuestion("Overview");
 
   // Assert — the checklist surfaces the streamed step while still streaming
   expect(await screen.findByText("Reading the schema")).toBeTruthy();
@@ -133,10 +129,10 @@ test("accumulates a transcript across turns on one stable conversation_id", asyn
   renderAt("/");
 
   // Act — first question, then a follow-up
-  ask("Revenue by month");
+  await askQuestion("Revenue by month");
   await waitFor(() => expect(screen.getByText(/Two months of revenue\./)).toBeTruthy());
 
-  ask("Break it down by week");
+  await askQuestion("Break it down by week");
   await waitFor(() => expect(screen.getByText(/Broken down by week\./)).toBeTruthy());
 
   // Assert — the first turn is STILL on screen (transcript accumulated, not replaced),
@@ -276,7 +272,7 @@ test("exposes a stream error as a role=alert live region so it is announced", as
   renderAt("/");
 
   // Act — a failing prompt.
-  ask("will fail");
+  await askQuestion("will fail");
 
   // Assert — the banner is a role=alert region (screen readers announce it), not a mute <p>.
   const alert = await screen.findByRole("alert");
@@ -296,7 +292,7 @@ test("a stream error stays with the thread that produced it when another is open
   renderAt("/");
 
   // Act — a failing prompt surfaces the error banner…
-  ask("will fail");
+  await askQuestion("will fail");
   await waitFor(() => expect(screen.getByText("boom")).toBeTruthy());
 
   // …then opening another thread leaves it behind (the error belongs to the failed thread).

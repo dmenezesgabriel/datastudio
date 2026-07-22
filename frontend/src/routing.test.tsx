@@ -2,6 +2,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 
 import { renderAt } from "./test-support/render";
+import { askQuestion } from "./test-support/composer";
 import {
   errorResponse,
   heldStreamResponse,
@@ -62,11 +63,6 @@ function pathname(): string {
   return screen.getByTestId("pathname").textContent ?? "";
 }
 
-function ask(question: string): void {
-  fireEvent.change(screen.getByPlaceholderText(/Ask a question/i), { target: { value: question } });
-  fireEvent.click(screen.getByRole("button", { name: /ask/i }));
-}
-
 test("a new chat lives at the root until it has been asked something", () => {
   vi.stubGlobal("fetch", routeFetch(() => streamResponse([])));
   renderAt("/");
@@ -81,7 +77,7 @@ test("asking the first question moves the URL to that conversation, replacing th
   renderAt("/");
 
   // Act
-  ask("Revenue by month");
+  await askQuestion("Revenue by month");
 
   // Assert — the thread is now addressable…
   await waitFor(() => expect(pathname()).toMatch(/^\/chat\/.+/));
@@ -262,7 +258,7 @@ test("a thread being answered elsewhere does not bleed into the thread on screen
   renderAt("/");
 
   // Act
-  ask("Question A");
+  await askQuestion("Question A");
   await waitFor(() => expect(pathname()).toMatch(/^\/chat\/.+/));
   fireEvent.click(await screen.findByRole("link", { name: "Old question" }));
   await screen.findByText("Past answer.");

@@ -100,11 +100,18 @@ export function ChatPage({ session }: { session: ChatSession }) {
           {friendlyError(session.error.message)}
         </p>
       )}
+      {/* A chat with no id yet is the one at "/", which has exactly one draft of its own —
+          it becomes a real thread only once its first question is sent, by which point the
+          draft has been cleared, so no draft ever needs to move between keys. */}
       <Composer
         onSubmit={askHere}
         disabled={isStreaming}
+        draftKey={openedId ?? "new"}
         restoreSignal={failedSends}
         autoFocus
+        // Questions here are about the schema, so "@" offers the dataset's real tables — a
+        // picked name reaches text2SQL as an identifier the engine has, not a guess.
+        mentionsEnabled
       />
     </main>
   );

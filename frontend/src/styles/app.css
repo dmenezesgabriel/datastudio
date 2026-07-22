@@ -204,12 +204,37 @@ body {
   background: var(--color-bg);
 }
 
-/* resize/font/line-height and the focus ring can't be utilities; the rest is composed. */
+/* The field and its send button share one surface, so the border, radius and focus ring
+   live here rather than on the <textarea> — that is what makes the pair read as a single
+   control instead of an input next to a button. */
+.composer__box {
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+}
+
+/* A real focus ring (2px, offset) instead of the old outline:none + 1px border tint — that
+   was far subtler than the browser ring every button gets, and easy to miss (a11y audit
+   QW-10). Keeps the accent border so the change reads even against a busy background.
+   :focus-within, because the focus lands on the field inside this box, not on the box. */
+.composer__box:focus-within {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+  border-color: var(--color-accent);
+}
+
+/* resize/font/line-height can't be utilities; the rest is composed. The field is bare: its
+   surround (.composer__box) carries the border and the ring, so a second outline here would
+   draw a box inside the box. */
 .composer__input {
   resize: none;
   font-family: inherit;
   color: var(--color-text);
   line-height: 1.4;
+  display: block;
+  background: transparent;
+  border: none;
+  outline: none;
   /* Unlike <input>/<button>, a <textarea> is content-box in the UA stylesheet. useAutoGrow
      sets height from scrollHeight, which already includes padding, so content-box sizing
      renders the field one padding taller than its own content on every measurement. */
@@ -221,13 +246,89 @@ body {
   overflow-y: auto;
 }
 
-/* A real focus ring (2px, offset) instead of the old outline:none + 1px border tint — that
-   was far subtler than the browser ring every button gets, and easy to miss (a11y audit
-   QW-10). Keeps the accent border so the change reads even against a busy background. */
-.composer__input:focus {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 1px;
-  border-color: var(--color-accent);
+/* The send button's own row, tucked under the field inside the shared box and pushed to the
+   trailing edge (flex-end, not right, so it follows the writing direction). */
+.composer__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 var(--space-2) var(--space-2);
+}
+
+/* --- Composer: table mentions -------------------------------------------- */
+
+/* Anchors the "@" menu, which is positioned against this box rather than the caret. */
+.composer__editor {
+  position: relative;
+}
+
+/* ProseMirror renders its own editable inside .composer__input, and that child is what
+   takes focus — so the UA focus ring has to be suppressed here too, or it draws a second
+   box inside the one .composer__box already rings. */
+.composer__input .ProseMirror {
+  outline: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* The document's own paragraphs: a question is prose, so blocks sit close together rather
+   than carrying the article spacing the UA stylesheet gives <p>. */
+.composer__input .ProseMirror p {
+  margin: 0;
+}
+
+.composer__input .ProseMirror p + p {
+  margin-top: var(--space-2);
+}
+
+/* A contenteditable has no placeholder, so it is drawn (see placeholderPlugin). float+height:0
+   keeps it out of the flow entirely, so the caret still sits at the start of an empty line. */
+.composer__placeholder::before {
+  content: attr(data-placeholder);
+  color: var(--color-text-muted);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* A referenced table. Reads as one object because it is one: the chip is an atom in the
+   document, so a caret cannot land inside it and editing cannot break the identifier. */
+.composer__mention {
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* The picker sits above the composer, not over the caret: no coordinate maths, nothing for
+   the transcript to clip, and it reads the same at every width. */
+.composer__menu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  margin-bottom: var(--space-2);
+  padding: var(--space-1);
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-raised);
+}
+
+.composer__menu-item {
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+}
+
+/* The keyboard highlight; the pointer follows the same state, so there is one "current"
+   option however the user is driving the menu. */
+.composer__menu-item--on {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
 }
 
 .composer__send {

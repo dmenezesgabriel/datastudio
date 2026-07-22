@@ -118,6 +118,7 @@ export function ArtifactView({ artifactId }: { artifactId: string }) {
       <Composer
         onSubmit={applyEdit}
         disabled={isStreaming}
+        draftKey={`artifact:${artifactId}`}
         placeholder="Describe a change — e.g. make the revenue chart a line chart…"
         label="Edit"
       />
