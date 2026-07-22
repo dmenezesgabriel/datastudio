@@ -9,10 +9,20 @@ from shared.infrastructure.logging.logging_config import configure_logging
 
 
 @pytest.fixture(autouse=True)
-def _restore_root_logger() -> Generator[None, None, None]:
+def _isolate_root_logger() -> Generator[None, None, None]:
+    """Hands each test an unconfigured root logger, then restores the process's own.
+
+    Clearing before the test (not just restoring after) is what makes these tests
+    independent: configure_logging is idempotent, so a JsonFormatter handler left on
+    the root logger by an earlier pytest session in the same process makes it skip
+    handler creation and the stream assertions compare a stale sys.stderr. That is
+    exactly how mutmut runs the suite -- its stats pass and its clean-test pass are
+    two pytest.main() calls in one process -- which broke `mutmut run` at baseline.
+    """
     root = logging.getLogger()
     original_level = root.level
     original_handlers = list(root.handlers)
+    root.handlers = []
     yield
     root.handlers = original_handlers
     root.setLevel(original_level)
