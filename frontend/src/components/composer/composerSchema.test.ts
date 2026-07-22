@@ -91,3 +91,16 @@ test("a pasted line break stays a line break", () => {
 test("an empty draft round-trips to an empty draft", () => {
   expect(draftToText(throughTheClipboard(docFromText("")))).toBe("");
 });
+
+test("a chip is one indivisible thing in the document", () => {
+  // What makes Backspace remove a chip whole instead of eating it a character at a time,
+  // leaving a broken identifier behind. Asserted as the schema property rather than as a
+  // keystroke: deleting inside a textblock is the browser's own editing, which ProseMirror
+  // then reads back — none of ProseMirror's Backspace commands fire for a plain cursor, and
+  // jsdom does no native editing, so the keystroke itself is only meaningful in a browser
+  // (where it is verified). This is the half we own.
+  for (const chip of [composerSchema.nodes.tableMention, composerSchema.nodes.columnMention]) {
+    expect(chip.isAtom).toBe(true);
+    expect(chip.isLeaf).toBe(true);
+  }
+});
