@@ -32,6 +32,15 @@ venvPath = "."
 venv = ".venv"
 typeCheckingMode = "strict"
 
+[tool.uv]
+# semgrep pins click~=8.1.8 and mcp==1.23.3; both have known CVEs
+# (PYSEC-2026-2132, CVE-2026-52870/52869/59950) fixed in later releases
+# that semgrep hasn't relaxed its own pins to allow yet.
+override-dependencies = [
+    "click>=8.3.3",
+    "mcp>=1.28.1",
+]
+
 [tool.ruff]
 target-version = "py312"
 line-length = 100
