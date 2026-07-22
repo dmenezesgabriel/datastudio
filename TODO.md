@@ -10,3 +10,5 @@
 - first chat page custom
 - data sources references, date references
 - emphasize numbers on narrative
+- table custom formatters (indicators, semaphores)
+- API HATEOAS
