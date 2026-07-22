@@ -1,0 +1,8 @@
+- Prompt input to text area
+- Prose mirror text area chat input, undo, redo
+- artifact thumbnails in cards
+- node prompts to yaml file
+- icons on task planning/progress
+- syntax highlight sql + copy button
+- canvas mode + collaboration
+- first chat page custom
