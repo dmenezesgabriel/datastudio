@@ -49,6 +49,12 @@ for (const proto of [Range.prototype, Element.prototype]) {
   }
 }
 
+// Nothing scrolls without layout either, so jsdom omits this outright. Present as an inert
+// stand-in so components can ask; tests that care about *what* was scrolled spy on it.
+if (typeof Element.prototype.scrollIntoView !== "function") {
+  Element.prototype.scrollIntoView = () => {};
+}
+
 // The Composer re-measures its field when the field's width changes; jsdom has no
 // ResizeObserver, so provide an inert stand-in (it never fires). Composer.test.tsx swaps in
 // its own that does, to drive that path.

@@ -163,6 +163,45 @@ test("puts the highlight back on the first match when the query changes", async 
   expect(selected?.textContent).toBe("northwind_order_details");
 });
 
+test("keeps the highlighted option in view as the arrows move it", async () => {
+  // The menu scrolls past about seven rows, so arrowing to the eighth — or wrapping from the
+  // top to the bottom — would otherwise leave aria-activedescendant pointing at something
+  // nobody can see. That is an accessibility defect, not a cosmetic one.
+  const scrolled: (string | null)[] = [];
+  vi.spyOn(HTMLElement.prototype, "scrollIntoView").mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    scrolled.push(this.textContent);
+  });
+  const { field } = renderComposer();
+  act(() => field.focus());
+  await waitFor(() => expect(api.calls).toBe(1));
+  await typeInto(field, "rows in @olist");
+  await waitFor(() => expect(screen.getByRole("listbox")).toBeTruthy());
+
+  fireEvent.keyDown(field, { key: "ArrowDown" });
+
+  expect(scrolled.at(-1)).toBe("olist_products");
+});
+
+test("wrapping past the end brings the last option back into view", async () => {
+  const scrolled: (string | null)[] = [];
+  vi.spyOn(HTMLElement.prototype, "scrollIntoView").mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    scrolled.push(this.textContent);
+  });
+  const { field } = renderComposer();
+  act(() => field.focus());
+  await waitFor(() => expect(api.calls).toBe(1));
+  await typeInto(field, "rows in @olist");
+  await waitFor(() => expect(screen.getByRole("listbox")).toBeTruthy());
+
+  fireEvent.keyDown(field, { key: "ArrowUp" }); // wraps from the first to the last
+
+  expect(scrolled.at(-1)).toBe("olist_products");
+});
+
 test("Escape closes the menu and leaves the draft alone", async () => {
   const { field } = renderComposer();
   act(() => field.focus());
