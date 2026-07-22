@@ -27,15 +27,35 @@ uv run python main.py -m "your question here"
 ```
 
 **Tests**
+
+`make test` is the everyday gate — the Python unit suite plus the frontend suite, the
+two that run anywhere with no credentials. The `pytest-unit` pre-commit hook runs the
+unit suite on every commit that touches Python.
+
 ```sh
-uv run pytest test/unit/ -q
-uv run pytest test/unit/ --cov=src --cov-report=term-missing -q
+make test              # unit + frontend (the everyday gate)
+make test-unit         # uv run pytest test/unit/ -q
+make test-frontend     # npm --prefix frontend test
+make test-cov          # unit suite with coverage (fails under 80%)
+make arch              # import-linter architecture contracts
 ```
 
-**Eval**
+These need a live LLM key in `.env` (see `.env.example`), so they are opt-in and are
+not part of `make test`:
+
 ```sh
+make test-integration  # pytest test/integration/ -m integration
 uv run python scripts/run_eval.py
 ```
+
+Mutation testing takes minutes — run it deliberately, not on every change:
+
+```sh
+make mutmut            # mutmut run, then mutmut results
+```
+
+Every static check (ruff, pyright, bandit, vulture, xenon, deptry, import-linter) runs
+via pre-commit. Install the hooks once with `uv run pre-commit install`.
 
 ## References
 

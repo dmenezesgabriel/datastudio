@@ -78,3 +78,14 @@ repos:
         entry: bash -c 'npm --prefix frontend run gen:prompt >/dev/null && git diff --exit-code -- src/chat/infrastructure/graph/prompts/catalog_prompt.generated.txt'
         pass_filenames: false
         always_run: true
+
+      # Last in the block so the fast static checks report first. ~8s for the whole
+      # unit suite. Until this hook existed nothing ran the tests automatically, and a
+      # broken integration test went unnoticed for 18 days.
+      # Integration and eval stay opt-in: they need a live LLM key.
+      - id: pytest-unit
+        name: pytest (unit suite)
+        language: system
+        entry: uv run pytest test/unit/ -q
+        types: [python]
+        pass_filenames: false
