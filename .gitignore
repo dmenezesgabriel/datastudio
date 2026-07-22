@@ -224,6 +224,12 @@ dev_data/
 
 mutants
 
+# Full eval reports: one run is megabytes once every case is repeated, past what this
+# repository accepts per file. reports/eval_summary_*.json is the tracked record of each
+# run; the per-case detail stays on the machine that produced it. The reports committed
+# before this rule remain tracked, so the trend keeps its history.
+reports/eval_report_*.json
+
 # Frontend (Vite + json-render)
 frontend/node_modules/
 frontend/dist/

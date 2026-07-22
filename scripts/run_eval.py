@@ -22,16 +22,44 @@ from shared.infrastructure.config.settings import AppSettings
 from shared.infrastructure.sql_engine.duckdb.duckdb_sql_engine import DuckDbSqlEngine
 
 
-def _report_path(reports_dir: Path, report: EvalReport) -> Path:
-    """Canonical report path derived from the run's own timestamp.
+def _run_epoch(report: EvalReport) -> int:
+    """The run's own timestamp as an epoch — the name both of its files are built from.
 
-    Naming from ``report.run_at`` (not a separate ``time.time()``) keeps the
-    filename reproducible from file content, so it's the only name a run can
-    produce. Example: ``_report_path(Path("reports"), report)`` ->
+    Taken from ``report.run_at`` rather than a separate ``time.time()`` so the names stay
+    reproducible from file content, and so the pair a run writes always agrees.
+    """
+    return int(datetime.datetime.fromisoformat(report.run_at).timestamp())
+
+
+def _report_path(reports_dir: Path, report: EvalReport) -> Path:
+    """Canonical path of the run's full report.
+
+    Example: ``_report_path(Path("reports"), report)`` ->
     ``reports/eval_report_1782962765.json``.
     """
-    epoch = int(datetime.datetime.fromisoformat(report.run_at).timestamp())
-    return reports_dir / f"eval_report_{epoch}.json"
+    return reports_dir / f"eval_report_{_run_epoch(report)}.json"
+
+
+def _summary_path(reports_dir: Path, report: EvalReport) -> Path:
+    """Canonical path of the run's summary, sharing its report's epoch.
+
+    The pair is written together, so a directory listing keeps them side by side. Example:
+    ``_summary_path(Path("reports"), report)`` -> ``reports/eval_summary_1782962765.json``.
+    """
+    return reports_dir / f"eval_summary_{_run_epoch(report)}.json"
+
+
+def _trend_summary(report: EvalReport) -> dict[str, object]:
+    """The run reduced to what the trend table reads: how it went, not what happened.
+
+    A full report grew to megabytes once the suite ran every case several times over, past
+    what the repository accepts per file. This is the part worth keeping for every run
+    forever; the per-case detail stays on the machine that produced it.
+
+    Example:
+        _trend_summary(report)  # {"run_at": ..., "model": ..., "summary": {...}}
+    """
+    return {"run_at": report.run_at, "model": report.model, "summary": report.summary}
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
@@ -200,9 +228,14 @@ def main() -> None:
     output_path = _report_path(Path(args.reports_dir), report)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(asdict(report), indent=2))
+    summary_path = _summary_path(Path(args.reports_dir), report)
+    # Trailing newline because this one is committed: without it the end-of-file hook
+    # rewrites every summary a run produces.
+    summary_path.write_text(json.dumps(_trend_summary(report), indent=2) + "\n")
 
     _print_summary(report)
     print(f"Full report → {output_path}")
+    print(f"Summary → {summary_path}")
 
 
 if __name__ == "__main__":

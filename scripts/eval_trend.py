@@ -40,19 +40,23 @@ def _build_arg_parser() -> argparse.ArgumentParser:
 
 
 def _load_rows(reports_dir: Path) -> list[dict[str, object]]:
-    """Return one summary row per report, sorted by run timestamp."""
-    rows: list[dict[str, object]] = []
-    for path in reports_dir.glob("eval_report_*.json"):
+    """Return one row per run, sorted by run timestamp.
+
+    Reads both kinds of file: the full reports recorded before summaries existed, and the
+    summaries written for every run since. A run that produced both — which is every run,
+    on the machine that produced it — is keyed by its timestamp so it appears once.
+    """
+    by_run: dict[str, dict[str, object]] = {}
+    for path in [*reports_dir.glob("eval_report_*.json"), *reports_dir.glob("eval_summary_*.json")]:
         report = cast(dict[str, object], json.loads(path.read_text()))
         summary = cast(dict[str, object], report.get("summary", {}))
-        rows.append(
-            {
-                "run_at": report.get("run_at", "?"),
-                "model": report.get("model", "?"),
-                **{key: summary.get(key, "-") for key in _COLUMNS[2:]},
-            }
-        )
-    return sorted(rows, key=lambda r: str(r["run_at"]))
+        run_at = str(report.get("run_at", "?"))
+        by_run[run_at] = {
+            "run_at": run_at,
+            "model": report.get("model", "?"),
+            **{key: summary.get(key, "-") for key in _COLUMNS[2:]},
+        }
+    return sorted(by_run.values(), key=lambda r: str(r["run_at"]))
 
 
 def _print_table(rows: list[dict[str, object]]) -> None:
