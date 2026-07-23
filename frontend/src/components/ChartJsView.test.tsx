@@ -150,21 +150,22 @@ test("a click on empty chart space (no mark) selects nothing", () => {
   expect(onSelect).not.toHaveBeenCalled();
 });
 
-test("emphasises the active mark and dims the others when a selection targets this chart", () => {
+test("emphasises the active marks and dims the others when a selection targets this chart", () => {
   render(
     <ChartJsView
       kind="bar"
       title="By category"
-      labels={["Books", "Toys"]}
-      datasets={[{ label: "count", data: [3, 9] }]}
-      activeIndex={0}
+      labels={["Books", "Toys", "Games"]}
+      datasets={[{ label: "count", data: [3, 9, 5] }]}
+      activeIndices={new Set([0, 2])}
     />,
   );
-  // The selected bar keeps its full hue; the unselected one is dimmed — so the source chart
+  // Both selected bars keep their full hue; the unselected one is dimmed — so the source chart
   // shows all its marks with the selection standing out (not filtered down to one bar).
   const { backgroundColor } = instances[0].data.datasets[0] as { backgroundColor: string[] };
   expect(Array.isArray(backgroundColor)).toBe(true);
-  expect(backgroundColor[0]).not.toBe(backgroundColor[1]);
+  expect(backgroundColor[0]).toBe(backgroundColor[2]); // both emphasised: same full hue
+  expect(backgroundColor[0]).not.toBe(backgroundColor[1]); // the third is dimmed
 });
 
 test("offers each category as a keyboard-operable control that selects it (SC 2.1.1)", () => {
@@ -177,7 +178,7 @@ test("offers each category as a keyboard-operable control that selects it (SC 2.
       title="By category"
       labels={["Books", "Toys"]}
       datasets={[{ label: "count", data: [3, 9] }]}
-      activeIndex={1}
+      activeIndices={new Set([1])}
       onSelect={onSelect}
     />,
   );

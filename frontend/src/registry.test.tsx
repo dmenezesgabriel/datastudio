@@ -50,7 +50,7 @@ describe("ChartJs cross-filter wiring", () => {
   test("as the selection's own dimension: keeps every mark and emphasises the active one", () => {
     renderDashboard(CATEGORY_CHART, {
       cat: { rows: [{ category: "Books", count: 3 }, { category: "Toys", count: 9 }] },
-      crossFilter: { category: "Books" },
+      crossFilter: { category: ["Books"] },
     });
     const chartTable = within(screen.getByRole("table", { name: /By category/i }));
     // Both bars remain (a source is not filtered down to one), and Books is marked active.
@@ -65,7 +65,7 @@ describe("ChartJs cross-filter wiring", () => {
     };
     renderDashboard(spec, {
       ts: { rows: [{ month: "Jan", category: "Books", count: 3 }, { month: "Feb", category: "Toys", count: 9 }] },
-      crossFilter: { category: "Books" },
+      crossFilter: { category: ["Books"] },
     });
     const chartTable = within(screen.getByRole("table", { name: /Over time/i }));
     expect(chartTable.getByRole("button", { name: "Jan" })).toBeTruthy();
@@ -137,7 +137,7 @@ describe("coordinated cross-filtering across widgets", () => {
           { category: "Toys", channel: "web", amount: 3 },
         ],
       },
-      crossFilter: { category: "Books", channel: "web" },
+      crossFilter: { category: ["Books"], channel: ["web"] },
     });
     const table = within(screen.getByRole("group", { name: /data table/i }));
     // Only the Books+web row survives the AND of both selections.
@@ -153,7 +153,7 @@ describe("coordinated cross-filtering across widgets", () => {
     };
     renderDashboard(spec, {
       detail: { columns: ["category"], rows: [{ category: "Books" }, { category: "Toys" }] },
-      crossFilter: { category: "Nonexistent" },
+      crossFilter: { category: ["Nonexistent"] },
     });
     expect(screen.getByRole("status").textContent).toMatch(/no rows match/i);
   });

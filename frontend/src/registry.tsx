@@ -1,7 +1,7 @@
 import { defineRegistry } from "@json-render/react";
 
 import { catalog } from "./catalog";
-import { activeIndexFor, applyFilters } from "./crossFilter";
+import { activeIndicesFor, applyFilters } from "./crossFilter";
 import { useCrossFilter } from "./hooks/useCrossFilter";
 import { ChartJsView, type ChartDataset } from "./components/ChartJsView";
 import {
@@ -81,7 +81,7 @@ export const { registry } = defineRegistry(catalog, {
       const { filters, toggle } = useCrossFilter();
       const allRows = asRows(props.data);
       const rows = applyFilters(allRows, filters, props.labelColumn);
-      const activeIndex = activeIndexFor(allRows, props.labelColumn, filters);
+      const activeIndices = activeIndicesFor(rows, props.labelColumn, filters);
       if (rows.length === 0) return <WidgetEmptyState />;
       return (
         <ChartJsView
@@ -89,7 +89,7 @@ export const { registry } = defineRegistry(catalog, {
           title={props.title}
           labels={rows.map((row) => formatLabel(row[props.labelColumn]))}
           datasets={chartDatasets(rows, props.valueColumns)}
-          activeIndex={activeIndex}
+          activeIndices={activeIndices}
           onSelect={(index) => toggle(props.labelColumn, rows[index][props.labelColumn])}
         />
       );

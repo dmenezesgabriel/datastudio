@@ -79,7 +79,7 @@ describe("DataTable", () => {
         ]}
         numericColumns={[false, false]}
         onSelectCell={vi.fn()}
-        activeValues={{ city: "Rio", channel: "web" }}
+        activeValues={{ city: ["Rio"], channel: ["web"] }}
       />,
     );
     // Two independent filters (AND) — each highlights its own matching cell.
@@ -87,6 +87,22 @@ describe("DataTable", () => {
     expect(screen.getByRole("button", { name: "web" }).getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByRole("button", { name: "Sampa" }).getAttribute("aria-pressed")).toBe("false");
     expect(screen.getByRole("button", { name: "store" }).getAttribute("aria-pressed")).toBe("false");
+  });
+
+  test("marks every cell whose value is in a column's selected set (multi-select)", () => {
+    render(
+      <DataTable
+        columns={["city"]}
+        rows={[["Sampa"], ["Rio"], ["Curitiba"]]}
+        rawRows={[["Sampa"], ["Rio"], ["Curitiba"]]}
+        numericColumns={[false]}
+        onSelectCell={vi.fn()}
+        activeValues={{ city: ["Sampa", "Curitiba"] }}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Sampa" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "Curitiba" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "Rio" }).getAttribute("aria-pressed")).toBe("false");
   });
 });
 

@@ -670,6 +670,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  position: relative; /* anchor for the multi-select popover */
 }
 
 .filter-group__label {
@@ -707,7 +708,18 @@ body {
   font-weight: 600;
 }
 
-.filter-select {
+/* The high-cardinality dimension's control: a disclosure button summarising the selection, which
+   opens the searchable checkbox popover below. Styled like the native control it replaces so the
+   bar reads uniformly (Gestalt similarity), with a caret advertising it opens a panel. */
+.filter-multiselect {
+  position: relative;
+  display: inline-flex;
+}
+
+.filter-multiselect__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   padding: 2px var(--space-2);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
@@ -715,6 +727,131 @@ body {
   color: var(--color-text);
   font-size: var(--text-sm, 0.875rem);
   cursor: pointer;
+}
+
+.filter-multiselect__trigger:hover {
+  border-color: var(--color-accent);
+}
+
+.filter-multiselect__trigger[aria-expanded="true"] {
+  border-color: var(--color-accent);
+}
+
+.filter-multiselect__caret {
+  color: var(--color-text-muted);
+  font-size: 0.75em;
+}
+
+/* The floating panel: a search box over a scrollable checkbox list. Absolutely positioned under
+   the trigger so it escapes the wrapping bar; the elevation shadow + raised fill read it as
+   layered above the content (like the pinned bar's is-stuck state). max-height caps a long list
+   to a scroll region rather than a wall of boxes. z-index clears the sticky bar (z-index:1) and
+   the chart canvas. */
+.filter-popover {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 14rem;
+  max-width: 20rem;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.filter-popover__search {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-subtle);
+  color: var(--color-text);
+  font-size: var(--text-sm, 0.875rem);
+}
+
+.filter-popover__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+/* A whole row is the click target (the label wraps the checkbox), so the value text and the box
+   toggle together — a larger, more forgiving hit area than the box alone (Fitts's law). */
+.filter-popover__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm, 0.875rem);
+  cursor: pointer;
+}
+
+.filter-popover__option:hover {
+  background: var(--color-bg-subtle);
+}
+
+.filter-popover__empty {
+  margin: 0;
+  padding: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm, 0.875rem);
+}
+
+/* The staging helpers sit left; Apply is the primary action on the right — a click there is what
+   runs the filter, so combining several values refilters once rather than on every checkbox tick. */
+.filter-popover__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--color-border);
+}
+
+.filter-popover__staging {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.filter-popover__action {
+  background: none;
+  border: 0;
+  padding: 2px var(--space-1);
+  color: var(--color-accent);
+  font-size: var(--text-sm, 0.875rem);
+  cursor: pointer;
+}
+
+.filter-popover__action:disabled {
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+/* Primary action: filled accent so it reads as the commit step. Disabled (no pending change) it
+   flattens to a muted outline, signalling there is nothing to apply. */
+.filter-popover__apply {
+  padding: 2px var(--space-3);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  color: var(--color-text-inverted);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filter-popover__apply:disabled {
+  border-color: var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: default;
 }
 
 /* The active selections, echoed as removable chips + a clear-all, so system status is always
@@ -756,7 +893,11 @@ body {
 }
 
 .filter-chip:focus-visible,
-.filter-select:focus-visible,
+.filter-multiselect__trigger:focus-visible,
+.filter-popover__search:focus-visible,
+.filter-popover__option:focus-within,
+.filter-popover__action:focus-visible,
+.filter-popover__apply:focus-visible,
 .filter-active__chip:focus-visible,
 .filter-active__clear:focus-visible {
   outline: 2px solid var(--color-accent);

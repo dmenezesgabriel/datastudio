@@ -19,29 +19,29 @@ export interface ChartJsProps {
   datasets: ChartDataset[];
   /** Called with a mark's index when the user selects it (drives cross-filtering). */
   onSelect?: (index: number) => void;
-  /** The index of the mark to emphasise (others dim) when a selection targets this chart. */
-  activeIndex?: number | null;
+  /** Indices of the marks to emphasise (others dim) when a selection targets this chart. */
+  activeIndices?: Set<number>;
 }
 
 /** Render a Chart.js chart into a canvas, updating it in place as its data changes. */
-export function ChartJsView({ kind, title, labels, datasets, onSelect, activeIndex }: ChartJsProps) {
+export function ChartJsView({ kind, title, labels, datasets, onSelect, activeIndices }: ChartJsProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
   // The latest render inputs, so the theme-change listener can repaint without
   // being re-subscribed on every data patch — and so Chart.js' onClick reads the
   // current onSelect, not the one captured when the chart was constructed.
-  const inputsRef = useRef({ kind, labels, datasets, onSelect, activeIndex });
-  inputsRef.current = { kind, labels, datasets, onSelect, activeIndex };
+  const inputsRef = useRef({ kind, labels, datasets, onSelect, activeIndices });
+  inputsRef.current = { kind, labels, datasets, onSelect, activeIndices };
 
   // Apply current data + fresh theme tokens to the live chart. Shared by the data
   // effect and the OS-theme listener so both go through one update(), never a rebuild.
   const paint = useCallback(() => {
     const chart = chartRef.current;
     if (!chart) return;
-    const { kind, labels, datasets, activeIndex } = inputsRef.current;
+    const { kind, labels, datasets, activeIndices } = inputsRef.current;
     const tokens = readChartTokens();
     chart.data.labels = labels;
-    chart.data.datasets = datasets.map((d, i) => styleDataset(d, i, kind, tokens, activeIndex));
+    chart.data.datasets = datasets.map((d, i) => styleDataset(d, i, kind, tokens, activeIndices));
     const options = baseOptions(kind, hasLegend(kind, datasets.length), tokens) as Chart["options"];
     // Route a canvas click through the latest onSelect: Chart.js hands us the active elements,
     // and the first is the clicked mark — a click on empty space passes none, selecting nothing.
@@ -75,7 +75,7 @@ export function ChartJsView({ kind, title, labels, datasets, onSelect, activeInd
 
   useEffect(() => {
     paint();
-  }, [paint, kind, labels, datasets, activeIndex]);
+  }, [paint, kind, labels, datasets, activeIndices]);
 
   // Re-theme live when the OS flips light↔dark. Guarded: jsdom (tests) has no
   // matchMedia. Repaints through update(), so the chart is never rebuilt.
@@ -111,7 +111,7 @@ export function ChartJsView({ kind, title, labels, datasets, onSelect, activeInd
         labels={labels}
         datasets={datasets}
         onSelect={onSelect}
-        activeIndex={activeIndex}
+        activeIndices={activeIndices}
       />
     </figure>
   );
@@ -143,14 +143,14 @@ function ChartDataTable({
   labels,
   datasets,
   onSelect,
-  activeIndex,
+  activeIndices,
 }: {
   title: string;
   kind: string;
   labels: string[];
   datasets: ChartDataset[];
   onSelect?: (index: number) => void;
-  activeIndex?: number | null;
+  activeIndices?: Set<number>;
 }) {
   return (
     <table className="sr-only chart-data-table">
@@ -169,7 +169,7 @@ function ChartDataTable({
         {labels.map((label, row) => (
           <tr key={`${label}-${row}`}>
             <th scope="row">
-              <CategoryHeader label={label} row={row} onSelect={onSelect} active={activeIndex === row} />
+              <CategoryHeader label={label} row={row} onSelect={onSelect} active={!!activeIndices?.has(row)} />
             </th>
             {datasets.map((dataset) => (
               <td key={dataset.label}>{dataset.data[row] ?? "—"}</td>
@@ -212,26 +212,26 @@ function hasLegend(kind: string, seriesCount: number): boolean {
 // full-opacity hue, so a cross-filter selection reads as emphasis, not a colour change.
 const DIM_ALPHA = "40";
 
-// Dim every mark except the active one when a selection targets this chart's dimension; with
-// no active index, colours pass through unchanged. `color` is one hue applied per category
+// Dim every mark except the active ones when a selection targets this chart's dimension; with
+// no active indices, colours pass through unchanged. `color` is one hue applied per category
 // index (bars/points share a series hue; a pie already colours per slice).
-function emphasize(color: string, data: unknown[], activeIndex: number | null | undefined): string | string[] {
-  if (activeIndex === null || activeIndex === undefined) return color;
-  return data.map((_, i) => (i === activeIndex ? color : `${color}${DIM_ALPHA}`));
+function emphasize(color: string, data: unknown[], activeIndices: Set<number> | undefined): string | string[] {
+  if (!activeIndices || activeIndices.size === 0) return color;
+  return data.map((_, i) => (activeIndices.has(i) ? color : `${color}${DIM_ALPHA}`));
 }
 
 /**
  * Colour + mark spec for one dataset. A single series wears the accent hue (not a
  * rainbow); multiple series take the ordered categorical palette by index (fixed
  * order, never a per-value rainbow). Marks are thin with rounded, zero-anchored ends.
- * When ``activeIndex`` is set the selected mark keeps its hue and the rest recede.
+ * When ``activeIndices`` is non-empty the selected marks keep their hue and the rest recede.
  */
 function styleDataset(
   dataset: ChartDataset,
   index: number,
   kind: string,
   tokens: ChartTokens,
-  activeIndex?: number | null,
+  activeIndices?: Set<number>,
 ) {
   const { categorical, accent, surface } = tokens;
   const seriesColor = index === 0 && kind !== "pie" ? accent : categorical[index % categorical.length];
@@ -240,15 +240,15 @@ function styleDataset(
   if (kind === "pie") {
     // Parts of a whole: colour per slice, a 2px surface-gap between slices.
     const slices = dataset.data.map((_, i) => categorical[i % categorical.length]);
-    const colored = activeIndex === null || activeIndex === undefined
+    const colored = !activeIndices || activeIndices.size === 0
       ? slices
-      : slices.map((hex, i) => (i === activeIndex ? hex : `${hex}${DIM_ALPHA}`));
+      : slices.map((hex, i) => (activeIndices.has(i) ? hex : `${hex}${DIM_ALPHA}`));
     return { ...base, backgroundColor: colored, borderColor: surface, borderWidth: 2 };
   }
   if (kind === "line") {
     return { ...base, borderColor: seriesColor, backgroundColor: seriesColor, borderWidth: 2, pointRadius: 2, tension: 0 };
   }
   // bar: thin, capped, 4px rounded data-end growing from the baseline.
-  const fill = emphasize(seriesColor, dataset.data, activeIndex);
+  const fill = emphasize(seriesColor, dataset.data, activeIndices);
   return { ...base, backgroundColor: fill, borderColor: fill, borderRadius: 4, borderSkipped: false, maxBarThickness: 24 };
 }

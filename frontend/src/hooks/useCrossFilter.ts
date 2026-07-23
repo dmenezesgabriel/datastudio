@@ -6,7 +6,9 @@ import {
   activeCount as countActive,
   FILTER_PATH,
   isActive,
-  valueFor,
+  sameValue,
+  valuesFor,
+  withField,
 } from "../crossFilter";
 
 // A stable empty reference so an unfiltered dashboard doesn't hand out a new object each render.
@@ -14,22 +16,22 @@ const NONE: ActiveFilters = {};
 
 /** What a widget or control needs to read and drive the dashboard's shared cross-filters. */
 export interface CrossFilter {
-  /** The active selections (`{field: value}`), AND-composed. `{}` when nothing is filtered. */
+  /** The active selections (`{field: [value, ...]}`), OR-within a field, AND-across fields. */
   filters: ActiveFilters;
-  /** Number of fields currently filtered. */
+  /** Number of fields currently filtered (not values). */
   activeCount: number;
-  /** Set `field = value` (replacing any prior value for that field). */
-  select: (field: string, value: unknown) => void;
-  /** Set `field = value`, or clear the field when that exact value is already active. */
+  /** Add `value` to `field`'s set, or remove it when that exact value is already selected. */
   toggle: (field: string, value: unknown) => void;
+  /** Replace `field`'s whole value set (used by the popover's "Select all" / "Clear"). */
+  setField: (field: string, values: unknown[]) => void;
   /** Replace the whole selection set at once (used to reconcile after a spec edit). */
   replace: (next: ActiveFilters) => void;
   /** Clear one field's selection. */
   clearField: (field: string) => void;
   /** Clear every selection. */
   clearAll: () => void;
-  /** The value selected for `field`, or `undefined`. */
-  valueOf: (field: string) => unknown;
+  /** The values selected for `field` (a stable empty array when none). */
+  valuesOf: (field: string) => unknown[];
 }
 
 /**
@@ -45,26 +47,27 @@ export function useCrossFilter(): CrossFilter {
   const filters = useStateValue<ActiveFilters>(FILTER_PATH) ?? NONE;
   const { set } = useStateStore();
 
-  const select = useCallback(
-    (field: string, value: unknown) => set(FILTER_PATH, { ...filters, [field]: value }),
-    [filters, set],
-  );
-  const clearField = useCallback(
-    (field: string) => {
-      const next = { ...filters };
-      delete next[field];
-      set(FILTER_PATH, next);
+  const toggle = useCallback(
+    (field: string, value: unknown) => {
+      const current = valuesFor(filters, field);
+      const next = isActive(filters, field, value)
+        ? current.filter((selected) => !sameValue(selected, value))
+        : [...current, value];
+      set(FILTER_PATH, withField(filters, field, next));
     },
     [filters, set],
   );
-  const toggle = useCallback(
-    (field: string, value: unknown) =>
-      isActive(filters, field, value) ? clearField(field) : select(field, value),
-    [filters, select, clearField],
+  const setField = useCallback(
+    (field: string, values: unknown[]) => set(FILTER_PATH, withField(filters, field, values)),
+    [filters, set],
+  );
+  const clearField = useCallback(
+    (field: string) => set(FILTER_PATH, withField(filters, field, [])),
+    [filters, set],
   );
   const replace = useCallback((next: ActiveFilters) => set(FILTER_PATH, next), [set]);
   const clearAll = useCallback(() => set(FILTER_PATH, {}), [set]);
-  const valueOf = useCallback((field: string) => valueFor(filters, field), [filters]);
+  const valuesOf = useCallback((field: string) => valuesFor(filters, field), [filters]);
 
-  return { filters, activeCount: countActive(filters), select, toggle, replace, clearField, clearAll, valueOf };
+  return { filters, activeCount: countActive(filters), toggle, setField, replace, clearField, clearAll, valuesOf };
 }

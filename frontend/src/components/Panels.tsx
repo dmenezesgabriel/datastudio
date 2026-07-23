@@ -2,7 +2,7 @@ import { Children, type ReactNode, useMemo } from "react";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 
-import { sameValue } from "../crossFilter";
+import { type ActiveFilters, isActive } from "../crossFilter";
 
 /** Vertical container for the rendered view elements. */
 export function Stack({ children }: { children?: ReactNode }) {
@@ -100,7 +100,7 @@ export function DataTable({
   numericColumns: boolean[];
   rawRows?: unknown[][];
   onSelectCell?: (column: string, value: unknown) => void;
-  activeValues?: Record<string, unknown>;
+  activeValues?: ActiveFilters;
 }) {
   // A wide table scrolls inside this box rather than widening the page (CLAUDE.md).
   // The box is a focusable, labelled region so a keyboard user can reach it and scroll it
@@ -130,8 +130,7 @@ export function DataTable({
                     selectable={!!onSelectCell && !numericColumns[columnIndex]}
                     active={
                       !!activeValues &&
-                      columns[columnIndex] in activeValues &&
-                      sameValue(activeValues[columns[columnIndex]], rawRows?.[rowIndex]?.[columnIndex])
+                      isActive(activeValues, columns[columnIndex], rawRows?.[rowIndex]?.[columnIndex])
                     }
                     onSelect={onSelectCell}
                   />
