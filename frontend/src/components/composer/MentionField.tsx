@@ -19,7 +19,7 @@ import { docFromText } from "./composerSchema";
 import type { ComposerFieldHandle } from "./composerField";
 import { buildEditorState } from "./editorState";
 import { useTableColumns } from "../../hooks/useTableColumns";
-import { matchingColumns, parseMentionQuery } from "./mentionQuery";
+import { type MentionQuery, matchingColumns, parseMentionQuery } from "./mentionQuery";
 import {
   type MentionTrigger,
   findMentionTrigger,
@@ -34,9 +34,11 @@ const MENU_ID = "composer-table-menu";
 // question, and the arrows move the highlight instead of the caret — the same precedence
 // claude.ai gives its slash menu.
 const MENU_KEYS = ["Enter", "Tab", "ArrowUp", "ArrowDown", "Escape"];
-// "." is claimed only while the menu is showing tables, where it drills into one. In the
-// column menu it is an ordinary character, since a column name may contain one.
-const DRILL_KEY = ".";
+// Keys that drill a highlighted table into its columns. "." is the primary gesture; "→" is
+// the familiar tree-view alias. Both are claimed only while the menu is showing tables — in
+// the column menu "." is an ordinary character (a column name may contain one) and "→" is an
+// ordinary caret move.
+const DRILL_KEYS = [".", "ArrowRight"];
 
 // The composer's structured editing surface: text, plus chips standing for real tables.
 // A ProseMirror document rather than a string, because a chip has to stay one indivisible
@@ -67,11 +69,15 @@ export function MentionField({
 
   const view = useEditorView({ host, placeholder, autoFocus, stored, storeDraft, setTrigger });
 
-  // What the "@" is turning into: a table until a dot follows one, its columns after.
-  const mention = useMemo(
-    () => (trigger === null ? null : parseMentionQuery(trigger.query, tables)),
-    [trigger, tables],
-  );
+  // What the "@" is turning into: a table until a dot follows one, its columns after. A
+  // trigger drilled from a chip already names its table, so it goes straight to that table's
+  // columns without re-parsing a "table." that is not in the text.
+  const mention = useMemo<MentionQuery | null>(() => {
+    if (trigger === null) return null;
+    if (trigger.chipTable !== undefined)
+      return { kind: "column", table: trigger.chipTable, query: trigger.query };
+    return parseMentionQuery(trigger.query, tables);
+  }, [trigger, tables]);
   const columns = useTableColumns(mention?.kind === "column" ? mention.table : null);
   const matches = useMemo(
     () =>
@@ -117,11 +123,11 @@ export function MentionField({
     editor.focus();
   }
 
-  /** Carry a highlighted table into its columns, so "." drills in instead of picking. */
-  function drillIntoTable() {
+  /** Carry a table into its columns, so "." (or the chevron) drills in instead of picking. */
+  function drillIntoTable(name: string = matches[highlighted]) {
     const editor = view.current;
     if (editor === null || trigger === null) return;
-    typeMentionQuery(trigger, `${matches[highlighted]}.`)(editor.state, editor.dispatch);
+    typeMentionQuery(trigger, `${name}.`)(editor.state, editor.dispatch);
     editor.focus();
   }
 
@@ -129,7 +135,9 @@ export function MentionField({
     // Mid-composition, Enter accepts the IME's candidate rather than ending the message —
     // sending here fires mid-word for anyone typing Japanese, Chinese, or Korean.
     if (event.nativeEvent.isComposing) return;
-    const claimed = MENU_KEYS.includes(event.key) || (event.key === DRILL_KEY && mention?.kind === "table");
+    const claimed =
+      MENU_KEYS.includes(event.key) ||
+      (DRILL_KEYS.includes(event.key) && mention?.kind === "table");
     if (isOpen && claimed) return claimForMenu(event);
     if (event.key === "Enter" && !event.shiftKey && !event.altKey) {
       // Shift+Enter and Alt+Enter fall through to the editor, which splits the paragraph.
@@ -146,17 +154,27 @@ export function MentionField({
     if (event.key === "Escape") return setDismissedAt(trigger?.from ?? null);
     if (event.key === "ArrowDown") return setHighlighted(step(highlighted, 1, matches.length));
     if (event.key === "ArrowUp") return setHighlighted(step(highlighted, -1, matches.length));
-    // "." on a highlighted table means "now show me its columns" — otherwise the only way
-    // to reach a column would be to type the table's full name by hand, which is exactly
+    // "." or "→" on a highlighted table means "now show me its columns" — otherwise the only
+    // way to reach a column would be to type the table's full name by hand, which is exactly
     // what the menu exists to avoid.
-    if (event.key === ".") return drillIntoTable();
+    if (DRILL_KEYS.includes(event.key)) return drillIntoTable();
     pick(matches[highlighted]);
   }
 
   return (
     <div className="composer__editor" onFocus={loadTables} onKeyDownCapture={handleKeyDown}>
-      {isOpen && (
-        <MentionMenu id={MENU_ID} matches={matches} highlighted={highlighted} onPick={pick} />
+      {isOpen && mention !== null && (
+        <MentionMenu
+          id={MENU_ID}
+          label={menuLabel(mention)}
+          hint={menuHint(mention)}
+          matches={matches}
+          highlighted={highlighted}
+          onPick={pick}
+          // Only tables drill; the chevron is absent in the column menu, where there is
+          // nothing further to open.
+          onDrill={mention.kind === "table" ? drillIntoTable : undefined}
+        />
       )}
       {/* ProseMirror owns everything inside this element. React must never render children
           into it, and must never move it: re-attaching a contenteditable drops the caret,
@@ -262,6 +280,16 @@ function useComboboxState(
 function setOrRemove(dom: Element, name: string, value: string | null): void {
   if (value === null) dom.removeAttribute(name);
   else dom.setAttribute(name, value);
+}
+
+/** What the menu announces to assistive tech: which list it is showing. */
+function menuLabel(mention: MentionQuery): string {
+  return mention.kind === "table" ? "Tables" : `Columns of ${mention.table}`;
+}
+
+/** The one-line affordance under the menu, telling the user the drill exists. */
+function menuHint(mention: MentionQuery): string {
+  return mention.kind === "table" ? "↵ add · . or → for columns" : "↵ add column";
 }
 
 /** Move the highlight, wrapping at both ends so the list is a loop. */

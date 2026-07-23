@@ -46,6 +46,21 @@ function renderComposer(onSubmit = vi.fn()) {
   return { field: screen.getByRole("textbox"), onSubmit };
 }
 
+// The name each option stands for, read from its label span rather than the whole row — a
+// table row also carries a drill chevron, which is not part of the name.
+function optionNames(): (string | null | undefined)[] {
+  return screen
+    .getAllByRole("option")
+    .map((option) => option.querySelector(".composer__menu-name")?.textContent);
+}
+
+function highlightedName(): string | null | undefined {
+  const selected = screen
+    .getAllByRole("option")
+    .find((option) => option.getAttribute("aria-selected") === "true");
+  return selected?.querySelector(".composer__menu-name")?.textContent;
+}
+
 // ProseMirror owns the DOM inside the editable, so drafts are typed the way a browser types:
 // text goes in as a text node and the editor is told the DOM changed.
 async function typeInto(field: HTMLElement, text: string) {
@@ -74,6 +89,19 @@ async function pressUndo(field: HTMLElement) {
 async function pressRedo(field: HTMLElement) {
   await act(async () => {
     fireEvent.keyDown(field, { key: "z", ctrlKey: true, shiftKey: true });
+    await Promise.resolve();
+  });
+}
+
+// Append `extra` at the end of the draft without rewriting what is already there — the way to
+// type after a chip, since setting textContent would tear the chip's DOM out from under PM.
+async function appendInto(field: HTMLElement, extra: string) {
+  await act(async () => {
+    field.focus();
+    const paragraph = field.querySelector("p") ?? field;
+    paragraph.append(document.createTextNode(extra));
+    placeCaretAtEnd(paragraph);
+    fireEvent.input(field);
     await Promise.resolve();
   });
 }
@@ -107,8 +135,7 @@ test("opens the table menu on @ and narrows it as the name is typed", async () =
   await typeInto(field, "rows in @olist");
 
   await waitFor(() => expect(screen.getByRole("listbox")).toBeTruthy());
-  const options = screen.getAllByRole("option").map((option) => option.textContent);
-  expect(options).toEqual(["olist_orders", "olist_products"]);
+  expect(optionNames()).toEqual(["olist_orders", "olist_products"]);
 });
 
 test("no menu until an @ is typed", async () => {
@@ -145,8 +172,7 @@ test("the arrows move the highlight through the menu", async () => {
 
   fireEvent.keyDown(field, { key: "ArrowDown" });
 
-  const selected = screen.getAllByRole("option").find((o) => o.getAttribute("aria-selected") === "true");
-  expect(selected?.textContent).toBe("olist_products");
+  expect(highlightedName()).toBe("olist_products");
 });
 
 test("points aria-activedescendant at the highlighted option", async () => {
@@ -173,11 +199,8 @@ test("puts the highlight back on the first match when the query changes", async 
 
   await typeInto(field, "rows in @northwind");
 
-  await waitFor(() => expect(screen.getAllByRole("option")[0].textContent).toBe(
-    "northwind_order_details",
-  ));
-  const selected = screen.getAllByRole("option").find((o) => o.getAttribute("aria-selected") === "true");
-  expect(selected?.textContent).toBe("northwind_order_details");
+  await waitFor(() => expect(optionNames()[0]).toBe("northwind_order_details"));
+  expect(highlightedName()).toBe("northwind_order_details");
 });
 
 test("keeps the highlighted option in view as the arrows move it", async () => {
@@ -277,6 +300,105 @@ test("keeps a chip when the draft is stored and reopened", async () => {
 
   expect(screen.getByRole("textbox").querySelector("[data-table-mention]")?.textContent).toBe(
     "olist_orders",
+  );
+});
+
+test("a bare @ lists the whole catalog, not just the first scannable page", async () => {
+  // Browsing must reach every table, not only the first eight — otherwise the tables past the
+  // eighth (a whole seeded dataset) are invisible unless the user guesses to type their name.
+  const many = Array.from({ length: 12 }, (_, i) => `table_${String(i).padStart(2, "0")}`);
+  new FakeSchemaApi(many).install();
+  const { field } = renderComposer();
+  act(() => field.focus());
+
+  await typeInto(field, "@");
+
+  await waitFor(() => expect(screen.getAllByRole("option")).toHaveLength(12));
+});
+
+test("ArrowRight drills a highlighted table into its columns", async () => {
+  // A second, arrow-key way into the drill — some users reach for the arrow, not the dot.
+  const { field } = renderComposer();
+  act(() => field.focus());
+  await waitFor(() => expect(api.calls).toBe(1));
+  await typeInto(field, "average @olist_ord");
+  await waitFor(() => expect(screen.getByRole("listbox")).toBeTruthy());
+
+  await act(async () => {
+    fireEvent.keyDown(field, { key: "ArrowRight" });
+    await Promise.resolve();
+  });
+
+  await waitFor(() =>
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toContain("order_id"),
+  );
+});
+
+test("clicking a table's chevron drills into its columns without committing the table", async () => {
+  const { field } = renderComposer();
+  act(() => field.focus());
+  await waitFor(() => expect(api.calls).toBe(1));
+  await typeInto(field, "average @olist_ord");
+  await waitFor(() => expect(screen.getByRole("listbox")).toBeTruthy());
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Show columns of olist_orders" }));
+    await Promise.resolve();
+  });
+
+  await waitFor(() =>
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toContain("order_id"),
+  );
+});
+
+test("typing a dot after a committed table chip reopens that table's columns", async () => {
+  // The gesture users actually try: pick the table, then type ".column". Before, that dead-ended.
+  const { field } = renderComposer();
+  act(() => field.focus());
+  await waitFor(() => expect(api.calls).toBe(1));
+  await typeInto(field, "average @olist_orders");
+  await waitFor(() => expect(screen.getByRole("listbox")).toBeTruthy());
+  fireEvent.keyDown(field, { key: "Enter" }); // commit olist_orders as a chip
+
+  await appendInto(field, "."); // the chip carries a trailing space, so this is "chip ."
+
+  await waitFor(() =>
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual([
+      "order_id",
+      "order_status",
+      "customer_id",
+    ]),
+  );
+});
+
+test("picking a column drilled from a chip sends it qualified by the table", async () => {
+  const { field, onSubmit } = renderComposer();
+  act(() => field.focus());
+  await waitFor(() => expect(api.calls).toBe(1));
+  await typeInto(field, "average @olist_orders");
+  await waitFor(() => expect(screen.getByRole("listbox")).toBeTruthy());
+  fireEvent.keyDown(field, { key: "Enter" }); // commit the table chip
+  await appendInto(field, ".order_s");
+  await waitFor(() => expect(screen.getByRole("listbox")).toBeTruthy());
+  fireEvent.keyDown(field, { key: "Enter" }); // picks order_status
+
+  fireEvent.keyDown(field, { key: "Enter" }); // menu closed -> sends
+
+  expect(onSubmit).toHaveBeenCalledWith("average olist_orders.order_status");
+});
+
+test("the menu announces tables, then the drilled table's columns", async () => {
+  const { field } = renderComposer();
+  act(() => field.focus());
+  await waitFor(() => expect(api.calls).toBe(1));
+  await typeInto(field, "average @olist_ord");
+  await waitFor(() => expect(screen.getByRole("listbox")).toBeTruthy());
+  expect(screen.getByRole("listbox").getAttribute("aria-label")).toBe("Tables");
+
+  await typeInto(field, "average @olist_orders.");
+
+  await waitFor(() =>
+    expect(screen.getByRole("listbox").getAttribute("aria-label")).toBe("Columns of olist_orders"),
   );
 });
 
