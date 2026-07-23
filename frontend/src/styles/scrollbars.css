@@ -1,0 +1,67 @@
+/* Application-wide scrollbar chrome. A single cross-cutting concern in its own file (SRP;
+   keeps app.css from growing), applied globally so every scroll region — the transcript,
+   dashboard canvas, result tables, sidebar, mention/filter popovers, code panels — reads
+   the same. Recessive by design: the browser default (thick, high-contrast on Win/Linux)
+   fights the data for attention, the opposite of the hairline grid/axis and quiet table
+   rules the rest of the app uses. Visuals are token-driven; see tokens.css.
+
+   Two engines, two mechanisms, deliberately kept apart so neither shadows the other:
+   Blink/WebKit honour ::-webkit-scrollbar *only while scrollbar-width is `auto`* — setting
+   scrollbar-width there would silently disable the custom thumb below. So the standard
+   scrollbar-width/-color path is scoped to engines that lack the pseudo-element (Firefox),
+   and the pseudo-element path to those that have it (Chromium, Safari 18.2+). Engines too
+   old for `@supports selector()` fall through to the UA default — acceptable degradation. */
+
+/* Firefox / the CSS standard path. Transparent track = no idle box; the thumb is the only
+   ink. scrollbar-color *is* inherited, so it need only be set on :root — but scrollbar-width
+   is *not* inherited, so it must be set on every element or nested scroll containers (sidebar,
+   transcript, tables) keep the browser default `auto` width. */
+@supports not selector(::-webkit-scrollbar) {
+  :root {
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+
+  * {
+    scrollbar-width: thin;
+  }
+}
+
+/* Chromium / Safari path. scrollbar-width is intentionally left unset here — setting it would
+   make Blink ignore every rule below. */
+@supports selector(::-webkit-scrollbar) {
+  *::-webkit-scrollbar {
+    width: var(--scrollbar-size);
+    height: var(--scrollbar-size);
+  }
+
+  /* No track box — zero ink where nothing is happening. */
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* A floating pill. The 3px transparent border + padding-box clip insets the paint from the
+     track edges, so a 10px-wide bar reads as a ~4px thumb with breathing room around it —
+     far less ink than a full-width bar, and it never touches the content edge. */
+  *::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
+
+  /* The one interactive cue: darken to muted ink when the pointer is on the bar. */
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+
+  /* Where a vertical and horizontal bar meet (e.g. a two-axis .table-scroll): no filled
+     corner square, matching the transparent track. */
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Drop the up/down arrow buttons — chartjunk, and absent from every modern scrollbar. */
+  *::-webkit-scrollbar-button {
+    display: none;
+  }
+}

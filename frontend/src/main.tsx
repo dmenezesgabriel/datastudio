@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import "./styles/tokens.css";
 import "./styles/utilities.css";
 import "./styles/app.css";
+import "./styles/scrollbars.css";
 import { App } from "./App";
 
 const container = document.getElementById("root");

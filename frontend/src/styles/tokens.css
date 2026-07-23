@@ -75,6 +75,14 @@
   --content-max: 760px;
 
   --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  /* Scrollbars: recessive by default so the data stays the loud thing (Tufte data-ink).
+     The thumb sits one step off the surface (--color-border-strong) and only darkens to
+     muted ink on hover. Both values resolve through theme-aware tokens, so the dark block
+     below needs no scrollbar override — they follow automatically. */
+  --scrollbar-size: 10px;
+  --scrollbar-thumb: var(--color-border-strong);
+  --scrollbar-thumb-hover: var(--color-text-muted);
 }
 
 @media (prefers-color-scheme: dark) {
