@@ -1,8 +1,8 @@
-- filter with multiple selection not all or single one
+- stylize scroll bars
+- filter, clear do the same as select all, misleading, select all polute the filters with a lot of chips
 - date picker widget for filtering
 - crossfilterting must reach backend to correctly recalculate aggregation
 - data table scroll match other widgets like charts height
-- stylize scroll bars
 - make llm also be able to edit the filter as artifact
 - automated glossary
 - chart annotations
