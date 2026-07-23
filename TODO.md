@@ -1,14 +1,15 @@
-- Prose mirror text area chat input, undo, redo
+- @commands better ux
 - cross filtering
 - automated glossary
 - chart annotations
+- emphasize numbers on narrative
 - color blindness (blue, orange pallet, tableau like)
-- artifact thumbnails in cards
+- table custom formatters (indicators, semaphores)
 - icons on task planning/progress
 - syntax highlight sql + copy button
+- data sources references, date references
+- artifact thumbnails in cards
 - canvas mode + collaboration
 - first chat page custom
-- data sources references, date references
-- emphasize numbers on narrative
-- table custom formatters (indicators, semaphores)
 - API HATEOAS
+- MSAL Auth + Keycloak
