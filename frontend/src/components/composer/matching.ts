@@ -27,3 +27,20 @@ export function rankedMatches(names: string[], query: string): string[] {
 function rankFor(name: string, needle: string): number {
   return name.toLowerCase().startsWith(needle) ? 0 : 1;
 }
+
+/**
+ * The names to show in the "@" menu for `query`: capped while filtering, uncapped while
+ * browsing.
+ *
+ * An empty query is the user browsing the whole list, not searching it — capping that hides
+ * everything past the eighth name (a warehouse's later tables, a wide table's later columns)
+ * behind a filter the user has no reason to know they need. The menu scrolls, so the full
+ * list is reachable. Once anything is typed the cap returns, keeping a match list scannable.
+ *
+ * Example:
+ *     rankedMenu(["a", "b", "c"], "");  // ["a", "b", "c"] — the whole list
+ */
+export function rankedMenu(names: string[], query: string): string[] {
+  const ranked = rankedMatches(names, query);
+  return query === "" ? ranked : ranked.slice(0, MENU_LENGTH);
+}

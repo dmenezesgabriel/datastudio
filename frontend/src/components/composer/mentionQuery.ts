@@ -3,7 +3,7 @@
 // dataset actually has — so one trigger drives both menus, and reaching a column needs no
 // second gesture to learn.
 
-import { MENU_LENGTH, rankedMatches } from "./matching";
+import { rankedMenu } from "./matching";
 
 /** Which menu an in-progress "@" should be showing, and what to filter it by. */
 export type MentionQuery =
@@ -38,5 +38,5 @@ export function parseMentionQuery(query: string, tables: string[]): MentionQuery
  *     matchingColumns(["order_id", "customer_id"], "order"); // ["order_id"]
  */
 export function matchingColumns(columns: string[], query: string): string[] {
-  return rankedMatches(columns, query).slice(0, MENU_LENGTH);
+  return rankedMenu(columns, query);
 }

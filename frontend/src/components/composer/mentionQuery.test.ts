@@ -55,3 +55,10 @@ test("keeps the column menu short enough to scan", () => {
   const many = Array.from({ length: 40 }, (_, i) => `col_${i}`);
   expect(matchingColumns(many, "col").length).toBe(8);
 });
+
+test("offers the whole table to browse before anything is typed after the dot", () => {
+  // Same as the table menu: a bare "table." is browsing the columns, so the cap that keeps a
+  // filtered list scannable would instead hide a wide table's later columns behind a filter.
+  const many = Array.from({ length: 40 }, (_, i) => `col_${i}`);
+  expect(matchingColumns(many, "").length).toBe(40);
+});
