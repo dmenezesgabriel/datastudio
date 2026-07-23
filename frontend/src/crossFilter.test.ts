@@ -6,6 +6,7 @@ import {
   applyFilters,
   isActive,
   matchesAllFilters,
+  pruneFilters,
   rowsHaveField,
   sameValue,
   valueFor,
@@ -95,6 +96,37 @@ describe("applyFilters", () => {
   test("tolerates null/undefined cells", () => {
     const rows = [{ category: null }, { category: "Books" }, { category: undefined }];
     expect(applyFilters(rows, { category: "Books" })).toEqual([{ category: "Books" }]);
+  });
+});
+
+describe("pruneFilters (reconcile a selection to the current dimensions)", () => {
+  // The dimensions an edited dashboard still offers: category (Toys only) and region (West).
+  const DIMENSIONS = [
+    { field: "category", options: [{ value: "Toys" }] },
+    { field: "region", options: [{ value: "West" }, { value: "East" }] },
+  ];
+
+  test("keeps selections whose field and value are still selectable (same ref, no churn)", () => {
+    const filters = { region: "West" };
+    expect(pruneFilters(filters, DIMENSIONS)).toBe(filters);
+  });
+
+  test("drops a selection whose field is no longer a dimension (edit removed the column)", () => {
+    expect(pruneFilters({ supplier: "Acme", region: "West" }, DIMENSIONS)).toEqual({ region: "West" });
+  });
+
+  test("drops a selection whose value the dimension no longer yields (edit changed the data)", () => {
+    // "Books" was selected, but the edited category dimension now offers only "Toys".
+    expect(pruneFilters({ category: "Books" }, DIMENSIONS)).toEqual({});
+  });
+
+  test("empty dimensions (a text-only edit) drop every selection", () => {
+    expect(pruneFilters({ category: "Toys", region: "West" }, [])).toEqual({});
+  });
+
+  test("an already-empty selection is returned as the same (empty) reference", () => {
+    const none = {};
+    expect(pruneFilters(none, DIMENSIONS)).toBe(none);
   });
 });
 

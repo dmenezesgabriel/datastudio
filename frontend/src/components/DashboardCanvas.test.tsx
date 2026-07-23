@@ -50,4 +50,53 @@ describe("DashboardCanvas", () => {
     fireEvent.click(within(screen.getAllByRole("group", { name: /category/i })[0]).getByRole("button", { name: "Books" }));
     expect(screen.getAllByRole("button", { name: /remove filter/i }).length).toBe(1);
   });
+
+  // An edit swaps the spec under the same provider (ArtifactView re-fetches on onComplete). The
+  // /crossFilter selection lives outside the spec state, so it survives that swap — these pin
+  // that the bar reconciles it to the edited dimensions instead of leaving a dangling chip.
+  test("an edit that drops a dimension prunes its now-orphaned active filter", () => {
+    const { rerender } = render(<DashboardCanvas spec={twoDimDashboard() as Spec} loading={false} />);
+    fireEvent.click(categoryGroup().getByRole("button", { name: "Books" }));
+    expect(screen.getByRole("button", { name: /remove filter.*category.*books/i })).toBeTruthy();
+    // The edited spec keeps only the region column — category is no longer a dimension.
+    rerender(<DashboardCanvas spec={regionOnlyDashboard() as Spec} loading={false} />);
+    expect(screen.queryByRole("button", { name: /remove filter.*category/i })).toBeNull();
+  });
+
+  test("an edit keeps an active filter whose dimension and value survive", () => {
+    const { rerender } = render(<DashboardCanvas spec={twoDimDashboard() as Spec} loading={false} />);
+    fireEvent.click(within(screen.getByRole("group", { name: /region/i })).getByRole("button", { name: "West" }));
+    rerender(<DashboardCanvas spec={regionOnlyDashboard() as Spec} loading={false} />);
+    // Region still exists with "West" among its values, so the selection stays applied.
+    expect(screen.getByRole("button", { name: /remove filter.*region.*west/i })).toBeTruthy();
+  });
 });
+
+// A table with two filterable dimensions (category, region) sharing the rows below.
+function twoDimDashboard(): SpecWithState {
+  return {
+    root: "root",
+    elements: {
+      root: { type: "Stack", props: {}, children: ["t"] },
+      t: { type: "DataTable", props: { data: { $state: "/d" } }, children: [] },
+    },
+    state: {
+      d: {
+        columns: ["category", "region"],
+        rows: [{ category: "Books", region: "West" }, { category: "Toys", region: "East" }],
+      },
+    },
+  };
+}
+
+// The same dashboard after an edit that drops the category column: only region remains.
+function regionOnlyDashboard(): SpecWithState {
+  return {
+    root: "root",
+    elements: {
+      root: { type: "Stack", props: {}, children: ["t"] },
+      t: { type: "DataTable", props: { data: { $state: "/d" } }, children: [] },
+    },
+    state: { d: { columns: ["region"], rows: [{ region: "West" }, { region: "East" }] } },
+  };
+}

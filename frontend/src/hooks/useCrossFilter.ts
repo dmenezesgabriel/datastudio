@@ -22,6 +22,8 @@ export interface CrossFilter {
   select: (field: string, value: unknown) => void;
   /** Set `field = value`, or clear the field when that exact value is already active. */
   toggle: (field: string, value: unknown) => void;
+  /** Replace the whole selection set at once (used to reconcile after a spec edit). */
+  replace: (next: ActiveFilters) => void;
   /** Clear one field's selection. */
   clearField: (field: string) => void;
   /** Clear every selection. */
@@ -60,8 +62,9 @@ export function useCrossFilter(): CrossFilter {
       isActive(filters, field, value) ? clearField(field) : select(field, value),
     [filters, select, clearField],
   );
+  const replace = useCallback((next: ActiveFilters) => set(FILTER_PATH, next), [set]);
   const clearAll = useCallback(() => set(FILTER_PATH, {}), [set]);
   const valueOf = useCallback((field: string) => valueFor(filters, field), [filters]);
 
-  return { filters, activeCount: countActive(filters), select, toggle, clearField, clearAll, valueOf };
+  return { filters, activeCount: countActive(filters), select, toggle, replace, clearField, clearAll, valueOf };
 }

@@ -1,10 +1,10 @@
 import type { Spec } from "@json-render/react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { type FilterDimension, type FilterOption, filterDimensions } from "../dashboardFilters";
 import { formatValue } from "../format";
 import { type CrossFilter, useCrossFilter } from "../hooks/useCrossFilter";
-import { isActive, sameValue } from "../crossFilter";
+import { isActive, pruneFilters, sameValue } from "../crossFilter";
 
 // A dimension with at most this many values shows every value inline as chips (recognition —
 // you see the whole set); more than this falls back to a dropdown so the bar stays compact.
@@ -23,6 +23,15 @@ const SEGMENT_MAX = 8;
 export function DashboardFilterBar({ spec }: { spec: Spec | null }) {
   const dimensions = useMemo(() => filterDimensions(spec), [spec]);
   const crossFilter = useCrossFilter();
+  const { filters, replace } = crossFilter;
+  // An edit re-derives the dimensions; reconcile the active selection to them so a column the
+  // edit removed (or a value it no longer yields) can't linger as a dangling filter chip. The
+  // active selection lives outside the spec state, so json-render's reconciliation never touches
+  // it — this is where it gets pruned. A no-op (same ref) when every selection is still valid.
+  useEffect(() => {
+    const pruned = pruneFilters(filters, dimensions);
+    if (pruned !== filters) replace(pruned);
+  }, [dimensions, filters, replace]);
   if (dimensions.length === 0) return null;
   return (
     <section className="filter-bar" aria-label="Filters">

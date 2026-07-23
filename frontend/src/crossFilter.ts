@@ -84,6 +84,42 @@ export function applyFilters(
 }
 
 /**
+ * The dimension shape {@link pruneFilters} needs: a field and the raw values still selectable
+ * on it. `FilterDimension` (dashboardFilters.ts) is structurally one of these — kept minimal
+ * here so this module stays dependency-free (dashboardFilters imports from it, not the reverse).
+ */
+export interface SelectableDimension {
+  field: string;
+  options: { value: unknown }[];
+}
+
+/**
+ * Drop selections that no longer correspond to a live dimension/value. Run after an edit
+ * re-derives the dashboard's dimensions: a column the edit removed, or a value it no longer
+ * yields, would otherwise linger as a dangling active-filter chip that filters nothing and
+ * has no control to toggle it off. Returns the SAME reference when every selection is still
+ * valid (so the caller writes nothing and no re-render churns); otherwise a new object with
+ * only the still-selectable selections.
+ *
+ * @example pruneFilters({ category: "Books", region: "West" }, [{ field: "category", options: [{ value: "Toys" }] }])
+ * // { } — "Books" is gone and "region" is no longer a dimension
+ */
+export function pruneFilters(
+  filters: ActiveFilters,
+  dimensions: SelectableDimension[],
+): ActiveFilters {
+  const optionsByField = new Map(dimensions.map((dimension) => [dimension.field, dimension.options]));
+  const kept: ActiveFilters = {};
+  let dropped = false;
+  for (const [field, value] of Object.entries(filters)) {
+    const options = optionsByField.get(field);
+    if (options?.some((option) => sameValue(option.value, value))) kept[field] = value;
+    else dropped = true;
+  }
+  return dropped ? kept : filters;
+}
+
+/**
  * The index of the first row matching the selection on `field`, for emphasising the source
  * mark (a chart whose `labelColumn` is filtered keeps all bars and highlights this one).
  * `null` when the field is not filtered or nothing matches.
