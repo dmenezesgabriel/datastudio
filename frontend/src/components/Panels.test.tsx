@@ -13,6 +13,19 @@ describe("DataTable", () => {
     const region = screen.getByRole("group", { name: /data table/i });
     expect(region.getAttribute("tabindex")).toBe("0");
   });
+
+  test("renders every supplied row inside the scroll region", () => {
+    // A tall result is height-capped and scrolls inside .table-scroll (verified live in
+    // Playwright — jsdom has no layout). Here we only guard that the wrapper never drops
+    // rows: the whole point of the scroll box is to hold *all* of them.
+    const rows = Array.from({ length: 50 }, (_, index) => [`city-${index}`, String(index)]);
+    const { container } = render(
+      <DataTable columns={["city", "orders"]} rows={rows} numericColumns={[false, true]} />,
+    );
+    const region = screen.getByRole("group", { name: /data table/i });
+    expect(region.classList.contains("table-scroll")).toBe(true);
+    expect(container.querySelectorAll("tbody tr").length).toBe(50);
+  });
 });
 
 describe("KpiStat", () => {
