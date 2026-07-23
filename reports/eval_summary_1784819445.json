@@ -1,0 +1,317 @@
+{
+  "run_at": "2026-07-23T15:10:45.789059+00:00",
+  "model": "openai/glm-5",
+  "summary": {
+    "total": 122,
+    "passed": 119,
+    "failed": 3,
+    "pass_rate": 0.975,
+    "avg_latency_s": 29.498,
+    "p95_latency_s": 50.369,
+    "total_input_tokens": 564633,
+    "total_output_tokens": 151521,
+    "total_cached_input_tokens": 409219,
+    "cache_read_rate": 0.725,
+    "avg_input_tokens": 4628.1,
+    "avg_output_tokens": 1242.0,
+    "cost_usd": 0.0,
+    "view_selection": {
+      "passed": 319,
+      "total": 319,
+      "accuracy": 1.0
+    },
+    "consistency": {
+      "cases": 122,
+      "mean_consistency": 0.975,
+      "reliable": 119,
+      "flaky": 0,
+      "failing": 3
+    },
+    "by_tag": {
+      "aggregation": {
+        "total": 25,
+        "passed": 24
+      },
+      "filter": {
+        "total": 22,
+        "passed": 22
+      },
+      "easy": {
+        "total": 14,
+        "passed": 14
+      },
+      "group_by": {
+        "total": 19,
+        "passed": 19
+      },
+      "ranking": {
+        "total": 12,
+        "passed": 12
+      },
+      "medium": {
+        "total": 28,
+        "passed": 28
+      },
+      "conditional_aggregation": {
+        "total": 2,
+        "passed": 2
+      },
+      "date": {
+        "total": 14,
+        "passed": 14
+      },
+      "comparison": {
+        "total": 2,
+        "passed": 2
+      },
+      "hard": {
+        "total": 26,
+        "passed": 26
+      },
+      "percentage": {
+        "total": 13,
+        "passed": 12
+      },
+      "join": {
+        "total": 12,
+        "passed": 12
+      },
+      "subquery": {
+        "total": 1,
+        "passed": 1
+      },
+      "chart": {
+        "total": 29,
+        "passed": 29
+      },
+      "time_series": {
+        "total": 8,
+        "passed": 8
+      },
+      "kpi": {
+        "total": 6,
+        "passed": 6
+      },
+      "dashboard": {
+        "total": 8,
+        "passed": 8
+      },
+      "overview": {
+        "total": 5,
+        "passed": 5
+      },
+      "multi-turn": {
+        "total": 9,
+        "passed": 9
+      },
+      "memory": {
+        "total": 7,
+        "passed": 7
+      },
+      "window": {
+        "total": 3,
+        "passed": 3
+      },
+      "growth": {
+        "total": 1,
+        "passed": 1
+      },
+      "running_total": {
+        "total": 1,
+        "passed": 1
+      },
+      "cohort": {
+        "total": 1,
+        "passed": 1
+      },
+      "retention": {
+        "total": 1,
+        "passed": 1
+      },
+      "cte": {
+        "total": 1,
+        "passed": 1
+      },
+      "distribution": {
+        "total": 2,
+        "passed": 2
+      },
+      "percentile": {
+        "total": 1,
+        "passed": 1
+      },
+      "having": {
+        "total": 2,
+        "passed": 2
+      },
+      "string": {
+        "total": 1,
+        "passed": 1
+      },
+      "funnel": {
+        "total": 1,
+        "passed": 1
+      },
+      "rank": {
+        "total": 1,
+        "passed": 1
+      },
+      "expert": {
+        "total": 1,
+        "passed": 1
+      },
+      "refinement": {
+        "total": 2,
+        "passed": 2
+      },
+      "text": {
+        "total": 6,
+        "passed": 6
+      },
+      "meta": {
+        "total": 2,
+        "passed": 2
+      },
+      "chitchat": {
+        "total": 3,
+        "passed": 3
+      },
+      "detail": {
+        "total": 1,
+        "passed": 1
+      },
+      "table": {
+        "total": 2,
+        "passed": 2
+      },
+      "placement": {
+        "total": 1,
+        "passed": 1
+      },
+      "drilldown": {
+        "total": 4,
+        "passed": 4
+      },
+      "paraphrase": {
+        "total": 7,
+        "passed": 7
+      },
+      "robustness": {
+        "total": 17,
+        "passed": 16
+      },
+      "edge": {
+        "total": 8,
+        "passed": 7
+      },
+      "empty_result": {
+        "total": 4,
+        "passed": 4
+      },
+      "out_of_scope": {
+        "total": 5,
+        "passed": 4
+      },
+      "no_hallucination": {
+        "total": 13,
+        "passed": 12
+      },
+      "ambiguity": {
+        "total": 1,
+        "passed": 1
+      },
+      "escalation": {
+        "total": 1,
+        "passed": 1
+      },
+      "edit": {
+        "total": 5,
+        "passed": 5
+      },
+      "restyle": {
+        "total": 3,
+        "passed": 3
+      },
+      "reanalyze": {
+        "total": 2,
+        "passed": 2
+      },
+      "add_widget": {
+        "total": 1,
+        "passed": 1
+      },
+      "preservation": {
+        "total": 1,
+        "passed": 1
+      },
+      "resilience": {
+        "total": 3,
+        "passed": 3
+      },
+      "intent": {
+        "total": 3,
+        "passed": 2
+      },
+      "null": {
+        "total": 2,
+        "passed": 2
+      },
+      "exec_scenario": {
+        "total": 10,
+        "passed": 10
+      },
+      "marketplace": {
+        "total": 17,
+        "passed": 16
+      },
+      "diagnostic": {
+        "total": 1,
+        "passed": 1
+      },
+      "concentration": {
+        "total": 2,
+        "passed": 2
+      },
+      "trading": {
+        "total": 10,
+        "passed": 9
+      },
+      "definitional_ambiguity": {
+        "total": 8,
+        "passed": 7
+      },
+      "false_premise": {
+        "total": 6,
+        "passed": 6
+      },
+      "adversarial": {
+        "total": 6,
+        "passed": 6
+      },
+      "tie": {
+        "total": 1,
+        "passed": 1
+      },
+      "division_by_zero": {
+        "total": 1,
+        "passed": 1
+      },
+      "hallucinated_column": {
+        "total": 1,
+        "passed": 0
+      },
+      "context_switch": {
+        "total": 1,
+        "passed": 1
+      },
+      "correction": {
+        "total": 1,
+        "passed": 1
+      },
+      "fanout": {
+        "total": 1,
+        "passed": 1
+      }
+    }
+  }
+}
