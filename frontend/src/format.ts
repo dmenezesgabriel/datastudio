@@ -70,6 +70,22 @@ export function formatCell(value: unknown): string {
 }
 
 /**
+ * Whether a column reads as numeric across a result: it has values and every non-empty cell
+ * is a number (or numeric string). Drives right-alignment of measure columns, and marks a
+ * column as a measure (not a filterable dimension). Ids and years count as numeric — correct.
+ *
+ * @example
+ *   isNumericColumn([{ amount: 12 }, { amount: "3.5" }], "amount") // true
+ *   isNumericColumn([{ city: "Rio" }], "city")                     // false
+ */
+export function isNumericColumn(rows: Record<string, unknown>[], column: string): boolean {
+  const present = rows
+    .map((row) => row[column])
+    .filter((value) => value !== null && value !== undefined && value !== "");
+  return present.length > 0 && present.every(isNumeric);
+}
+
+/**
  * Format a chart axis label. A midnight ISO timestamp (DuckDB date_trunc output)
  * renders as its date alone so a monthly axis reads "2017-01-01" instead of the
  * meaningless "0:00:00"; every other value is stringified unchanged.

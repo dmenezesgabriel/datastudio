@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import { formatCell, formatLabel, formatValue } from "./format";
+import { formatCell, formatLabel, formatValue, isNumericColumn } from "./format";
 
 test("formatValue adds thousands separators to integers", () => {
   expect(formatValue(99441)).toBe("99,441");
@@ -63,4 +63,16 @@ test("formatCell passes strings through and renders null as empty", () => {
 test("formatCell renders a non-finite number as empty, not 'NaN'/'∞'", () => {
   expect(formatCell(NaN)).toBe("");
   expect(formatCell(Infinity)).toBe("");
+});
+
+test("isNumericColumn is true when every present cell reads as a number", () => {
+  const rows = [{ amount: 12, city: "Rio" }, { amount: "3.5", city: "Sampa" }];
+  expect(isNumericColumn(rows, "amount")).toBe(true);
+  expect(isNumericColumn(rows, "city")).toBe(false);
+});
+
+test("isNumericColumn ignores null/empty cells but needs at least one value", () => {
+  expect(isNumericColumn([{ n: null }, { n: 5 }], "n")).toBe(true);
+  expect(isNumericColumn([{ n: null }, { n: "" }], "n")).toBe(false);
+  expect(isNumericColumn([], "n")).toBe(false);
 });
