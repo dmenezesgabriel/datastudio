@@ -1,4 +1,3 @@
-- @commands better ux
 - cross filtering
 - automated glossary
 - chart annotations

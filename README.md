@@ -68,3 +68,4 @@ via pre-commit. Install the hooks once with `uv run pre-commit install`.
 - https://medium.com/@ranapratapdey/text2sql-architecture-empowered-by-knowledge-graphs-agentic-framework-and-semantic-memory-7d77fb7eef31
 - https://docs.langchain.com/oss/python/langchain/frontend/generative-ui
 - https://docs.langchain.com/oss/python/langgraph/graph-api
+- https://medium.com/@sathishkraju/the-ai-agentic-workflow-patterns-that-actually-matter-in-2026-08955ac6f398
