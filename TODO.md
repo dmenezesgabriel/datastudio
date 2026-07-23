@@ -1,4 +1,8 @@
-- cross filtering
+- fix narrative between filters and visualization its filters not leeting to see the whole without scroll back and forward
+- filter with multiple selection not all or single one
+- make llm also be able to edit the filter as artifact
+- data table scroll match other widgets like charts height
+- stylize scroll bars
 - automated glossary
 - chart annotations
 - emphasize numbers on narrative
