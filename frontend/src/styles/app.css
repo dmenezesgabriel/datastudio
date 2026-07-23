@@ -441,10 +441,18 @@ body {
 }
 
 /* The chart's HTML title sits above the canvas (not baked into the pixels): the
-   <figure> resets the UA default margin so it stays a plain grid child. */
+   <figure> resets the UA default margin so it stays a plain grid child.
+
+   The figure is exactly the standardized widget height, so it sets the height of its grid
+   row and a table beside it (capped at the same token) ends on the same line — the two used
+   to be sized by unrelated rules, leaving a 240px step between a chart and a 20-row table. */
 .chart-figure {
   margin: 0;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: var(--widget-body-height);
 }
 
 /* Title as a quiet caption — it names what's plotted; the data stays the loud thing. */
@@ -455,10 +463,13 @@ body {
 }
 
 /* A determinate box for each chart: Chart.js (responsive + maintainAspectRatio:false)
-   fills it, so charts keep a stable height instead of overflowing their grid cell. */
+   fills it, so charts keep a stable height instead of overflowing their grid cell. It takes
+   whatever the title leaves of the figure's standardized height (flex:1), so the canvas
+   follows the token rather than carrying a second, independent height of its own. */
 .chart-box {
   position: relative;
-  height: 260px;
+  flex: 1;
+  min-height: 0;
   width: 100%;
 }
 
@@ -479,11 +490,31 @@ body {
   min-width: 0;
 }
 
+/* Every widget in the grid is capped at the standardized height and scrolls inside it, so a
+   tall table can no longer stretch its row past the chart beside it. The cap sits on the body
+   (the common parent of every widget's content) rather than on .table-scroll, so the SQL view
+   is bounded identically; the flex column lets a scrollable child shrink to the cap. */
+.dash-grid .widget-frame__body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: var(--widget-body-height);
+}
+
+/* A lone widget has nothing beside it to align with, so it keeps the taller standalone cap
+   (a single-widget answer — e.g. just a "top N" table — shows its rows, not a stub). */
+.dash-grid > .widget-frame:only-child .widget-frame__body {
+  max-height: min(60dvh, 40rem);
+}
+
 /* The SQL view: a readable panel that scrolls inside its own box, the same idiom as the
    chat's code blocks (.message-list pre). Without the max-width a long query overflows
-   its grid cell and paints over the neighbouring widget. */
+   its grid cell and paints over the neighbouring widget. It scrolls on BOTH axes: the body's
+   standardized cap bounds its height too, so a many-line query scrolls in place instead of
+   growing the row it was opened in (min-height:0 lets it shrink to that cap). */
 .widget-frame__sql {
-  overflow-x: auto;
+  overflow: auto;
+  min-height: 0;
   max-width: 100%;
   margin: 0;
   padding: var(--space-3);
@@ -567,11 +598,15 @@ body {
    (many id columns) never widens the transcript, tall never pushes it off screen. The
    height cap mirrors the composer textarea's cap idiom above. min(60dvh, 40rem) is
    responsive — at most 60% of the (dynamic) viewport, but never past 40rem on a big
-   monitor; overscroll-behavior keeps a wheel scroll from chaining out to the page. */
+   monitor; overscroll-behavior keeps a wheel scroll from chaining out to the page.
+   This is the STANDALONE cap: inside the dashboard grid the tighter
+   --widget-body-height cap on .widget-frame__body wins, and min-height:0 is what lets
+   the box shrink to it instead of overflowing. */
 .table-scroll {
   overflow: auto;
   max-width: 100%;
   max-height: min(60dvh, 40rem);
+  min-height: 0;
   overscroll-behavior: contain;
 }
 

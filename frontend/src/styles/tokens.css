@@ -74,6 +74,10 @@
   --sidebar-width: 260px;
   --content-max: 760px;
 
+  /* The standardized body height for a widget in the dashboard grid: a chart is exactly this
+     tall and a table scrolls at it, so a chart and a table side by side share one baseline. */
+  --widget-body-height: 20rem;
+
   --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
 
   /* Scrollbars: recessive by default so the data stays the loud thing (Tufte data-ink).

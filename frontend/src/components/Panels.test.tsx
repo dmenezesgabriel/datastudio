@@ -15,9 +15,10 @@ describe("DataTable", () => {
   });
 
   test("renders every supplied row inside the scroll region", () => {
-    // A tall result is height-capped and scrolls inside .table-scroll (verified live in
-    // Playwright — jsdom has no layout). Here we only guard that the wrapper never drops
-    // rows: the whole point of the scroll box is to hold *all* of them.
+    // A tall result is height-capped and scrolls inside .table-scroll — in the dashboard grid
+    // at the standardized --widget-body-height, so it ends level with the chart beside it
+    // (verified live in Playwright — jsdom has no layout). Here we only guard that the wrapper
+    // never drops rows: the whole point of the scroll box is to hold *all* of them.
     const rows = Array.from({ length: 50 }, (_, index) => [`city-${index}`, String(index)]);
     const { container } = render(
       <DataTable columns={["city", "orders"]} rows={rows} numericColumns={[false, true]} />,
