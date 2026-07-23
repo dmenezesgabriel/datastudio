@@ -1,8 +1,6 @@
-- stylize scroll bars
 - filter, clear do the same as select all, misleading, select all polute the filters with a lot of chips
 - date picker widget for filtering
-- crossfilterting must reach backend to correctly recalculate aggregation
-- data table scroll match other widgets like charts height
+- cross filtering must reach backend to correctly recalculate aggregation
 - make llm also be able to edit the filter as artifact
 - automated glossary
 - chart annotations
