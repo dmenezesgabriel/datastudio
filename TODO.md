@@ -1,4 +1,5 @@
-- fix narrative between filters and visualization its filters not leeting to see the whole without scroll back and forward
+- fix narrative between filters and visualization its filters not letting to see the whole without scroll back and forward
+- crossfilterting must reach backend to correctly recalculate aggregation
 - filter with multiple selection not all or single one
 - make llm also be able to edit the filter as artifact
 - data table scroll match other widgets like charts height
