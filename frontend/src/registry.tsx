@@ -1,6 +1,8 @@
 import { defineRegistry } from "@json-render/react";
 
 import { catalog } from "./catalog";
+import { activeIndexFor, applyFilters } from "./crossFilter";
+import { useCrossFilter } from "./hooks/useCrossFilter";
 import { ChartJsView, type ChartDataset } from "./components/ChartJsView";
 import {
   DataTable,
@@ -11,8 +13,9 @@ import {
   Markdown,
   Stack,
 } from "./components/Panels";
+import { WidgetEmptyState } from "./components/WidgetEmptyState";
 import { WidgetFrame } from "./components/WidgetFrame";
-import { formatCell, formatLabel, formatValue, isNumeric } from "./format";
+import { formatCell, formatLabel, formatValue, isNumericColumn } from "./format";
 
 // Bind each catalogue component to its React implementation. Data props arrive
 // already resolved from provider state (the $state binding), as an array of row
@@ -39,13 +42,6 @@ function toChartNumber(value: unknown): number | null {
   return Number.isFinite(num) ? num : null;
 }
 
-// A column is numeric (→ right-aligned) when it has values and every non-empty cell
-// reads as a number. Ids and years are numeric too — that's correct; they align right.
-function isNumericColumn(rows: Row[], column: string): boolean {
-  const present = rows.map((row) => row[column]).filter((v) => v !== null && v !== undefined && v !== "");
-  return present.length > 0 && present.every(isNumeric);
-}
-
 // Build the KPI's trend badge from a signed change column. Direction comes from the
 // sign (arrow + status color reinforce each other); a non-numeric cell yields no badge.
 function deltaFrom(row: Row, deltaColumn?: string, deltaLabel?: string): KpiDelta | undefined {
@@ -67,31 +63,58 @@ export const { registry } = defineRegistry(catalog, {
     // visualization (children) — see BaseComponentProps in @json-render/react.
     WidgetFrame: ({ props, children }) => <WidgetFrame sql={props.sql}>{children}</WidgetFrame>,
     Markdown: ({ props }) => <Markdown text={props.text} />,
+    // The KPI recomputes over the filtered rows, so a headline number tracks the active
+    // selections when its result carries those columns (otherwise applyFilters is a no-op).
     KpiStat: ({ props }) => {
-      const rows = asRows(props.data);
+      const { filters } = useCrossFilter();
+      const rows = applyFilters(asRows(props.data), filters);
       const row = rows[0];
       const value = row ? formatValue(row[props.valueColumn]) : "";
       const delta = row ? deltaFrom(row, props.deltaColumn, props.deltaLabel) : undefined;
       return <KpiStat label={props.label} value={value} delta={delta} />;
     },
+    // A chart is both a filter source (clicking a mark selects its labelColumn value) and a
+    // target. It filters its rows by every OTHER active dimension, but keeps its OWN grouped
+    // dimension (labelColumn) and emphasises the selected mark instead of dropping bars.
+    // Selections carry the RAW label value so the filter compares unformatted.
     ChartJs: ({ props }) => {
-      const rows = asRows(props.data);
+      const { filters, toggle } = useCrossFilter();
+      const allRows = asRows(props.data);
+      const rows = applyFilters(allRows, filters, props.labelColumn);
+      const activeIndex = activeIndexFor(allRows, props.labelColumn, filters);
+      if (rows.length === 0) return <WidgetEmptyState />;
       return (
         <ChartJsView
           kind={props.kind}
           title={props.title}
           labels={rows.map((row) => formatLabel(row[props.labelColumn]))}
           datasets={chartDatasets(rows, props.valueColumns)}
+          activeIndex={activeIndex}
+          onSelect={(index) => toggle(props.labelColumn, rows[index][props.labelColumn])}
         />
       );
     },
     DataTable: ({ props }) => {
+      const { filters, toggle } = useCrossFilter();
       const result = (props.data ?? {}) as { columns?: string[]; rows?: Row[] };
       const columns = result.columns ?? [];
-      const sourceRows = result.rows ?? [];
+      const allRows = result.rows ?? [];
+      // Alignment is judged over the full result, then the rows focus to the active selections.
+      const numericColumns = columns.map((column) => isNumericColumn(allRows, column));
+      const sourceRows = applyFilters(allRows, filters);
+      if (sourceRows.length === 0) return <WidgetEmptyState />;
       const rows = sourceRows.map((row) => columns.map((column) => formatCell(row[column])));
-      const numericColumns = columns.map((column) => isNumericColumn(sourceRows, column));
-      return <DataTable columns={columns} rows={rows} numericColumns={numericColumns} />;
+      const rawRows = sourceRows.map((row) => columns.map((column) => row[column]));
+      return (
+        <DataTable
+          columns={columns}
+          rows={rows}
+          numericColumns={numericColumns}
+          rawRows={rawRows}
+          onSelectCell={(column, value) => toggle(column, value)}
+          activeValues={filters}
+        />
+      );
     },
   },
 });

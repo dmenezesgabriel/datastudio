@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, test } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { DataTable, Grid, KpiRow, KpiStat } from "./Panels";
 
@@ -25,6 +25,68 @@ describe("DataTable", () => {
     const region = screen.getByRole("group", { name: /data table/i });
     expect(region.classList.contains("table-scroll")).toBe(true);
     expect(container.querySelectorAll("tbody tr").length).toBe(50);
+  });
+
+  test("renders plain (non-interactive) cells when no selection handler is given", () => {
+    const { container } = render(
+      <DataTable columns={["city", "orders"]} rows={[["Sampa", "42"]]} numericColumns={[false, true]} />,
+    );
+    expect(container.querySelector("button")).toBeNull();
+  });
+
+  test("makes a filterable (non-numeric) cell a button that emits its column and raw value", () => {
+    // Selection drives the cross-filter, so the raw cell value is emitted (not the formatted
+    // display string) — the filter compares against unformatted row values.
+    const onSelectCell = vi.fn();
+    render(
+      <DataTable
+        columns={["city", "orders"]}
+        rows={[["Sampa", "42"]]}
+        rawRows={[["Sampa", 42]]}
+        numericColumns={[false, true]}
+        onSelectCell={onSelectCell}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Sampa" }));
+    expect(onSelectCell).toHaveBeenCalledWith("city", "Sampa");
+  });
+
+  test("leaves numeric cells as plain text even when selection is enabled", () => {
+    // Filtering by a measure is meaningless; only dimension (text) columns are selectable.
+    render(
+      <DataTable
+        columns={["city", "orders"]}
+        rows={[["Sampa", "42"]]}
+        rawRows={[["Sampa", 42]]}
+        numericColumns={[false, true]}
+        onSelectCell={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "42" })).toBeNull();
+  });
+
+  test("marks cells matching any active filter with aria-pressed", () => {
+    render(
+      <DataTable
+        columns={["city", "channel"]}
+        rows={[
+          ["Sampa", "web"],
+          ["Rio", "store"],
+        ]}
+        rawRows={[
+          ["Sampa", "web"],
+          ["Rio", "store"],
+        ]}
+        numericColumns={[false, false]}
+        onSelectCell={vi.fn()}
+        activeValues={{ city: "Rio", channel: "web" }}
+      />,
+    );
+    // Two independent filters (AND) — each highlights its own matching cell.
+    expect(screen.getByRole("button", { name: "Rio" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "web" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "Sampa" }).getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByRole("button", { name: "store" }).getAttribute("aria-pressed")).toBe("false");
   });
 });
 

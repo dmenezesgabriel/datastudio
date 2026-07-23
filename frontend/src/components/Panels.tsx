@@ -2,6 +2,8 @@ import { Children, type ReactNode, useMemo } from "react";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 
+import { sameValue } from "../crossFilter";
+
 /** Vertical container for the rendered view elements. */
 export function Stack({ children }: { children?: ReactNode }) {
   return <div className="flex flex-col gap-4">{children}</div>;
@@ -77,15 +79,28 @@ export function KpiStat({
 
 /** The raw result rows rendered as a plain table.
  *  `numericColumns[i]` right-aligns column i (measures align on the decimal; text
- *  columns stay left) — a Tufte table reads down a column of numbers by their tails. */
+ *  columns stay left) — a Tufte table reads down a column of numbers by their tails.
+ *
+ *  When `onSelectCell` is given, cells in a non-numeric (dimension) column become
+ *  keyboard-operable toggle buttons that drive the dashboard cross-filters: they emit the
+ *  column and the RAW value from `rawRows` (the filter compares unformatted values). A cell
+ *  whose column is in `activeValues` at its own value carries `aria-pressed` (several columns
+ *  can be pressed at once, one per active filter). Measures stay plain — filtering by a number
+ *  is meaningless. With no handler the table is read-only (e.g. an old-version preview). */
 export function DataTable({
   columns,
   rows,
   numericColumns,
+  rawRows,
+  onSelectCell,
+  activeValues,
 }: {
   columns: string[];
   rows: unknown[][];
   numericColumns: boolean[];
+  rawRows?: unknown[][];
+  onSelectCell?: (column: string, value: unknown) => void;
+  activeValues?: Record<string, unknown>;
 }) {
   // A wide table scrolls inside this box rather than widening the page (CLAUDE.md).
   // The box is a focusable, labelled region so a keyboard user can reach it and scroll it
@@ -108,7 +123,18 @@ export function DataTable({
             <tr key={rowIndex}>
               {row.map((value, columnIndex) => (
                 <td key={columnIndex} className={numericColumns[columnIndex] ? "data-table__num" : undefined}>
-                  {String(value)}
+                  <DataCell
+                    display={String(value)}
+                    column={columns[columnIndex]}
+                    rawValue={rawRows?.[rowIndex]?.[columnIndex]}
+                    selectable={!!onSelectCell && !numericColumns[columnIndex]}
+                    active={
+                      !!activeValues &&
+                      columns[columnIndex] in activeValues &&
+                      sameValue(activeValues[columns[columnIndex]], rawRows?.[rowIndex]?.[columnIndex])
+                    }
+                    onSelect={onSelectCell}
+                  />
                 </td>
               ))}
             </tr>
@@ -116,5 +142,34 @@ export function DataTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** One table cell: plain text, or a toggle button when its column drives the cross-filter. */
+function DataCell({
+  display,
+  column,
+  rawValue,
+  selectable,
+  active,
+  onSelect,
+}: {
+  display: string;
+  column: string;
+  rawValue: unknown;
+  selectable: boolean;
+  active: boolean;
+  onSelect?: (column: string, value: unknown) => void;
+}) {
+  if (!selectable || !onSelect) return <>{display}</>;
+  return (
+    <button
+      type="button"
+      className="data-table__select"
+      aria-pressed={active}
+      onClick={() => onSelect(column, rawValue)}
+    >
+      {display}
+    </button>
   );
 }

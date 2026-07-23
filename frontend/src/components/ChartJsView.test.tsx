@@ -1,16 +1,17 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 // Spies are hoisted so the vi.mock factory (itself hoisted above imports) can close over them.
 const { constructed, updateSpy, destroySpy, instances } = vi.hoisted(() => ({
   constructed: vi.fn(),
   updateSpy: vi.fn(),
   destroySpy: vi.fn(),
-  instances: [] as { data: { labels: unknown; datasets: DatasetStyle[] } }[],
+  instances: [] as { data: { labels: unknown; datasets: DatasetStyle[] }; options: Record<string, unknown> }[],
 }));
 
-// The styled dataset shape ChartJsView writes onto the live chart (colour + label).
-type DatasetStyle = { label: string; backgroundColor?: string; borderColor?: string };
+// The styled dataset shape ChartJsView writes onto the live chart (colour + label). Colours
+// are a single hue, or a per-mark array when a cross-filter selection emphasises one mark.
+type DatasetStyle = { label: string; backgroundColor?: string | string[]; borderColor?: string | string[] };
 
 // A fake Chart so the test runs without a real canvas 2D context (absent in jsdom) and can
 // count how often the chart is (re)constructed vs. merely updated, and inspect the styled
@@ -121,6 +122,69 @@ test("disables chart animation when the user prefers reduced motion", () => {
   expect(config.options.animation).toBe(false);
 
   window.matchMedia = original;
+});
+
+test("fires onSelect with the clicked mark's index, so a chart can drive the cross-filter", () => {
+  const onSelect = vi.fn();
+  render(
+    <ChartJsView
+      kind="bar"
+      title="By category"
+      labels={["Books", "Toys"]}
+      datasets={[{ label: "count", data: [3, 9] }]}
+      onSelect={onSelect}
+    />,
+  );
+  // Chart.js routes a canvas click through options.onClick(event, activeElements); the second
+  // bar was clicked, so the widget selects index 1 (its raw category value, in the registry).
+  const onClick = instances[0].options.onClick as (e: unknown, els: { index: number }[]) => void;
+  onClick({}, [{ index: 1 }]);
+  expect(onSelect).toHaveBeenCalledWith(1);
+});
+
+test("a click on empty chart space (no mark) selects nothing", () => {
+  const onSelect = vi.fn();
+  render(<ChartJsView {...ONE_BAR} onSelect={onSelect} />);
+  const onClick = instances[0].options.onClick as (e: unknown, els: { index: number }[]) => void;
+  onClick({}, []);
+  expect(onSelect).not.toHaveBeenCalled();
+});
+
+test("emphasises the active mark and dims the others when a selection targets this chart", () => {
+  render(
+    <ChartJsView
+      kind="bar"
+      title="By category"
+      labels={["Books", "Toys"]}
+      datasets={[{ label: "count", data: [3, 9] }]}
+      activeIndex={0}
+    />,
+  );
+  // The selected bar keeps its full hue; the unselected one is dimmed — so the source chart
+  // shows all its marks with the selection standing out (not filtered down to one bar).
+  const { backgroundColor } = instances[0].data.datasets[0] as { backgroundColor: string[] };
+  expect(Array.isArray(backgroundColor)).toBe(true);
+  expect(backgroundColor[0]).not.toBe(backgroundColor[1]);
+});
+
+test("offers each category as a keyboard-operable control that selects it (SC 2.1.1)", () => {
+  // A canvas click is mouse-only; the off-screen data-table equivalent doubles as the
+  // keyboard path — its category row-headers become buttons that drive the same selection.
+  const onSelect = vi.fn();
+  render(
+    <ChartJsView
+      kind="bar"
+      title="By category"
+      labels={["Books", "Toys"]}
+      datasets={[{ label: "count", data: [3, 9] }]}
+      activeIndex={1}
+      onSelect={onSelect}
+    />,
+  );
+  const toys = screen.getByRole("button", { name: "Toys" });
+  expect(toys.getAttribute("aria-pressed")).toBe("true");
+  fireEvent.click(screen.getByRole("button", { name: "Books" }));
+  expect(onSelect).toHaveBeenCalledWith(0);
 });
 
 test("gives two series two distinct categorical colours", () => {
