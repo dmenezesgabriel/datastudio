@@ -1,8 +1,7 @@
-import { memo, useMemo } from "react";
-import { JSONUIProvider, Renderer } from "@json-render/react";
+import { memo } from "react";
 import type { Spec } from "@json-render/react";
 
-import { registry } from "../registry";
+import { DashboardCanvas } from "./DashboardCanvas";
 import { PageNotice } from "./PageNotice";
 import { ProgressChecklist } from "./ProgressChecklist";
 import type { ProgressSteps, SpecWithState, Turn } from "../types";
@@ -56,8 +55,9 @@ export function MessageList({
   );
 }
 
-// One turn's dashboard. Each turn gets its OWN JSONUIProvider because widget $state
-// bindings are scoped per spec — sharing one store across turns would cross-bind data.
+// One turn's dashboard. Each turn gets its OWN JSONUIProvider (via DashboardCanvas) because
+// widget $state bindings — and the cross-filter selection — are scoped per spec; sharing one
+// store across turns would cross-bind data and leak a filter between dashboards.
 //
 // memo so a settled turn (stable props) doesn't re-render — and rebuild its charts —
 // every time a *later* turn streams a patch into the parent.
@@ -72,13 +72,6 @@ const TurnView = memo(function TurnView({
   loading: boolean;
   progress?: ProgressSteps;
 }) {
-  // A fresh object per spec ref (one per patch) so JSONUIProvider re-flattens the
-  // streamed state into its store, resolving $state as each widget's data arrives.
-  const stateModel = useMemo(() => {
-    const state = (spec as SpecWithState | null)?.state;
-    return state ? { ...state } : {};
-  }, [spec]);
-
   return (
     <section>
       {/* The question is this turn's heading (labels the dashboard below it), not a paragraph. */}
@@ -86,10 +79,7 @@ const TurnView = memo(function TurnView({
         {prompt}
       </h2>
       <ProgressChecklist steps={progress} />
-      <JSONUIProvider registry={registry} initialState={stateModel}>
-        {/* loading lets the renderer show partial trees gracefully while patches arrive */}
-        <Renderer spec={spec} registry={registry} loading={loading} />
-      </JSONUIProvider>
+      <DashboardCanvas spec={spec} loading={loading} />
     </section>
   );
 });

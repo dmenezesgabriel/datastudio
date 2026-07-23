@@ -1,8 +1,8 @@
-import { useCallback, useMemo, useState } from "react";
-import { JSONUIProvider, Renderer, useUIStream } from "@json-render/react";
+import { useCallback, useState } from "react";
+import { useUIStream } from "@json-render/react";
 import { Link } from "react-router-dom";
 
-import { registry } from "../registry";
+import { DashboardCanvas } from "./DashboardCanvas";
 import { Composer } from "./Composer";
 import { PageNotice } from "./PageNotice";
 import { ProgressChecklist } from "./ProgressChecklist";
@@ -102,7 +102,7 @@ export function ArtifactView({ artifactId }: { artifactId: string }) {
                 Viewing an earlier version — revert from the history panel to restore it.
               </p>
             )}
-            <DashboardView spec={shownSpec} loading={isStreaming} />
+            <DashboardCanvas spec={shownSpec} loading={isStreaming} />
           </div>
         </div>
         {detail && (
@@ -123,16 +123,5 @@ export function ArtifactView({ artifactId }: { artifactId: string }) {
         label="Edit"
       />
     </main>
-  );
-}
-
-// Renders one dashboard spec. Its own JSONUIProvider scopes the $state bindings to this spec
-// (a fresh state object per spec ref so the provider re-flattens when the spec changes).
-function DashboardView({ spec, loading }: { spec: SpecWithState | null; loading: boolean }) {
-  const stateModel = useMemo(() => (spec?.state ? { ...spec.state } : {}), [spec]);
-  return (
-    <JSONUIProvider registry={registry} initialState={stateModel}>
-      <Renderer spec={spec} registry={registry} loading={loading} />
-    </JSONUIProvider>
   );
 }

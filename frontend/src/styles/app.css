@@ -588,6 +588,199 @@ body {
   border: 0;
 }
 
+/* --- Cross-filtering ------------------------------------------------------ */
+
+/* The explicit filter controls above a dashboard. A bordered "common region" (Gestalt) so the
+   grouped controls read as one toolbar; wraps on narrow widths. Always visible when the
+   dashboard has dimensions — the discoverable counterpart to clicking a mark. */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-subtle);
+}
+
+.filter-bar__title {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.filter-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.filter-group__label {
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--color-text-muted);
+}
+
+.filter-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+/* A dimension value as a toggle chip. Uniform styling (Gestalt similarity); the active one
+   fills with the accent so the current selection stands out without relying on colour alone
+   (it also carries aria-pressed). */
+.filter-chip {
+  padding: 2px var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-bg-raised);
+  color: var(--color-text);
+  font-size: var(--text-sm, 0.875rem);
+  cursor: pointer;
+}
+
+.filter-chip:hover {
+  border-color: var(--color-accent);
+}
+
+.filter-chip.is-active {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-text-inverted);
+  font-weight: 600;
+}
+
+.filter-select {
+  padding: 2px var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-raised);
+  color: var(--color-text);
+  font-size: var(--text-sm, 0.875rem);
+  cursor: pointer;
+}
+
+/* The active selections, echoed as removable chips + a clear-all, so system status is always
+   visible and every filter is reversible (Nielsen #1/#3). Pushed to the row's end. */
+.filter-active {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.filter-active__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 2px var(--space-2);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+  font-size: var(--text-sm, 0.875rem);
+  cursor: pointer;
+}
+
+.filter-active__x {
+  font-size: 0.75em;
+  opacity: 0.8;
+}
+
+.filter-active__clear {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm, 0.875rem);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.filter-chip:focus-visible,
+.filter-select:focus-visible,
+.filter-active__chip:focus-visible,
+.filter-active__clear:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* Shown in place of a widget when the active filters leave it with no rows. */
+.widget-empty {
+  padding: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm, 0.875rem);
+  text-align: center;
+}
+
+/* A selectable dimension cell (table) or category (chart). Table cells carry a dotted underline
+   so they read as interactive at rest (discoverability), solid on hover; the active selection
+   is filled. Chart category controls live in the off-screen table (revealed on focus, below). */
+.data-table__select,
+.chart-data-table__select {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: inherit;
+}
+
+.data-table__select {
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--color-border-strong);
+}
+
+.data-table__select:hover {
+  text-decoration: underline solid;
+  text-decoration-color: var(--color-accent);
+}
+
+.data-table__select[aria-pressed="true"] {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-1);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.data-table__select:focus-visible,
+.chart-data-table__select:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* A chart's cross-filter controls live in its off-screen data table (its keyboard/AT path).
+   On keyboard focus the table un-hides itself as a compact card beneath the chart, so the
+   focused category control is visible — no hidden focus (SC 2.4.7), no keyboard trap. */
+.chart-data-table:focus-within {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2);
+  clip: auto;
+  overflow: auto;
+  max-height: 12rem;
+  white-space: normal;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-raised);
+  font-size: var(--text-sm, 0.875rem);
+}
+
+.chart-data-table:focus-within caption {
+  color: var(--color-text-muted);
+  text-align: left;
+  margin-bottom: var(--space-1);
+}
+
 /* --- Artifacts: gallery, view, version history ---------------------------- */
 
 /* Responsive card grid (same idiom as .dash-grid): cards flow and wrap, centered in

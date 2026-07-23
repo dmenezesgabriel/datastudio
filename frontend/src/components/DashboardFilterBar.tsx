@@ -1,0 +1,146 @@
+import type { Spec } from "@json-render/react";
+import { useMemo } from "react";
+
+import { type FilterDimension, type FilterOption, filterDimensions } from "../dashboardFilters";
+import { formatValue } from "../format";
+import { type CrossFilter, useCrossFilter } from "../hooks/useCrossFilter";
+import { isActive, sameValue } from "../crossFilter";
+
+// A dimension with at most this many values shows every value inline as chips (recognition —
+// you see the whole set); more than this falls back to a dropdown so the bar stays compact.
+const SEGMENT_MAX = 8;
+
+/**
+ * The explicit, always-visible filter controls for a dashboard — the discoverable counterpart
+ * to click-a-mark. Auto-derives the filterable dimensions from the spec and renders one control
+ * per dimension (chips for few values, a dropdown for many), plus the active selections as
+ * removable chips and a "Clear all". Both the controls here and clicking a mark drive the same
+ * shared `/crossFilter` state, so they stay in sync.
+ *
+ * Renders nothing when the dashboard has no filterable dimensions (e.g. a text answer). Must be
+ * inside the dashboard's `JSONUIProvider`.
+ */
+export function DashboardFilterBar({ spec }: { spec: Spec | null }) {
+  const dimensions = useMemo(() => filterDimensions(spec), [spec]);
+  const crossFilter = useCrossFilter();
+  if (dimensions.length === 0) return null;
+  return (
+    <section className="filter-bar" aria-label="Filters">
+      <span className="filter-bar__title">Filters</span>
+      {dimensions.map((dimension) => (
+        <FilterControl key={dimension.field} dimension={dimension} crossFilter={crossFilter} />
+      ))}
+      <ActiveFilters dimensions={dimensions} crossFilter={crossFilter} />
+    </section>
+  );
+}
+
+/** One dimension's control: a chip group when its values are few, a dropdown when many. */
+function FilterControl({ dimension, crossFilter }: { dimension: FilterDimension; crossFilter: CrossFilter }) {
+  const control =
+    dimension.options.length <= SEGMENT_MAX ? (
+      <FilterChipGroup dimension={dimension} crossFilter={crossFilter} />
+    ) : (
+      <FilterSelect dimension={dimension} crossFilter={crossFilter} />
+    );
+  return (
+    <div className="filter-group" role="group" aria-label={dimension.label}>
+      <span className="filter-group__label">{dimension.label}</span>
+      {control}
+    </div>
+  );
+}
+
+/** Every value as a toggle chip, preceded by an "All" chip that clears the dimension. */
+function FilterChipGroup({ dimension, crossFilter }: { dimension: FilterDimension; crossFilter: CrossFilter }) {
+  const { field } = dimension;
+  const selected = crossFilter.valueOf(field);
+  return (
+    <div className="filter-chips">
+      <FilterChip label="All" active={selected === undefined} onClick={() => crossFilter.clearField(field)} />
+      {dimension.options.map((option) => (
+        <FilterChip
+          key={option.display}
+          label={option.display}
+          active={isActive(crossFilter.filters, field, option.value)}
+          onClick={() => crossFilter.toggle(field, option.value)}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** A single toggle chip; `aria-pressed` carries its selected state (not colour alone). */
+function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button type="button" className={`filter-chip${active ? " is-active" : ""}`} aria-pressed={active} onClick={onClick}>
+      {label}
+    </button>
+  );
+}
+
+/** A labelled native dropdown for a high-cardinality dimension (native type-ahead = search).
+ *  Option values are display strings (unique per dimension); the change maps back to the raw. */
+function FilterSelect({ dimension, crossFilter }: { dimension: FilterDimension; crossFilter: CrossFilter }) {
+  const { field } = dimension;
+  const selected = dimension.options.find((option) => isActive(crossFilter.filters, field, option.value));
+  const onChange = (display: string) => {
+    const option = dimension.options.find((candidate) => candidate.display === display);
+    if (option) crossFilter.select(field, option.value);
+    else crossFilter.clearField(field);
+  };
+  return (
+    <select
+      className="filter-select"
+      aria-label={dimension.label}
+      value={selected?.display ?? ""}
+      onChange={(event) => onChange(event.target.value)}
+    >
+      <option value="">All</option>
+      {dimension.options.map((option) => (
+        <option key={option.display} value={option.display}>
+          {option.display}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/** The active selections as removable chips, plus "Clear all"; nothing when none are active. */
+function ActiveFilters({ dimensions, crossFilter }: { dimensions: FilterDimension[]; crossFilter: CrossFilter }) {
+  const entries = Object.entries(crossFilter.filters);
+  if (entries.length === 0) return null;
+  return (
+    <div className="filter-active">
+      {entries.map(([field, value]) => (
+        <button
+          key={field}
+          type="button"
+          className="filter-active__chip"
+          aria-label={`Remove filter: ${labelFor(dimensions, field)} equals ${displayFor(dimensions, field, value)}`}
+          onClick={() => crossFilter.clearField(field)}
+        >
+          <span>
+            {labelFor(dimensions, field)} = <strong>{displayFor(dimensions, field, value)}</strong>
+          </span>
+          <span className="filter-active__x" aria-hidden="true">
+            ✕
+          </span>
+        </button>
+      ))}
+      <button type="button" className="filter-active__clear" onClick={crossFilter.clearAll}>
+        Clear all
+      </button>
+    </div>
+  );
+}
+
+function labelFor(dimensions: FilterDimension[], field: string): string {
+  return dimensions.find((dimension) => dimension.field === field)?.label ?? field;
+}
+
+/** The display string of an active value, from its dimension's options (falls back to format). */
+function displayFor(dimensions: FilterDimension[], field: string, value: unknown): string {
+  const options: FilterOption[] = dimensions.find((dimension) => dimension.field === field)?.options ?? [];
+  return options.find((option) => sameValue(option.value, value))?.display ?? formatValue(value);
+}
