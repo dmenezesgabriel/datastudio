@@ -63,6 +63,7 @@ RUN apt-get update && apt-get install -y \
     zsh \
     socat \
     chromium \
+    gh \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js from node_source
