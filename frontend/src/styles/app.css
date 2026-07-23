@@ -592,7 +592,16 @@ body {
 
 /* The explicit filter controls above a dashboard. A bordered "common region" (Gestalt) so the
    grouped controls read as one toolbar; wraps on narrow widths. Always visible when the
-   dashboard has dimensions — the discoverable counterpart to clicking a mark. */
+   dashboard has dimensions — the discoverable counterpart to clicking a mark.
+
+   Pinned to the top of the scrolling canvas (position: sticky): an insight-led dashboard puts
+   its narrative between the bar and the widgets, so scrolling to a chart/table would otherwise
+   carry the controls (and the active selections) off-screen — the filter and the mark it drives
+   were never co-visible (measured: bar 140px above the viewport with the grid in view). Sticky
+   keeps them together while reading the result (Nielsen #1 visibility, #6 recognition; mirrors
+   the pinned DataTable header, d8871a5). Its containing block is this dashboard's subtree, so it
+   releases at the next turn instead of bleeding over a later dashboard. The opaque background +
+   border occlude the content scrolling under it; z-index lifts it over the chart canvas. */
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
@@ -603,6 +612,52 @@ body {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  transition: box-shadow 0.15s ease;
+}
+
+/* Pinned state (toggled by useStuckToTop). An opaque bar already occludes the content scrolling
+   under it, so a translucent/blur "backdrop" isn't needed (and would hurt contrast). Instead an
+   elevation shadow signals the layering — the accessible cue that the bar floats above the
+   content (Nielsen #1). Squaring the bottom corners closes the one gap the opaque fill leaves:
+   the 10px radius let a sliver of content show through the bottom-corner triangles. Only while
+   stuck, so the at-rest bar keeps its rounded card look. */
+.filter-bar.is-stuck {
+  box-shadow: var(--shadow-raised);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Probe for useStuckToTop. 1px tall (a 0-area target won't reliably trip IntersectionObserver)
+   with a -1px margin so it claims no net layout space or affects the bar's resting position. */
+.filter-bar__sentinel {
+  height: 1px;
+  margin-bottom: -1px;
+}
+
+/* Keep a widget cell/mark that gains focus clear of the sticky filter bar: without this,
+   scrollIntoView tucks a target near the top of the grid *under* the pinned bar (WCAG 2.2
+   §2.4.11 Focus Not Obscured). Sized to the bar's tall wrapped state; a larger-than-needed
+   pad only lands the target slightly lower, never under the bar. Both dashboard scroll
+   containers (artifact view + chat transcript) host the bar, so both compensate.
+
+   Drop the containers' *top* padding (it stays via the inner wrapper's margin below): a scroll
+   container paints scrolled content through its own top padding, so with the padding in place a
+   sliver of narrative shows in the band above the pinned bar. Zeroing it lets the bar pin flush
+   to the viewport top with the content scrolling cleanly under it, while the relocated margin
+   keeps the same breathing room at rest. app.css loads after utilities.css, so these win the
+   cascade over `.py-6` at equal specificity. */
+.artifact-view__canvas,
+.message-list {
+  scroll-padding-top: 128px;
+  padding-top: 0;
+}
+
+.artifact-view__canvas > .max-w-content,
+.message-list__inner {
+  margin-top: var(--space-6);
 }
 
 .filter-bar__title {

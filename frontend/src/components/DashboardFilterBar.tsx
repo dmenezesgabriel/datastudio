@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { type FilterDimension, type FilterOption, filterDimensions } from "../dashboardFilters";
 import { formatValue } from "../format";
 import { type CrossFilter, useCrossFilter } from "../hooks/useCrossFilter";
+import { useStuckToTop } from "../hooks/useStuckToTop";
 import { isActive, pruneFilters, sameValue } from "../crossFilter";
 
 // A dimension with at most this many values shows every value inline as chips (recognition —
@@ -24,6 +25,9 @@ export function DashboardFilterBar({ spec }: { spec: Spec | null }) {
   const dimensions = useMemo(() => filterDimensions(spec), [spec]);
   const crossFilter = useCrossFilter();
   const { filters, replace } = crossFilter;
+  // The bar is sticky; it only gains its elevation shadow + squared bottom corners once pinned,
+  // so scrolling content reads as passing *under* a raised toolbar (not colliding with a flat one).
+  const [stuck, sentinelRef] = useStuckToTop();
   // An edit re-derives the dimensions; reconcile the active selection to them so a column the
   // edit removed (or a value it no longer yields) can't linger as a dangling filter chip. The
   // active selection lives outside the spec state, so json-render's reconciliation never touches
@@ -34,13 +38,18 @@ export function DashboardFilterBar({ spec }: { spec: Spec | null }) {
   }, [dimensions, filters, replace]);
   if (dimensions.length === 0) return null;
   return (
-    <section className="filter-bar" aria-label="Filters">
-      <span className="filter-bar__title">Filters</span>
-      {dimensions.map((dimension) => (
-        <FilterControl key={dimension.field} dimension={dimension} crossFilter={crossFilter} />
-      ))}
-      <ActiveFilters dimensions={dimensions} crossFilter={crossFilter} />
-    </section>
+    <>
+      {/* Zero-height marker just above the sticky bar; useStuckToTop watches it cross the
+          container's top edge to know when the bar is pinned. */}
+      <div ref={sentinelRef} className="filter-bar__sentinel" aria-hidden="true" />
+      <section className={`filter-bar${stuck ? " is-stuck" : ""}`} aria-label="Filters">
+        <span className="filter-bar__title">Filters</span>
+        {dimensions.map((dimension) => (
+          <FilterControl key={dimension.field} dimension={dimension} crossFilter={crossFilter} />
+        ))}
+        <ActiveFilters dimensions={dimensions} crossFilter={crossFilter} />
+      </section>
+    </>
   );
 }
 

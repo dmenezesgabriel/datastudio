@@ -65,3 +65,20 @@ if (typeof globalThis.ResizeObserver !== "function") {
     disconnect() {}
   };
 }
+
+// useStuckToTop observes a sentinel with IntersectionObserver to detect the sticky filter bar's
+// pinned state; jsdom has none, so provide an inert stand-in (it never fires — the bar stays in
+// its default un-stuck state, which is what an unscrolled render should show).
+if (typeof globalThis.IntersectionObserver !== "function") {
+  globalThis.IntersectionObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return [];
+    }
+    root = null;
+    rootMargin = "";
+    thresholds = [];
+  } as unknown as typeof IntersectionObserver;
+}
